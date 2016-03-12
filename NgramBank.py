@@ -119,8 +119,7 @@ class StreamPredictor:
 if __name__ == '__main__':
     sp = StreamPredictor()
     with open('data/pride_small.txt', 'r') as myfile:
-        data=myfile.read().replace('\n', '')
-        data.replace(" ", "_")
+        data=myfile.read().replace('\n', '').replace(' ', '')
         data = data[:10000]
         sp.train(data)
     sp.n_gram_bank.status()
