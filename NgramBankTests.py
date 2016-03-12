@@ -75,7 +75,7 @@ class TestBankNgram(TestCase):
         bank_sample.current_stream = ['a','b','c']
         list_ngrams = bank_sample.create_ngrams_strings('d')
         self.assertEqual(4,len(bank_sample.current_stream))
-        bank_sample.current_stream = list('0123456789')
+        bank_sample.current_stream = list('01234')
         self.assertEqual(NgramBank.max_length_ngram, len(bank_sample.current_stream))
         list_ngrams = bank_sample.create_ngrams_strings('z')
         self.assertEqual(NgramBank.max_length_ngram, len(bank_sample.current_stream))
