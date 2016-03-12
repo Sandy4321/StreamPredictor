@@ -21,9 +21,9 @@ class TestBankNgram(TestCase):
     def add_to_bank_new_test(self):
         bank_sample = NgramBank.BankNgram()
         ngram_sample = NgramBank.Ngram('test')
-        self.assertFalse(bank_sample.in_bank(ngram_sample))
+        self.assertFalse(bank_sample.ngram_in_bank(ngram_sample))
         bank_sample.add_to_bank_string('test')
-        self.assertTrue(bank_sample.in_bank(ngram_sample))
+        self.assertTrue(bank_sample.ngram_in_bank(ngram_sample))
 
     def add_to_bank_existing_increases_strength_test(self):
         bank_sample = NgramBank.BankNgram()
@@ -33,3 +33,43 @@ class TestBankNgram(TestCase):
         bank_sample.add_to_bank_string('test2')
         second_strength = bank_sample.bank['test2'].strength
         self.assertTrue(second_strength > first_strength)
+
+    def create_ngrams_test(self):
+        bank_sample = NgramBank.BankNgram()
+        bank_sample.current_stream = ['a','b','c']
+        list_ngrams = bank_sample.create_ngrams('d')
+        strings = [i.value for i in list_ngrams]
+        self.assertTrue('dab' in strings)
+        self.assertTrue('da' in strings)
+        self.assertTrue('d' in strings)
+
+    def cull_test(self):
+        bank_sample = NgramBank.BankNgram()
+        bank_sample.add_to_bank_string('a')
+        bank_sample.cull()
+        self.assertTrue('a' in bank_sample.bank)
+        for i in range(NgramBank.starting_ngram_strength):
+            bank_sample.decay()
+        bank_sample.cull()
+        self.assertTrue('a' in bank_sample.bank)
+        for i in range(1):
+            bank_sample.decay()
+        bank_sample.cull()
+        self.assertFalse('a' in bank_sample.bank)
+
+    def check_maturation_test(self):
+        bank_sample = NgramBank.BankNgram()
+        bank_sample.add_to_bank_string('a')
+        bank_sample.check_maturation()
+        self.assertFalse(bank_sample.bank['a'].matured)
+        for i in range(NgramBank.maturity_age):
+            bank_sample.decay()
+        bank_sample.check_maturation()
+        self.assertFalse(bank_sample.bank['a'].matured)
+        bank_sample.decay()
+        bank_sample.check_maturation()
+        self.assertTrue(bank_sample.bank['a'].matured)
+
+
+
+
