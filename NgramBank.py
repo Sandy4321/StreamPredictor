@@ -150,7 +150,7 @@ class BankNgram:
         return np.hstack(vectors_list)
 
     def save(self):
-        savestr = 'token, strength, age'
+        savestr = 'token, strength, age\n'
         for key, ngram in self.bank.iteritems():
             savestr += key + ',' + str(ngram.strength) + ',' + str(ngram.age) + '\n'
         with open(self.savefilename, mode='w') as file:
