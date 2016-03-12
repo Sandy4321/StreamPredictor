@@ -6,10 +6,12 @@ unique vectors management.
 """
 
 # constants
+import operator
+
 starting_ngram_strength = 100
 feed_strength_gain = 100
-max_length_ngram = 10
-maturity_age = 300
+max_length_ngram = 5
+maturity_age = 3000
 
 
 class Ngram:
@@ -21,7 +23,8 @@ class Ngram:
         self.matured = False
 
     def __repr__(self):
-        return self.value + " strength=" + str(self.strength)
+        return self.value[::-1] + ' strength=' + str(self.strength) \
+               + ' age=' + str(self.age) + '\n'
 
     def decay(self):
         self.age += 1
@@ -54,21 +57,24 @@ class BankNgram:
         for key, ngram in self.bank.iteritems():
             ngram.decay()
 
-    def create_ngrams(self, char):
+    def create_ngrams_strings(self, char):
         """
-        Creates the ngrams of all lengths by taking in the current char, inserting
-        into the curent_stream queue, removing the oldest one.
+        Creates the strings of all lengths by taking in the current char, inserting
+        into the current_stream queue, removing the oldest one.
 
         :param char:  string of length 1
-        :return: List of ngrams with lengths 1 to max length
+        :return: List of strings with lengths 1 to max length
         """
-        self.current_stream = [char] + self.current_stream[:-1]
-        return [Ngram(''.join(self.current_stream[:i]))
+        if len(self.current_stream) < max_length_ngram:
+            self.current_stream = [char] + self.current_stream
+        else:
+            self.current_stream = [char] + self.current_stream[:-1]
+        return [''.join(self.current_stream[:i])
                 for i in range(1, 1 + len(self.current_stream))]
 
     def timestep(self, char):
-        for ngram in self.create_ngrams(char):
-            self.add_to_bank_string(ngram)
+        for string in self.create_ngrams_strings(char):
+            self.add_to_bank_string(string)
         self.check_maturation()
         self.decay()
         self.cull()
@@ -79,19 +85,43 @@ class BankNgram:
             if ngram.strength < 0:
                 cull_list.append(key)
         for cull_key in cull_list:
+            print 'Culling ' + cull_key
             self.bank.pop(cull_key)
 
     def check_maturation(self):
         for key, ngram in self.bank.iteritems():
+            if ngram.matured:
+                continue
             if ngram.age > maturity_age:
                 ngram.matured = True
-                print ngram.value + " matured."
+                print ngram.value[::-1] + " matured."
                 # if anything matured then mature and if limit exceeds, delete weakest mature.
+
+    def status(self):
+        print 'Status of ngram bank with ' + str(len(self.bank)) + ' ngrams \n'
+        for key, ngram in sorted(self.bank.iteritems(), key= lambda ng: ng[1].strength):
+            print ngram.__repr__()
+        print 'Status of ngram bank with ' + str(len(self.bank)) + ' ngrams \n'
 
 
 class StreamPredictor:
+    def __init__(self):
+        self.n_gram_bank = BankNgram()
+
     def train(self, input_stream):
-        pass
+        print 'Started training with stream length ' + str(len(input_stream))
+        for char in list(input_stream):
+            self.n_gram_bank.timestep(char)
 
     def predict(self, input_stream):
         pass
+
+if __name__ == '__main__':
+    sp = StreamPredictor()
+    with open('data/pride_small.txt', 'r') as myfile:
+        data=myfile.read().replace('\n', '')
+        data.replace(" ", "_")
+        data = data[:10000]
+        sp.train(data)
+    sp.n_gram_bank.status()
+

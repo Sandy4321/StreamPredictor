@@ -37,8 +37,8 @@ class TestBankNgram(TestCase):
     def create_ngrams_test(self):
         bank_sample = NgramBank.BankNgram()
         bank_sample.current_stream = ['a','b','c']
-        list_ngrams = bank_sample.create_ngrams('d')
-        strings = [i.value for i in list_ngrams]
+        list_ngrams = bank_sample.create_ngrams_strings('d')
+        strings = [i for i in list_ngrams]
         self.assertTrue('dab' in strings)
         self.assertTrue('da' in strings)
         self.assertTrue('d' in strings)
@@ -69,6 +69,16 @@ class TestBankNgram(TestCase):
         bank_sample.decay()
         bank_sample.check_maturation()
         self.assertTrue(bank_sample.bank['a'].matured)
+
+    def create_ngrams_short_long_test(self):
+        bank_sample = NgramBank.BankNgram()
+        bank_sample.current_stream = ['a','b','c']
+        list_ngrams = bank_sample.create_ngrams_strings('d')
+        self.assertEqual(4,len(bank_sample.current_stream))
+        bank_sample.current_stream = list('0123456789')
+        self.assertEqual(NgramBank.max_length_ngram, len(bank_sample.current_stream))
+        list_ngrams = bank_sample.create_ngrams_strings('z')
+        self.assertEqual(NgramBank.max_length_ngram, len(bank_sample.current_stream))
 
 
 
