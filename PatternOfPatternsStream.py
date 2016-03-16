@@ -4,6 +4,7 @@ Pattern of patterns.
 Kind of adaptive coding.
 """
 import numpy as np
+import time
 
 # constants
 starting_strength = 1000
@@ -85,15 +86,15 @@ class PopManager:
                     previous_pop = current_pop
                     break
             if i % 10 == 0 and i > starting_strength:
-                self.cull()
-            self.cull()
+                self.cull(0)
+            self.cull(starting_strength)
         return self.patterns_collection
 
-    def cull(self):
+    def cull(self, limit):
         cull_list = []
         for key, ngram in self.patterns_collection.iteritems():
             ngram.decay()
-            if ngram.strength < 0 and len(ngram.unrolled_pattern) > 1:
+            if ngram.strength < limit and len(ngram.unrolled_pattern) > 1:
                 cull_list.append(key)
         for cull_key in cull_list:
             # print 'Culling ' + cull_key
@@ -156,7 +157,7 @@ class PopManager:
             next_word = self.predict_next_word(current_word)
             if next_word == '':
                 next_word = np.random.choice([pop.unrolled_pattern
-                                              for key,pop in self.patterns_collection.iteritems()])
+                                              for key, pop in self.patterns_collection.iteritems()])
             generated_output += next_word
             current_word = next_word
         return generated_output
@@ -168,6 +169,7 @@ class PopManager:
 
 
 if __name__ == '__main__':
+    start_time = time.time()
     test_string = 'abfacdabcadadabcdabcdafabcdabcdevabcdabcdadfaabcd;kjojafaabcd'
     with open('data/pride.txt', 'r') as myfile:
         data = myfile.read().replace('\n', '').replace(' ', '_')
@@ -175,6 +177,7 @@ if __name__ == '__main__':
         data = ''.join(e for e in data if e.isalnum() or e is '_')
     pm = PopManager()
     pm.train(data)
-    pm.status()
+    # pm.status()
     pm.save('patterns_of_pride.csv')
     pm.generate_default()
+    print 'Total time taken to run this program is ', round((time.time() - start_time) / 60, ndigits=2), ' mins'
