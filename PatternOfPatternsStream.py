@@ -4,7 +4,12 @@ Pattern of patterns.
 Kind of adaptive coding.
 
 Todos:
+1. Graphs - done
 2. Multi step look ahead
+3. Single character prediction
+4. Measure of prediction , avg prediction rate
+5. Measure of interesting, find interesting stuff to learn.
+6. Crawl web.
 """
 import numpy as np
 import time
@@ -13,14 +18,14 @@ import matplotlib.pyplot as plt
 import math
 
 # constants
-max_input_stream_length = 100000
+max_input_stream_length = 10000
 starting_strength = 1000
 maxlen_word = 20
 required_repeats = 5
 feed_strength_gain = 2 * max_input_stream_length / required_repeats
 decay_strength_loss = 1
 feed_ratio = [0.5, 0.25, 0.25]
-storage_file = 'patterns_of_pride.csv'
+storage_file = 'CSV/patterns_of_pride.csv'
 input_txt_file = 'data/pride.txt'
 
 
@@ -62,8 +67,6 @@ class Pop:
 class PopManager:
     def __init__(self):
         self.patterns_collection = dict()
-        for common_word in ['and', 'but', 'the', 'of', 'when', 'where', 'in', 'that', 'to', 'it']:
-            self.patterns_collection[common_word] = Pop(common_word)
 
     def set_components_from_string(self, pop, first_string, second_string):
         if not first_string or not second_string:
@@ -262,6 +265,7 @@ def train_main():
         rotation = np.random.randint(low = 0, high=max_input_stream_length, size=1)
         data = data[rotation:max_input_stream_length] + data[:rotation]
         # data = ''.join(e for e in data if e.isalnum() or e is '_')
+        data = ''.join(e for e in data if e.isalnum() or e in '._"?')
     pm = PopManager()
     if os.path.isfile(storage_file):
         pm.load(storage_file)
@@ -275,7 +279,7 @@ def train_predict_main():
         data = myfile.read().replace('\n', '_').replace(' ', '_')
         rotation = np.random.randint(low = 0, high=max_input_stream_length, size=1)
         data = data[rotation:max_input_stream_length] + data[:rotation]
-        # data = ''.join(e for e in data if e.isalnum() or e is '_')
+        data = ''.join(e for e in data if e.isalnum() or e in '._"?')
     pm = PopManager()
     if os.path.isfile(storage_file):
         pm.load(storage_file)
@@ -286,7 +290,7 @@ def train_predict_main():
 
 
 if __name__ == '__main__':
-    for iteration in range(20):
+    for iteration in range(1):
         print 'Iteration number ' + str(iteration)
         start_time = time.time()
         train_main()

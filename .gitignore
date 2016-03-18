@@ -6,3 +6,9 @@
 .idea/workspace.xml
 .idea/*
 
+*.csv
+*.swp
+*.pyc
+*.zip
+*~
+*.lnk
