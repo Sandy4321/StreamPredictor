@@ -16,17 +16,15 @@ import time
 import os
 import matplotlib.pyplot as plt
 import math
+import DataObtainer
 
 # constants
-max_input_stream_length = 10000
+max_input_stream_length = 1000000
 starting_strength = 1000
 maxlen_word = 20
 required_repeats = 5
-feed_strength_gain = 2 * max_input_stream_length / required_repeats
 decay_strength_loss = 1
 feed_ratio = [0.5, 0.25, 0.25]
-storage_file = 'CSV/patterns_of_pride.csv'
-input_txt_file = 'data/pride.txt'
 
 
 class Pop:
@@ -77,7 +75,9 @@ class PopManager:
             pop.second_component = self.patterns_collection[second_string]
 
     def train(self, string):
-        print 'Started training with string length ' + str(len(string))
+        input_length = len(string)
+        feed_strength_gain = 2 * input_length/ required_repeats
+        print 'Started training with string length ' + str(input_length)
         char_set = set(string)
         for char in char_set:
             self.patterns_collection[char] = Pop(char)
@@ -102,49 +102,50 @@ class PopManager:
                 self.cull(0)
         self.cull(0)
         return self.patterns_collection
-
-    def train_predict(self, string):
-        print 'Started prediction training with string length ' + str(len(string))
-        char_set = set(string)
-        for char in char_set:
-            self.patterns_collection[char] = Pop(char)
-        previous_pop = self.patterns_collection[string[0]]
-        counter = StreamCounter()
-        i = 1
-        prediction_gain = 0
-        while i < len(string) - maxlen_word:
-            predicted_word = self.predict_next_word(previous_pop.unrolled_pattern)
-            if (predicted_word != '') and (string[i:len(predicted_word)] == predicted_word):
-                # predicted correctly
-                i += len(predicted_word)
-                parent_pattern = previous_pop.unrolled_pattern + predicted_word
-                self.patterns_collection[parent_pattern].feed(feed_strength_gain)
-                previous_pop = self.patterns_collection[predicted_word]
-                prediction_gain += 1
-                counter.update(i, len(self.patterns_collection), prediction_gain)
-            else:
-                # predicted wrongly
-                for j in range(maxlen_word, 0, -1):
-                    current_word = string[i:i + j]
-                    if current_word in self.patterns_collection:
-                        current_pop = self.patterns_collection[current_word]
-                        # self.patterns_collection[current_word].feed(feed_strength_gain)
-                        i += j
-                        new_pattern = previous_pop.unrolled_pattern + current_word
-                        if new_pattern not in self.patterns_collection:
-                            self.patterns_collection[new_pattern] = Pop(new_pattern)
-                            self.patterns_collection[new_pattern].set_components(previous_pop, current_pop)
-                        else:
-                            self.patterns_collection[new_pattern].feed(feed_strength_gain)
-                        previous_pop = current_pop
-                        prediction_gain -= 1
-                        counter.update(i, len(self.patterns_collection), prediction_gain)
-                        break
-            if i % 10 == 0 and i > starting_strength:
-                self.cull(0)
-        self.cull(0)
-        # counter.plot()
-        return self.patterns_collection
+    #
+    # def train_predict(self, string):
+    #     # todo refactor this with main
+    #     print 'Started prediction training with string length ' + str(len(string))
+    #     char_set = set(string)
+    #     for char in char_set:
+    #         self.patterns_collection[char] = Pop(char)
+    #     previous_pop = self.patterns_collection[string[0]]
+    #     counter = StreamCounter()
+    #     i = 1
+    #     prediction_gain = 0
+    #     while i < len(string) - maxlen_word:
+    #         predicted_word = self.predict_next_word(previous_pop.unrolled_pattern)
+    #         if (predicted_word != '') and (string[i:len(predicted_word)] == predicted_word):
+    #             # predicted correctly
+    #             i += len(predicted_word)
+    #             parent_pattern = previous_pop.unrolled_pattern + predicted_word
+    #             self.patterns_collection[parent_pattern].feed(feed_strength_gain)
+    #             previous_pop = self.patterns_collection[predicted_word]
+    #             prediction_gain += 1
+    #             counter.update(i, len(self.patterns_collection), prediction_gain)
+    #         else:
+    #             # predicted wrongly
+    #             for j in range(maxlen_word, 0, -1):
+    #                 current_word = string[i:i + j]
+    #                 if current_word in self.patterns_collection:
+    #                     current_pop = self.patterns_collection[current_word]
+    #                     # self.patterns_collection[current_word].feed(feed_strength_gain)
+    #                     i += j
+    #                     new_pattern = previous_pop.unrolled_pattern + current_word
+    #                     if new_pattern not in self.patterns_collection:
+    #                         self.patterns_collection[new_pattern] = Pop(new_pattern)
+    #                         self.patterns_collection[new_pattern].set_components(previous_pop, current_pop)
+    #                     else:
+    #                         self.patterns_collection[new_pattern].feed(feed_strength_gain)
+    #                     previous_pop = current_pop
+    #                     prediction_gain -= 1
+    #                     counter.update(i, len(self.patterns_collection), prediction_gain)
+    #                     break
+    #         if i % 10 == 0 and i > starting_strength:
+    #             self.cull(0)
+    #     self.cull(0)
+    #     # counter.plot()
+    #     return self.patterns_collection
 
     def cull(self, limit):
         cull_list = []
@@ -180,10 +181,10 @@ class PopManager:
     def save(self, filename):
         savestr = 'pattern, strength, component1, component2\n'
         for key, pop in sorted(self.patterns_collection.iteritems(), key=lambda ng: ng[1].strength):
-            savestr += key + ',' + str(pop.strength) + ','
+            savestr += key + '\t' + str(pop.strength) + '\t'
             if pop.first_component:
                 savestr += pop.first_component.unrolled_pattern
-            savestr += ','
+            savestr += '\t'
             if pop.second_component:
                 savestr += pop.second_component.unrolled_pattern
             savestr += '\n'
@@ -195,12 +196,12 @@ class PopManager:
         with open(filename, mode='r') as file:
             all_lines = file.readlines()
             for lines in all_lines[1:]:
-                elements = lines.split(',')
+                elements = lines.split('\t')
                 key = elements[0]
                 self.patterns_collection[key] = Pop(key)
                 self.patterns_collection[key].strength = int(elements[1])
             for lines in all_lines[1:]:
-                elements = lines.strip().split(',')
+                elements = lines.strip('\n').split('\t')
                 key = elements[0]
                 if elements[2] is not '' and elements[3] is not '':
                     self.set_components_from_string(self.patterns_collection[key], elements[2], elements[3])
@@ -233,7 +234,7 @@ class PopManager:
             current_word = next_word
         return generated_output
 
-    def generate_default(self):
+    def generate_default(self, storage_file):
         self.load(storage_file)
         output = self.generate_stream(100, 'The')
         print output
@@ -259,43 +260,49 @@ class StreamCounter:
         plt.ylabel('prediction gain')
         plt.show()
 
-def train_main():
-    with open(input_txt_file, 'r') as myfile:
-        data = myfile.read().replace('\n', '_').replace(' ', '_')
-        rotation = np.random.randint(low = 0, high=max_input_stream_length, size=1)
-        data = data[rotation:max_input_stream_length] + data[:rotation]
-        # data = ''.join(e for e in data if e.isalnum() or e is '_')
-        data = ''.join(e for e in data if e.isalnum() or e in '._"?')
-    pm = PopManager()
-    if os.path.isfile(storage_file):
-        pm.load(storage_file)
-    pm.train(data)
-    # pm.status()
-    pm.save(storage_file)
-    pm.generate_default()
+# def train_main():
+#     with open(input_txt_file, 'r') as myfile:
+#         data = myfile.read().replace('\n', '_').replace(' ', '_')
+#         rotation = np.random.randint(low = 0, high=max_input_stream_length, size=1)
+#         data = data[rotation:max_input_stream_length] + data[:rotation]
+#         # data = ''.join(e for e in data if e.isalnum() or e is '_')
+#         data = ''.join(e for e in data if e.isalnum() or e in '._"?')
+#     pm = PopManager()
+#     if os.path.isfile(storage_file):
+#         pm.load(storage_file)
+#     pm.train(data)
+#     # pm.status()
+#     pm.save(storage_file)
+#     pm.generate_default()
+#
+# def train_predict_main():
+#     with open(input_txt_file, 'r') as myfile:
+#         data = myfile.read().replace('\n', '_').replace(' ', '_')
+#         rotation = np.random.randint(low = 0, high=max_input_stream_length, size=1)
+#         data = data[rotation:max_input_stream_length] + data[:rotation]
+#         data = ''.join(e for e in data if e.isalnum() or e in '._"?')
+#     pm = PopManager()
+#     if os.path.isfile(storage_file):
+#         pm.load(storage_file)
+#     pm.train_predict(data)
+#     # pm.status()
+#     pm.save(storage_file)
+#     pm.generate_default()
 
-def train_predict_main():
-    with open(input_txt_file, 'r') as myfile:
-        data = myfile.read().replace('\n', '_').replace(' ', '_')
-        rotation = np.random.randint(low = 0, high=max_input_stream_length, size=1)
-        data = data[rotation:max_input_stream_length] + data[:rotation]
-        data = ''.join(e for e in data if e.isalnum() or e in '._"?')
-    pm = PopManager()
-    if os.path.isfile(storage_file):
-        pm.load(storage_file)
-    pm.train_predict(data)
-    # pm.status()
-    pm.save(storage_file)
-    pm.generate_default()
+def overnight_trainer(storage_file):
+    for iteration in range(100):
+        start_time = time.time()
+        print 'Iteration number ' + str(iteration)
+        text = DataObtainer.get_random_book_local()
+        text = DataObtainer.clean_text(text, max_input_stream_length)
+        pm = PopManager()
+        if os.path.isfile(storage_file):
+            pm.load(storage_file)
+        pm.train(text)
+        pm.save(storage_file)
+        pm.generate_default(storage_file)
+        print 'Total time taken to run this is ', round((time.time() - start_time) / 60, ndigits=2), ' mins'
 
 
 if __name__ == '__main__':
-    for iteration in range(1):
-        print 'Iteration number ' + str(iteration)
-        start_time = time.time()
-        train_main()
-        print 'Total time taken to run this program is ', round((time.time() - start_time) / 60, ndigits=2), ' mins'
-    pm = PopManager()
-    if os.path.isfile(storage_file):
-        pm.load(storage_file)
-    pm.status(show_strength=False)
+    overnight_trainer('CSV/overnight.tsv')
