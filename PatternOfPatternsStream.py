@@ -1,7 +1,12 @@
 """
 Pattern of patterns.
 
-Kind of adaptive coding.
+Sequence prediction by remembering pattern of patterns. When a new pattern is seen it is stored and combined with
+existing patterns. Concrete example.
+Suppose pattern A is seen, then pattern B is seen. New pattern AB is created from these.
+
+Patterns decay over time, if not seen are culled. Patterns are fed if they are seen, and their components are fed
+half of them. Kind of adaptive coding.
 
 Todos:
 1. Graphs - done
@@ -10,32 +15,37 @@ Todos:
 4. Measure of prediction , avg prediction rate
 5. Measure of interesting, find interesting stuff to learn.
 6. Crawl web.
+
+Idea:
+Refactoring: See if instead of current components, new components which are stronger can be set.
+e.g. if pattern is ABCD = {ABC:D} but AB and CD are stronger then set ABCD = {AB:CD}
 """
-import numpy as np
-import time
 import os
+import time
 import matplotlib.pyplot as plt
-import math
+import numpy as np
 import DataObtainer
 
 # constants
 max_input_stream_length = 1000000
 starting_strength = 1000
-maxlen_word = 20
-required_repeats = 5
-decay_strength_loss = 1
-feed_ratio = [0.5, 0.25, 0.25]
+maxlen_word = 20  # maximum pattern length
+required_repeats = 5  # if seen less than this many times, patterns won't survive on the long run.
+decay_strength_loss = 1  # loss of strength per time step.
+feed_ratio = [0.5, 0.25, 0.25]  # ratio of self feed to child components feed. First self, next two children.
 
 
 class Pop:
     def __init__(self, chars):
-        self.unrolled_pattern = chars
+        self.unrolled_pattern = chars  # The actual characters that make up current pattern.
         self.strength = starting_strength
-        self.first_component = None
+        self.first_component = None  # Children
         self.second_component = None
-        # print 'Created pop ' + self.unrolled_pattern
 
     def set_components(self, first_component, second_component):
+        """
+        Sets the children.
+        """
         if not first_component or not second_component:
             raise Exception("component cannot be None")
         self.first_component = first_component
@@ -76,20 +86,18 @@ class PopManager:
 
     def train(self, string):
         input_length = len(string)
-        feed_strength_gain = 2 * input_length/ required_repeats
+        feed_strength_gain = 2 * input_length / required_repeats
         print 'Started training with string length ' + str(input_length)
         char_set = set(string)
         for char in char_set:
             self.patterns_collection[char] = Pop(char)
         previous_pop = self.patterns_collection[string[0]]
         i = 1
-        while i < len(string) - maxlen_word:
-            for j in range(maxlen_word, 0, -1):
+        while i < input_length - maxlen_word:
+            for j in range(maxlen_word, 0, -1):  # how many chars to look ahead
                 current_word = string[i:i + j]
                 if current_word in self.patterns_collection:
                     current_pop = self.patterns_collection[current_word]
-                    # self.patterns_collection[current_word].feed(feed_strength_gain)
-                    i += j
                     new_pattern = previous_pop.unrolled_pattern + current_word
                     if new_pattern not in self.patterns_collection:
                         self.patterns_collection[new_pattern] = Pop(new_pattern)
@@ -97,80 +105,36 @@ class PopManager:
                     else:
                         self.patterns_collection[new_pattern].feed(feed_strength_gain)
                     previous_pop = current_pop
+                    i += j
                     break
-            if i % 10 == 0 and i > starting_strength:
+            if i % 10 == 0 and i > starting_strength:  # Every now and then cull weak patterns
                 self.cull(0)
         self.cull(0)
         return self.patterns_collection
-    #
-    # def train_predict(self, string):
-    #     # todo refactor this with main
-    #     print 'Started prediction training with string length ' + str(len(string))
-    #     char_set = set(string)
-    #     for char in char_set:
-    #         self.patterns_collection[char] = Pop(char)
-    #     previous_pop = self.patterns_collection[string[0]]
-    #     counter = StreamCounter()
-    #     i = 1
-    #     prediction_gain = 0
-    #     while i < len(string) - maxlen_word:
-    #         predicted_word = self.predict_next_word(previous_pop.unrolled_pattern)
-    #         if (predicted_word != '') and (string[i:len(predicted_word)] == predicted_word):
-    #             # predicted correctly
-    #             i += len(predicted_word)
-    #             parent_pattern = previous_pop.unrolled_pattern + predicted_word
-    #             self.patterns_collection[parent_pattern].feed(feed_strength_gain)
-    #             previous_pop = self.patterns_collection[predicted_word]
-    #             prediction_gain += 1
-    #             counter.update(i, len(self.patterns_collection), prediction_gain)
-    #         else:
-    #             # predicted wrongly
-    #             for j in range(maxlen_word, 0, -1):
-    #                 current_word = string[i:i + j]
-    #                 if current_word in self.patterns_collection:
-    #                     current_pop = self.patterns_collection[current_word]
-    #                     # self.patterns_collection[current_word].feed(feed_strength_gain)
-    #                     i += j
-    #                     new_pattern = previous_pop.unrolled_pattern + current_word
-    #                     if new_pattern not in self.patterns_collection:
-    #                         self.patterns_collection[new_pattern] = Pop(new_pattern)
-    #                         self.patterns_collection[new_pattern].set_components(previous_pop, current_pop)
-    #                     else:
-    #                         self.patterns_collection[new_pattern].feed(feed_strength_gain)
-    #                     previous_pop = current_pop
-    #                     prediction_gain -= 1
-    #                     counter.update(i, len(self.patterns_collection), prediction_gain)
-    #                     break
-    #         if i % 10 == 0 and i > starting_strength:
-    #             self.cull(0)
-    #     self.cull(0)
-    #     # counter.plot()
-    #     return self.patterns_collection
 
     def cull(self, limit):
+        cull_list = self.cull_child_and_mark_self(limit)
+        for cull_key in cull_list:
+            self.patterns_collection.pop(cull_key)
+
+    def cull_child_and_mark_self(self, limit):
         cull_list = []
         for key, pop in self.patterns_collection.iteritems():
             pop.decay()
-            self.cull_child_and_mark_self(cull_list, key, limit, pop)
-        for cull_key in cull_list:
-            # print 'Culling ' + cull_key
-            self.patterns_collection.pop(cull_key)
-            # Todo how to remove components?
-
-    def cull_child_and_mark_self(self, cull_list, key, limit, pop):
-        if pop.first_component:
-            if pop.first_component.strength < limit:
-                pop.first_component = None
-        if pop.second_component:
-            if pop.second_component.strength < limit:
-                pop.second_component = None
-        if pop.strength < limit and len(pop.unrolled_pattern) > 1:
-            cull_list.append(key)
+            if pop.first_component:
+                if pop.first_component.strength < limit:
+                    pop.first_component = None
+            if pop.second_component:
+                if pop.second_component.strength < limit:
+                    pop.second_component = None
+            if pop.strength < limit and len(pop.unrolled_pattern) > 1:
+                cull_list.append(key)
+        return cull_list
 
     def status(self, show_strength):
         if show_strength:
-            for key, ngram in sorted(self.patterns_collection.iteritems(), key=lambda ng: ng[1].strength):
-                print ngram.__repr__()
+            for key, pop in sorted(self.patterns_collection.iteritems(), key=lambda ng: ng[1].strength):
+                print pop.__repr__()
             print 'Status of Pattern of patterns with ' + str(len(self.patterns_collection)) + ' pops \n'
         strengths = [pop.strength for i, pop in self.patterns_collection.iteritems()]
         lengths = [len(pop.unrolled_pattern) for i, pop in self.patterns_collection.iteritems()]
@@ -179,17 +143,17 @@ class PopManager:
         plt.show()
 
     def save(self, filename):
-        savestr = 'pattern, strength, component1, component2\n'
+        save_string = 'pattern, strength, component1, component2\n'
         for key, pop in sorted(self.patterns_collection.iteritems(), key=lambda ng: ng[1].strength):
-            savestr += key + '\t' + str(pop.strength) + '\t'
+            save_string += key + '\t' + str(pop.strength) + '\t'
             if pop.first_component:
-                savestr += pop.first_component.unrolled_pattern
-            savestr += '\t'
+                save_string += pop.first_component.unrolled_pattern
+            save_string += '\t'
             if pop.second_component:
-                savestr += pop.second_component.unrolled_pattern
-            savestr += '\n'
+                save_string += pop.second_component.unrolled_pattern
+            save_string += '\n'
         with open(filename, mode='w') as file:
-            file.write(savestr)
+            file.write(save_string)
         print 'Saved file ' + filename
 
     def load(self, filename):
@@ -234,13 +198,12 @@ class PopManager:
             current_word = next_word
         return generated_output
 
-    def generate_default(self, storage_file):
-        self.load(storage_file)
-        output = self.generate_stream(200)
-        print output
-
 
 class StreamCounter:
+    """
+    Used to analyze and plot few variables of Pop Manager.
+    """
+
     def __init__(self):
         self.time = []
         self.pop_count = []
@@ -260,37 +223,9 @@ class StreamCounter:
         plt.ylabel('prediction gain')
         plt.show()
 
-# def train_main():
-#     with open(input_txt_file, 'r') as myfile:
-#         data = myfile.read().replace('\n', '_').replace(' ', '_')
-#         rotation = np.random.randint(low = 0, high=max_input_stream_length, size=1)
-#         data = data[rotation:max_input_stream_length] + data[:rotation]
-#         # data = ''.join(e for e in data if e.isalnum() or e is '_')
-#         data = ''.join(e for e in data if e.isalnum() or e in '._"?')
-#     pm = PopManager()
-#     if os.path.isfile(storage_file):
-#         pm.load(storage_file)
-#     pm.train(data)
-#     # pm.status()
-#     pm.save(storage_file)
-#     pm.generate_default()
-#
-# def train_predict_main():
-#     with open(input_txt_file, 'r') as myfile:
-#         data = myfile.read().replace('\n', '_').replace(' ', '_')
-#         rotation = np.random.randint(low = 0, high=max_input_stream_length, size=1)
-#         data = data[rotation:max_input_stream_length] + data[:rotation]
-#         data = ''.join(e for e in data if e.isalnum() or e in '._"?')
-#     pm = PopManager()
-#     if os.path.isfile(storage_file):
-#         pm.load(storage_file)
-#     pm.train_predict(data)
-#     # pm.status()
-#     pm.save(storage_file)
-#     pm.generate_default()
 
-def overnight_trainer(storage_file):
-    for iteration in range(100):
+def default_trainer(storage_file):
+    for iteration in range(2):
         start_time = time.time()
         print 'Iteration number ' + str(iteration)
         text = DataObtainer.get_random_book_local()
@@ -300,9 +235,9 @@ def overnight_trainer(storage_file):
             pm.load(storage_file)
         pm.train(text)
         pm.save(storage_file)
-        pm.generate_default(storage_file)
+        print pm.generate_stream(200)
         print 'Total time taken to run this is ', round((time.time() - start_time) / 60, ndigits=2), ' mins'
 
 
 if __name__ == '__main__':
-    overnight_trainer('CSV/overnight.tsv')
+    default_trainer('PatternStore/first_pattern.tsv')
