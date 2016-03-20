@@ -223,7 +223,7 @@ class PopManager:
 
     def generate_stream(self, word_length, seed=None):
         generated_output = ""
-        current_word = self.patterns_collection.values()[0] \
+        current_word = np.random.choice(self.patterns_collection.values()) \
             if seed is None else seed
         for i in range(word_length):
             next_word = self.predict_next_word(current_word)
@@ -236,7 +236,7 @@ class PopManager:
 
     def generate_default(self, storage_file):
         self.load(storage_file)
-        output = self.generate_stream(100, 'The')
+        output = self.generate_stream(200)
         print output
 
 

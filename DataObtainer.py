@@ -18,9 +18,9 @@ def gutenberg_random_book():
 
 
 def get_random_book_local():
-    for file in os.listdir('data/'):
-        with open('data/' + file) as opened_file:
-            return opened_file.read()
+    file = np.random.choice(os.listdir('data/'))
+    with open('data/' + file) as opened_file:
+        return opened_file.read()
 
 
 def clean_text(text, max_input_stream_length):
