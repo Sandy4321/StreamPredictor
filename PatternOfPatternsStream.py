@@ -40,7 +40,7 @@ class Pop:
         self.strength = 0
         self.first_component = None  # Children
         self.second_component = None
-        self.parent = []
+        self.first_child_parents = []
 
     def set_components(self, first_component, second_component):
         """
@@ -49,9 +49,8 @@ class Pop:
         if not first_component or not second_component:
             raise Exception("component cannot be None")
         self.first_component = first_component
-        first_component.parent.append(self)
+        first_component.first_child_parents.append(self)
         self.second_component = second_component
-        second_component.parent.append(self)
 
     def feed(self, gain):
         self.strength += int(gain * feed_ratio[0])
@@ -124,17 +123,16 @@ class PopManager:
         :return: PoP(), longest pattern from start.
         """
         current_pattern = self.patterns_collection[long_word[0]]
-        if current_pattern.parent:
-            end = 1
-            while end < len(long_word):
-                for parents in current_pattern.parent:
+        if current_pattern.first_child_parents:
+            found_parent = True
+            while found_parent:
+                found_parent = False
+                for parents in current_pattern.first_child_parents:
                     parents_unrolled_pattern = parents.unrolled_pattern
                     if parents_unrolled_pattern == long_word[:len(parents_unrolled_pattern)]:
                         current_pattern = parents
-                        end += len(parents_unrolled_pattern)
+                        found_parent = True
                         break
-                else:
-                    return current_pattern
             return current_pattern
         else:
             for j in range(maxlen_word, 0, -1):  # how many chars to look ahead
@@ -184,7 +182,7 @@ class PopManager:
             if pop.second_component:
                 save_string += pop.second_component.unrolled_pattern
             save_string += '\t'
-            for parent_i in pop.parent:
+            for parent_i in pop.first_child_parents:
                 save_string += parent_i.unrolled_pattern
                 save_string += '\t'
             save_string += '\n'
@@ -207,7 +205,7 @@ class PopManager:
                     self.set_components_from_string(self.patterns_collection[key], elements[2], elements[3])
                 if elements[4]!= '':
                     for parent_i in elements[4:]:
-                        self.patterns_collection[key].parent.append(self.patterns_collection[parent_i])
+                        self.patterns_collection[key].first_child_parents.append(self.patterns_collection[parent_i])
         print 'Loaded file ' + filename + ' with number of patterns = ' + str(len(self.patterns_collection))
 
     def predict_next_word(self, current_word):
