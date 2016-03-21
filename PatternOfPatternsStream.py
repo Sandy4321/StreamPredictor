@@ -40,7 +40,7 @@ class Pop:
         self.strength = 0
         self.first_component = None  # Children
         self.second_component = None
-        self.parent = None
+        self.parent = []
 
     def set_components(self, first_component, second_component):
         """
@@ -49,9 +49,9 @@ class Pop:
         if not first_component or not second_component:
             raise Exception("component cannot be None")
         self.first_component = first_component
-        first_component.parent = self
+        first_component.parent.append(self)
         self.second_component = second_component
-        second_component.parent = self
+        second_component.parent.append(self)
 
     def feed(self, gain):
         self.strength += int(gain * feed_ratio[0])
@@ -97,20 +97,18 @@ class PopManager:
         previous_pop = self.patterns_collection[string[0]]
         i = 1
         while i < input_length - maxlen_word:
-            for j in range(maxlen_word, 0, -1):  # how many chars to look ahead
-                current_word = string[i:i + j]
-                if current_word in self.patterns_collection:
-                    current_pop = self.patterns_collection[current_word]
-                    new_pattern = previous_pop.unrolled_pattern + current_word
-                    if new_pattern not in self.patterns_collection:
-                        self.patterns_collection[new_pattern] = Pop(new_pattern)
-                        self.patterns_collection[new_pattern].feed(feed_strength_gain)
-                        self.patterns_collection[new_pattern].set_components(previous_pop, current_pop)
-                    else:
-                        self.patterns_collection[new_pattern].feed(feed_strength_gain)
-                    previous_pop = current_pop
-                    i += j
-                    break
+            current_pop = self.find_next_pattern(string[i:i + maxlen_word])
+            current_word = current_pop.unrolled_pattern
+            if current_word in self.patterns_collection:
+                new_pattern = previous_pop.unrolled_pattern + current_word
+                if new_pattern not in self.patterns_collection:
+                    self.patterns_collection[new_pattern] = Pop(new_pattern)
+                    self.patterns_collection[new_pattern].feed(feed_strength_gain)
+                    self.patterns_collection[new_pattern].set_components(previous_pop, current_pop)
+                else:
+                    self.patterns_collection[new_pattern].feed(feed_strength_gain)
+                previous_pop = current_pop
+                i += len(current_word)
             if i % 10 == 0 and i > feed_strength_gain:  # Every now and then cull weak patterns
                 self.cull(0)
             if i % 100 == 0 and i > feed_strength_gain:  # Refactor, adopt stronger children, as long as one's
@@ -126,17 +124,23 @@ class PopManager:
         :return: PoP(), longest pattern from start.
         """
         current_pattern = self.patterns_collection[long_word[0]]
-        end = 1
-        while end < len(long_word):
-            for parents in current_pattern.parent:
-                parents_unrolled_pattern = parents.unrolled_pattern
-                if parents_unrolled_pattern == long_word[:len(parents_unrolled_pattern)]:
-                    current_pattern = parents
-                    end += len(parents_unrolled_pattern)
-                    break
-            else:
-                return current_pattern
-        return current_pattern
+        if current_pattern.parent:
+            end = 1
+            while end < len(long_word):
+                for parents in current_pattern.parent:
+                    parents_unrolled_pattern = parents.unrolled_pattern
+                    if parents_unrolled_pattern == long_word[:len(parents_unrolled_pattern)]:
+                        current_pattern = parents
+                        end += len(parents_unrolled_pattern)
+                        break
+                else:
+                    return current_pattern
+            return current_pattern
+        else:
+            for j in range(maxlen_word, 0, -1):  # how many chars to look ahead
+                current_word = long_word[:j]
+                if current_word in self.patterns_collection:
+                    return self.patterns_collection[current_word]
 
     def cull(self, limit):
         cull_list = self.cull_child_and_mark_self(limit)
@@ -157,19 +161,21 @@ class PopManager:
                 cull_list.append(key)
         return cull_list
 
-    def status(self, show_strength):
-        if show_strength:
-            for key, pop in sorted(self.patterns_collection.iteritems(), key=lambda ng: ng[1].strength):
-                print pop.__repr__()
-            print 'Status of Pattern of patterns with ' + str(len(self.patterns_collection)) + ' pops \n'
-        strengths = [pop.strength for i, pop in self.patterns_collection.iteritems()]
-        lengths = [len(pop.unrolled_pattern) for i, pop in self.patterns_collection.iteritems()]
-        plt.scatter(x=lengths, y=strengths)
-        plt.title('Strengths vs Lengths (x axis)')
-        plt.show()
+    def status(self, show_plot=False):
+        out_string = ''
+        for key, pop in sorted(self.patterns_collection.iteritems(), key=lambda ng: ng[1].strength):
+            out_string += pop.__repr__()
+        out_string += 'Status of Pattern of patterns with ' + str(len(self.patterns_collection)) + ' pops \n'
+        if show_plot:
+            strengths = [pop.strength for i, pop in self.patterns_collection.iteritems()]
+            lengths = [len(pop.unrolled_pattern) for i, pop in self.patterns_collection.iteritems()]
+            plt.scatter(x=lengths, y=strengths)
+            plt.title('Strengths vs Lengths (x axis)')
+            plt.show()
+        return out_string
 
     def save(self, filename):
-        save_string = 'pattern, strength, component1, component2\n'
+        save_string = 'pattern, strength, component1, component2, parents\n'
         for key, pop in sorted(self.patterns_collection.iteritems(), key=lambda ng: ng[1].strength):
             save_string += key + '\t' + str(pop.strength) + '\t'
             if pop.first_component:
@@ -177,6 +183,10 @@ class PopManager:
             save_string += '\t'
             if pop.second_component:
                 save_string += pop.second_component.unrolled_pattern
+            save_string += '\t'
+            for parent_i in pop.parent:
+                save_string += parent_i.unrolled_pattern
+                save_string += '\t'
             save_string += '\n'
         with open(filename, mode='w') as file:
             file.write(save_string)
@@ -195,6 +205,9 @@ class PopManager:
                 key = elements[0]
                 if elements[2] is not '' and elements[3] is not '':
                     self.set_components_from_string(self.patterns_collection[key], elements[2], elements[3])
+                if elements[4]!= '':
+                    for parent_i in elements[4:]:
+                        self.patterns_collection[key].parent.append(self.patterns_collection[parent_i])
         print 'Loaded file ' + filename + ' with number of patterns = ' + str(len(self.patterns_collection))
 
     def predict_next_word(self, current_word):
@@ -307,5 +320,5 @@ def online_trainer(storage_file):
 
 
 if __name__ == '__main__':
-    pattern_file = 'PatternStore/overnight.tsv'
+    pattern_file = 'PatternStore/parent.tsv'
     default_trainer(pattern_file)
