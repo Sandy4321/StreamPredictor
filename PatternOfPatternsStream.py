@@ -27,9 +27,8 @@ import numpy as np
 import DataObtainer
 
 # constants
-max_input_stream_length = 1000000
-starting_strength = 1000
-maxlen_word = 20  # maximum pattern length
+max_input_stream_length = 10000
+maxlen_word = 40  # maximum pattern length
 required_repeats = 5  # if seen less than this many times, patterns won't survive on the long run.
 decay_strength_loss = 1  # loss of strength per time step.
 feed_ratio = [0.5, 0.25, 0.25]  # ratio of self feed to child components feed. First self, next two children.
@@ -38,9 +37,10 @@ feed_ratio = [0.5, 0.25, 0.25]  # ratio of self feed to child components feed. F
 class Pop:
     def __init__(self, chars):
         self.unrolled_pattern = chars  # The actual characters that make up current pattern.
-        self.strength = starting_strength
+        self.strength = 0
         self.first_component = None  # Children
         self.second_component = None
+        self.parent = None
 
     def set_components(self, first_component, second_component):
         """
@@ -49,7 +49,9 @@ class Pop:
         if not first_component or not second_component:
             raise Exception("component cannot be None")
         self.first_component = first_component
+        first_component.parent = self
         self.second_component = second_component
+        second_component.parent = self
 
     def feed(self, gain):
         self.strength += int(gain * feed_ratio[0])
@@ -91,6 +93,7 @@ class PopManager:
         char_set = set(string)
         for char in char_set:
             self.patterns_collection[char] = Pop(char)
+            self.patterns_collection[char].feed(feed_strength_gain)
         previous_pop = self.patterns_collection[string[0]]
         i = 1
         while i < input_length - maxlen_word:
@@ -101,16 +104,39 @@ class PopManager:
                     new_pattern = previous_pop.unrolled_pattern + current_word
                     if new_pattern not in self.patterns_collection:
                         self.patterns_collection[new_pattern] = Pop(new_pattern)
+                        self.patterns_collection[new_pattern].feed(feed_strength_gain)
                         self.patterns_collection[new_pattern].set_components(previous_pop, current_pop)
                     else:
                         self.patterns_collection[new_pattern].feed(feed_strength_gain)
                     previous_pop = current_pop
                     i += j
                     break
-            if i % 10 == 0 and i > starting_strength:  # Every now and then cull weak patterns
+            if i % 10 == 0 and i > feed_strength_gain:  # Every now and then cull weak patterns
                 self.cull(0)
+            if i % 100 == 0 and i > feed_strength_gain:  # Refactor, adopt stronger children, as long as one's
+                # unrolled pattern is same.
+                self.refactor()
         self.cull(0)
         return self.patterns_collection
+
+    def find_next_pattern(self, long_word):
+        """
+        Returns the longest pattern in the given word.
+        :param long_word: a string
+        :return: PoP(), longest pattern from start.
+        """
+        current_pattern = self.patterns_collection[long_word[0]]
+        end = 1
+        while end < len(long_word):
+            for parents in current_pattern.parent:
+                parents_unrolled_pattern = parents.unrolled_pattern
+                if parents_unrolled_pattern == long_word[:len(parents_unrolled_pattern)]:
+                    current_pattern = parents
+                    end += len(parents_unrolled_pattern)
+                    break
+            else:
+                return current_pattern
+        return current_pattern
 
     def cull(self, limit):
         cull_list = self.cull_child_and_mark_self(limit)
@@ -198,6 +224,32 @@ class PopManager:
             current_word = next_word
         return generated_output
 
+    def refactor(self, verbose=False):
+        for key, pop in self.patterns_collection.iteritems():
+            if pop.first_component and pop.second_component:
+                current_components_strength = pop.first_component.strength + pop.second_component.strength
+            else:
+                current_components_strength = 0
+            for i in range(1, len(key) - 1):
+                new_first_component = key[:i]
+                new_second_component = key[i:]
+                if new_first_component in self.patterns_collection:
+                    if new_second_component in self.patterns_collection:
+                        refactored_components_strength = self.patterns_collection[new_first_component].strength + \
+                                                         self.patterns_collection[new_second_component].strength
+                        if refactored_components_strength > current_components_strength:
+                            if pop.first_component and pop.second_component:
+                                old_first_component = pop.first_component.unrolled_pattern
+                                old_second_component = pop.second_component.unrolled_pattern
+                            else:
+                                old_first_component, old_second_component = "", ""
+                            pop.set_components(self.patterns_collection[new_first_component],
+                                               self.patterns_collection[new_second_component])
+                            if verbose:
+                                print 'Refactored ' + pop.unrolled_pattern + ' from {' + old_first_component + ':' \
+                                      + old_second_component + '} into {' + new_first_component + ':' + \
+                                      new_second_component + '}'
+
 
 class StreamCounter:
     """
@@ -225,7 +277,7 @@ class StreamCounter:
 
 
 def default_trainer(storage_file):
-    for iteration in range(2):
+    for iteration in range(100):
         start_time = time.time()
         print 'Iteration number ' + str(iteration)
         text = DataObtainer.get_random_book_local()
@@ -239,5 +291,21 @@ def default_trainer(storage_file):
         print 'Total time taken to run this is ', round((time.time() - start_time) / 60, ndigits=2), ' mins'
 
 
+def online_trainer(storage_file):
+    for iteration in range(100):
+        start_time = time.time()
+        print 'Iteration number ' + str(iteration)
+        text = DataObtainer.gutenberg_random_book()
+        text = DataObtainer.clean_text(text, max_input_stream_length)
+        pm = PopManager()
+        if os.path.isfile(storage_file):
+            pm.load(storage_file)
+        pm.train(text)
+        pm.save(storage_file)
+        print pm.generate_stream(200)
+        print 'Total time taken to run this is ', round((time.time() - start_time) / 60, ndigits=2), ' mins'
+
+
 if __name__ == '__main__':
-    default_trainer('PatternStore/first_pattern.tsv')
+    pattern_file = 'PatternStore/overnight.tsv'
+    default_trainer(pattern_file)
