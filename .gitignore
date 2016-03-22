@@ -5,6 +5,8 @@
 .idea/vcs.xml
 .idea/workspace.xml
 .idea/*
+data/*
+PatternStore/*
 
 *.csv
 *.swp
