@@ -7,6 +7,8 @@
 .idea/*
 data/*
 PatternStore/*
+output/*
+notebook/*
 
 *.csv
 *.swp
@@ -14,3 +16,4 @@ PatternStore/*
 *.zip
 *~
 *.lnk
+
