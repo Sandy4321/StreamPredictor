@@ -15,19 +15,22 @@ Todos:
 4. Measure of prediction , avg prediction rate
 5. Measure of interesting, find interesting stuff to learn.
 6. Crawl web.
+7. Binary search in find next pattern()
 
 Idea:
-Refactoring: See if instead of current components, new components which are stronger can be set.
-e.g. if pattern is ABCD = {ABC:D} but AB and CD are stronger then set ABCD = {AB:CD}
+    1. (done) Refactoring: See if instead of current components, new components which are stronger can be set.
+    e.g. if pattern is ABCD = {ABC:D} but AB and CD are stronger then set ABCD = {AB:CD}
 """
 import os
 import time
+
+import math
 import matplotlib.pyplot as plt
 import numpy as np
 import DataObtainer
 
 # constants
-max_input_stream_length = 10000
+max_input_stream_length = 1000000
 maxlen_word = 40  # maximum pattern length
 required_repeats = 5  # if seen less than this many times, patterns won't survive on the long run.
 decay_strength_loss = 1  # loss of strength per time step.
@@ -123,22 +126,36 @@ class PopManager:
         :return: PoP(), longest pattern from start.
         """
         current_pattern = self.patterns_collection[long_word[0]]
-        if current_pattern.first_child_parents:
-            found_parent = True
-            while found_parent:
-                found_parent = False
-                for parents in current_pattern.first_child_parents:
-                    parents_unrolled_pattern = parents.unrolled_pattern
-                    if parents_unrolled_pattern == long_word[:len(parents_unrolled_pattern)]:
-                        current_pattern = parents
-                        found_parent = True
-                        break
-            return current_pattern
-        else:
-            for j in range(maxlen_word, 0, -1):  # how many chars to look ahead
-                current_word = long_word[:j]
-                if current_word in self.patterns_collection:
-                    return self.patterns_collection[current_word]
+        # this is not efficient
+        # if current_pattern.first_child_parents and False:
+        #     found_parent = True
+        #     while found_parent:
+        #         found_parent = False
+        #         for parents in current_pattern.first_child_parents:
+        #             parents_unrolled_pattern = parents.unrolled_pattern
+        #             if parents_unrolled_pattern == long_word[:len(parents_unrolled_pattern)]:
+        #                 current_pattern = parents
+        #                 found_parent = True
+        #                 break
+        #     return current_pattern
+        # else:
+        if long_word in self.patterns_collection:
+            return self.patterns_collection[long_word]
+        found = False
+        current_high = len(long_word)
+        current_low = 1
+        while found != True:
+            length_current = int(math.floor(current_high / 2))
+            current_word = long_word[:length_current]
+            if current_word in self.patterns_collection:
+                current_low = length_current
+            else:
+                current_high = length_current
+            if current_low >= current_high:
+                if long_word[:current_low] in self.patterns_collection:
+                    return self.patterns_collection[long_word[:current_low]]
+                else:
+                    raise Exception
 
     def cull(self, limit):
         cull_list = self.cull_child_and_mark_self(limit)
@@ -203,9 +220,10 @@ class PopManager:
                 key = elements[0]
                 if elements[2] is not '' and elements[3] is not '':
                     self.set_components_from_string(self.patterns_collection[key], elements[2], elements[3])
-                if elements[4]!= '':
+                if elements[4] != '':
                     for parent_i in elements[4:]:
-                        self.patterns_collection[key].first_child_parents.append(self.patterns_collection[parent_i])
+                        if parent_i != '' and parent_i in self.patterns_collection:
+                            self.patterns_collection[key].first_child_parents.append(self.patterns_collection[parent_i])
         print 'Loaded file ' + filename + ' with number of patterns = ' + str(len(self.patterns_collection))
 
     def predict_next_word(self, current_word):
@@ -299,7 +317,9 @@ def default_trainer(storage_file):
         pm.train(text)
         pm.save(storage_file)
         print pm.generate_stream(200)
-        print 'Total time taken to run this is ', round((time.time() - start_time) / 60, ndigits=2), ' mins'
+        total_time_mins = (time.time() - start_time) / 60
+        rate_chars_min = len(text) / total_time_mins
+        print 'Total time taken to run this is ', round(total_time_mins, ndigits=2), ' mins. Rate = ', rate_chars_min
 
 
 def online_trainer(storage_file):
@@ -314,7 +334,9 @@ def online_trainer(storage_file):
         pm.train(text)
         pm.save(storage_file)
         print pm.generate_stream(200)
-        print 'Total time taken to run this is ', round((time.time() - start_time) / 60, ndigits=2), ' mins'
+        total_time_mins = (time.time() - start_time) / 60
+        rate_chars_min = len(text) / total_time_mins
+        print 'Total time taken to run this is ', round(total_time_mins, ndigits=2), ' mins. Rate = ', rate_chars_min
 
 
 if __name__ == '__main__':

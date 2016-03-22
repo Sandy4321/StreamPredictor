@@ -32,3 +32,21 @@ class TestPatternOfPatterns(TestCase):
         second.load(test_pattern_file)
         second_string = second.status(show_plot=False)
         self.assertEqual(first_string, second_string)
+
+    def test_find_next_pattern(self):
+        sample = self.get_sample()
+        small_pattern = 'somewhat '
+        big_pattern = small_pattern + ' some random text'
+        sample.patterns_collection[small_pattern] = PatternOfPatternsStream.Pop(small_pattern)
+        found_pattern = sample.find_next_pattern(big_pattern)
+        self.assertEqual(found_pattern.unrolled_pattern, small_pattern)
+        small_pattern = 'somewhat'
+        big_pattern = small_pattern + ' some random text'
+        sample.patterns_collection[small_pattern] = PatternOfPatternsStream.Pop(small_pattern)
+        found_pattern = sample.find_next_pattern(big_pattern)
+        self.assertEqual(found_pattern.unrolled_pattern, small_pattern)
+        small_pattern = 'somewha'
+        big_pattern = small_pattern + ' some random text'
+        sample.patterns_collection[small_pattern] = PatternOfPatternsStream.Pop(small_pattern)
+        found_pattern = sample.find_next_pattern(big_pattern)
+        self.assertEqual(found_pattern.unrolled_pattern, small_pattern)
