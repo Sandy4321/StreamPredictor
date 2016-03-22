@@ -126,36 +126,10 @@ class PopManager:
         :return: PoP(), longest pattern from start.
         """
         current_pattern = self.patterns_collection[long_word[0]]
-        # this is not efficient
-        # if current_pattern.first_child_parents and False:
-        #     found_parent = True
-        #     while found_parent:
-        #         found_parent = False
-        #         for parents in current_pattern.first_child_parents:
-        #             parents_unrolled_pattern = parents.unrolled_pattern
-        #             if parents_unrolled_pattern == long_word[:len(parents_unrolled_pattern)]:
-        #                 current_pattern = parents
-        #                 found_parent = True
-        #                 break
-        #     return current_pattern
-        # else:
-        if long_word in self.patterns_collection:
-            return self.patterns_collection[long_word]
-        found = False
-        current_high = len(long_word)
-        current_low = 1
-        while found != True:
-            length_current = int(math.floor(current_high / 2))
-            current_word = long_word[:length_current]
+        for j in range(maxlen_word, 0, -1):  # how many chars to look ahead
+            current_word = long_word[:j]
             if current_word in self.patterns_collection:
-                current_low = length_current
-            else:
-                current_high = length_current
-            if current_low >= current_high:
-                if long_word[:current_low] in self.patterns_collection:
-                    return self.patterns_collection[long_word[:current_low]]
-                else:
-                    raise Exception
+                return self.patterns_collection[current_word]
 
     def cull(self, limit):
         cull_list = self.cull_child_and_mark_self(limit)
