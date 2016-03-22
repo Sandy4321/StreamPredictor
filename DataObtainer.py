@@ -17,14 +17,14 @@ def gutenberg_random_book():
             time.sleep(10 + book_number / 10)
 
 
-def get_random_book_local():
-    file = np.random.choice(os.listdir('data/'))
-    with open('data/' + file) as opened_file:
+def get_random_book_local(folder):
+    file = np.random.choice(os.listdir(folder))
+    with open(folder + file) as opened_file:
         return opened_file.read()
 
 
 def clean_text(text, max_input_stream_length):
-    text= text.replace('\n', ' ')
+    text = text.replace('\n', ' ')
     max_length = min(max_input_stream_length, len(text))
     rotation = np.random.randint(low=0, high=max_length, size=1)
     text = text[rotation:max_length] + text[:rotation]

@@ -216,8 +216,9 @@ class PopManager:
 
     def generate_stream(self, word_length, seed=None):
         generated_output = ""
+        seed_pattern = self.find_next_pattern(seed)
         current_word = np.random.choice(self.patterns_collection.values()) \
-            if seed is None else seed
+            if seed is None else seed_pattern.unrolled_pattern
         for i in range(word_length):
             next_word = self.predict_next_word(current_word)
             if next_word == '':
@@ -253,6 +254,12 @@ class PopManager:
                                       + old_second_component + '} into {' + new_first_component + ':' + \
                                       new_second_component + '}'
 
+    def generalize(self):
+        for key, pop in self.patterns_collection.iteritems():
+            if pop.first_component and pop.second_component and len(pop.first_child_parents) > 1:
+                pass
+                # create new cpops with members = second components of each of first_child_parents
+
 
 class StreamCounter:
     """
@@ -283,7 +290,7 @@ def default_trainer(storage_file):
     for iteration in range(100):
         start_time = time.time()
         print 'Iteration number ' + str(iteration)
-        text = DataObtainer.get_random_book_local()
+        text = DataObtainer.get_random_book_local('data/HarryPotter/')
         text = DataObtainer.clean_text(text, max_input_stream_length)
         pm = PopManager()
         if os.path.isfile(storage_file):
@@ -292,8 +299,9 @@ def default_trainer(storage_file):
         pm.save(storage_file)
         print pm.generate_stream(200)
         total_time_mins = (time.time() - start_time) / 60
-        rate_chars_min = len(text) / total_time_mins
-        print 'Total time taken to run this is ', round(total_time_mins, ndigits=2), ' mins. Rate = ', rate_chars_min
+        rate_chars_min = round(len(text) / total_time_mins / 1000)
+        print 'Total time taken to run this is ', round(total_time_mins, ndigits=2), \
+            ' mins. Rate = ', rate_chars_min, ' K chars/min'
 
 
 def online_trainer(storage_file):
@@ -309,10 +317,11 @@ def online_trainer(storage_file):
         pm.save(storage_file)
         print pm.generate_stream(200)
         total_time_mins = (time.time() - start_time) / 60
-        rate_chars_min = len(text) / total_time_mins
-        print 'Total time taken to run this is ', round(total_time_mins, ndigits=2), ' mins. Rate = ', rate_chars_min
+        rate_chars_min = round(len(text) / total_time_mins / 1000)
+        print 'Total time taken to run this is ', round(total_time_mins, ndigits=2), \
+            ' mins. Rate = ', rate_chars_min, ' K chars/min'
 
 
 if __name__ == '__main__':
-    pattern_file = 'PatternStore/parent.tsv'
+    pattern_file = 'PatternStore/HarryPotter.tsv'
     default_trainer(pattern_file)
