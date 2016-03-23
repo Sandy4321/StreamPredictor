@@ -201,8 +201,8 @@ class PopManager:
 
     def predict_next_word(self, current_word):
         predictor_pops = []
-        for j in range(len(current_word), 0, -1):
-            current_word = current_word[:j]
+        for j in range(len(current_word)):
+            current_word = current_word[j:]
             if current_word in self.patterns_collection:
                 current_pop = self.patterns_collection[current_word]
                 if len(current_pop.first_child_parents) < 1:
