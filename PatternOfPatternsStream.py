@@ -125,7 +125,6 @@ class PopManager:
         :param long_word: a string
         :return: PoP(), longest pattern from start.
         """
-        current_pattern = self.patterns_collection[long_word[0]]
         for j in range(maxlen_word, 0, -1):  # how many chars to look ahead
             current_word = long_word[:j]
             if current_word in self.patterns_collection:
@@ -202,23 +201,28 @@ class PopManager:
 
     def predict_next_word(self, current_word):
         predictor_pops = []
-        for key, pop in self.patterns_collection.iteritems():
-            if pop.first_component and pop.second_component:
-                if pop.first_component.unrolled_pattern == current_word:
-                    predictor_pops.append((pop.strength, pop.second_component.unrolled_pattern))
-        if len(predictor_pops) == 0:
-            return ''
-        strengths = [i[0] for i in predictor_pops]
-        total = sum(strengths)
-        words = [i[1] for i in predictor_pops]
-        probabilities = [float(i) / total for i in strengths]
-        return np.random.choice(words, p=probabilities)
+        for j in range(len(current_word), 0, -1):
+            current_word = current_word[:j]
+            if current_word in self.patterns_collection:
+                current_pop = self.patterns_collection[current_word]
+                if len(current_pop.first_child_parents) < 1:
+                    continue
+                for pop in current_pop.first_child_parents:
+                    if pop.second_component:
+                        predictor_pops.append((pop.strength, pop.second_component.unrolled_pattern))
+                if len(predictor_pops) > 0:
+                    strengths = [i[0] for i in predictor_pops]
+                    total = sum(strengths)
+                    words = [i[1] for i in predictor_pops]
+                    probabilities = [float(i) / total for i in strengths]
+                    return np.random.choice(words, p=probabilities)
+        return ''
 
     def generate_stream(self, word_length, seed=None):
-        generated_output = ""
-        seed_pattern = self.find_next_pattern(seed)
-        current_word = np.random.choice(self.patterns_collection.values()) \
-            if seed is None else seed_pattern.unrolled_pattern
+        current_pop = np.random.choice(self.patterns_collection.values()) \
+            if seed is None or '' else self.find_next_pattern(seed)
+        current_word = current_pop.unrolled_pattern
+        generated_output = current_word
         for i in range(word_length):
             next_word = self.predict_next_word(current_word)
             if next_word == '':
