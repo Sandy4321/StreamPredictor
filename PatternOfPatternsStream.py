@@ -25,7 +25,6 @@ import os
 import time
 
 import math
-import matplotlib.pyplot as plt
 import numpy as np
 import DataObtainer
 
@@ -149,17 +148,11 @@ class PopManager:
                 cull_list.append(key)
         return cull_list
 
-    def status(self, show_plot=False):
+    def status(self):
         out_string = ''
         for key, pop in sorted(self.patterns_collection.iteritems(), key=lambda ng: ng[1].strength):
             out_string += pop.__repr__()
         out_string += 'Status of Pattern of patterns with ' + str(len(self.patterns_collection)) + ' pops \n'
-        if show_plot:
-            strengths = [pop.strength for i, pop in self.patterns_collection.iteritems()]
-            lengths = [len(pop.unrolled_pattern) for i, pop in self.patterns_collection.iteritems()]
-            plt.scatter(x=lengths, y=strengths)
-            plt.title('Strengths vs Lengths (x axis)')
-            plt.show()
         return out_string
 
     def save(self, filename):
@@ -267,7 +260,7 @@ class PopManager:
 
 class StreamCounter:
     """
-    Used to analyze and plot few variables of Pop Manager.
+    Used to analyze few variables of Pop Manager.
     """
 
     def __init__(self):
@@ -280,21 +273,11 @@ class StreamCounter:
         self.pop_count.append(popcount)
         self.prediction_gain.append(prediction_gain)
 
-    def plot(self):
-        plt.figure()
-        plt.plot(self.time, self.pop_count)
-        plt.ylabel('Count of pops')
-        plt.figure()
-        plt.plot(self.time, self.prediction_gain)
-        plt.ylabel('prediction gain')
-        plt.show()
-
-
 def default_trainer(storage_file):
     for iteration in range(100):
         start_time = time.time()
         print 'Iteration number ' + str(iteration)
-        text = DataObtainer.get_random_book_local('data/HarryPotter/')
+        text = DataObtainer.get_random_book_local('data/')
         text = DataObtainer.clean_text(text, max_input_stream_length)
         pm = PopManager()
         if os.path.isfile(storage_file):
