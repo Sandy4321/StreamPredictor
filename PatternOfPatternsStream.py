@@ -311,4 +311,4 @@ def online_trainer(storage_file):
 
 if __name__ == '__main__':
     pattern_file = 'PatternStore/HarryPotter.tsv'
-    default_trainer(pattern_file)
+    online_trainer(pattern_file)
