@@ -292,6 +292,7 @@ def default_trainer(storage_file):
 
 
 def online_trainer(storage_file):
+    print 'Starting online training'
     for iteration in range(100):
         start_time = time.time()
         print 'Iteration number ' + str(iteration)
