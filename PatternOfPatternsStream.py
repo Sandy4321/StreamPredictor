@@ -25,8 +25,10 @@ import os
 import time
 
 import math
+
 import numpy as np
 import DataObtainer
+from difflib import SequenceMatcher
 
 # constants
 max_input_stream_length = 1000000
@@ -73,6 +75,15 @@ class Pop:
             out += self.second_component.unrolled_pattern + '}'
         return self.unrolled_pattern + ': strength ' + str(self.strength) + out
         # ' components ' + \ # self.first_component.unrolled_pattern + ' and ' + self.second_component.unrolled_patternt
+
+    def similarity(self, other_pop):
+        if not (self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
+            return SequenceMatcher(None, self.unrolled_pattern, other_pop.unrolled_pattern)
+        similarity1 = self.first_component.similarity(other_pop.first_component).ratio()
+        similarity2 = self.second_component.similarity(other_pop.second_component).ratio()
+        return (len(self.first_component.unrolled_pattern) * similarity1 + len(self.second_component.unrolled_pattern)
+                * similarity2)/len(self.unrolled_pattern)
+
 
 
 class PopManager:
@@ -251,6 +262,11 @@ class PopManager:
                                       + old_second_component + '} into {' + new_first_component + ':' + \
                                       new_second_component + '}'
 
+    def similarity_all(self):
+        for key1, pop1 in self.patterns_collection.iteritems():
+            for key2, pop2 in self.patterns_collection.iteritems():
+                print 'Similarity of ', pop1.unrolled_pattern, ' and ', pop2.unrolled_pattern, ' is ', pop1.similarity(pop2)
+
     def generalize(self):
         for key, pop in self.patterns_collection.iteritems():
             if pop.first_component and pop.second_component and len(pop.first_child_parents) > 1:
@@ -272,6 +288,7 @@ class StreamCounter:
         self.time.append(time)
         self.pop_count.append(popcount)
         self.prediction_gain.append(prediction_gain)
+
 
 def default_trainer(storage_file):
     for iteration in range(100):
@@ -312,4 +329,7 @@ def online_trainer(storage_file):
 
 if __name__ == '__main__':
     pattern_file = 'PatternStore/General.tsv'
-    online_trainer(pattern_file)
+    pm = PopManager()
+    pm.load(pattern_file)
+    pm.similarity_all()
+
