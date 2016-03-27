@@ -26,11 +26,11 @@ class TestPatternOfPatterns(TestCase):
     def test_save_load_equal(self):
         sample = self.get_sample()
         sample.patterns_collection['karma'] = PatternOfPatternsStream.Pop('karma')
-        first_string = sample.status(show_plot=False)
+        first_string = sample.status()
         sample.save(test_pattern_file)
         second = PatternOfPatternsStream.PopManager()
         second.load(test_pattern_file)
-        second_string = second.status(show_plot=False)
+        second_string = second.status()
         self.assertEqual(first_string, second_string)
 
     def test_find_next_pattern(self):

@@ -45,6 +45,8 @@ class Pop:
         self.first_component = None  # Children
         self.second_component = None
         self.first_child_parents = []
+        self.belongs_to_category = None  # type Pop(), which category does this belong to?
+        self.members_of_category = []  # Pop() List, who are the members of this category?
 
     def set_components(self, first_component, second_component):
         """
@@ -89,6 +91,7 @@ class Pop:
 class PopManager:
     def __init__(self):
         self.patterns_collection = dict()
+        self.feed_strength_gain = 10000
 
     def set_components_from_string(self, pop, first_string, second_string):
         if not first_string or not second_string:
@@ -99,35 +102,42 @@ class PopManager:
             pop.second_component = self.patterns_collection[second_string]
 
     def train(self, string):
-        input_length = len(string)
-        feed_strength_gain = 2 * input_length / required_repeats
-        print 'Started training with string length ' + str(input_length)
-        char_set = set(string)
-        for char in char_set:
-            self.patterns_collection[char] = Pop(char)
-            self.patterns_collection[char].feed(feed_strength_gain)
+        input_length= self.setup_train(string)
         previous_pop = self.patterns_collection[string[0]]
         i = 1
         while i < input_length - maxlen_word:
             current_pop = self.find_next_pattern(string[i:i + maxlen_word])
-            current_word = current_pop.unrolled_pattern
-            if current_word in self.patterns_collection:
-                new_pattern = previous_pop.unrolled_pattern + current_word
-                if new_pattern not in self.patterns_collection:
-                    self.patterns_collection[new_pattern] = Pop(new_pattern)
-                    self.patterns_collection[new_pattern].feed(feed_strength_gain)
-                    self.patterns_collection[new_pattern].set_components(previous_pop, current_pop)
-                else:
-                    self.patterns_collection[new_pattern].feed(feed_strength_gain)
-                previous_pop = current_pop
-                i += len(current_word)
-            if i % 10 == 0 and i > feed_strength_gain:  # Every now and then cull weak patterns
+            current_word = self.found_pattern(previous_pop, current_pop)
+            previous_pop = current_pop
+            i += len(current_word)
+            if i % 10 == 0 and i > self.feed_strength_gain:  # Every now and then cull weak patterns
                 self.cull(0)
-            if i % 100 == 0 and i > feed_strength_gain:  # Refactor, adopt stronger children, as long as one's
+            if i % 100 == 0 and i > self.feed_strength_gain:  # Refactor, adopt stronger children, as long as one's
                 # unrolled pattern is same.
                 self.refactor()
         self.cull(0)
         return self.patterns_collection
+
+    def setup_train(self, string):
+        input_length = len(string)
+        self.feed_strength_gain = 2 * input_length / required_repeats
+        print 'Started training with string length ' + str(input_length)
+        char_set = set(string)
+        for char in char_set:
+            self.patterns_collection[char] = Pop(char)
+            self.patterns_collection[char].feed(self.feed_strength_gain)
+        return input_length
+
+    def found_pattern(self,  previous_pop, current_pop):
+        current_word = current_pop.unrolled_pattern
+        new_pattern = previous_pop.unrolled_pattern + current_word
+        if new_pattern not in self.patterns_collection:
+            self.patterns_collection[new_pattern] = Pop(new_pattern)
+            self.patterns_collection[new_pattern].feed(self.feed_strength_gain)
+            self.patterns_collection[new_pattern].set_components(previous_pop, current_pop)
+        else:
+            self.patterns_collection[new_pattern].feed(self.feed_strength_gain)
+        return current_word
 
     def find_next_pattern(self, long_word):
         """
@@ -326,9 +336,19 @@ def online_trainer(storage_file):
         print 'Total time taken to run this is ', round(total_time_mins, ndigits=2), \
             ' mins. Rate = ', rate_chars_min, ' K chars/min'
 
+def sanity_check_run():
+    pm = PopManager()
+    text = 'hahaha this is a sanity check, just checking some text'
+    pm.train(text)
+    pm.train(text)
+    pm.train(text)
+    pm.train(text)
+    print pm.generate_stream(5)
+    print 'Everything OK'
 
 if __name__ == '__main__':
-    pattern_file = 'PatternStore/General.tsv'
-    online_trainer(pattern_file)
+    # pattern_file = 'PatternStore/General.tsv'
+    # online_trainer(pattern_file)
+    sanity_check_run()
 
 
