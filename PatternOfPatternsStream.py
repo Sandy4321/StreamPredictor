@@ -215,7 +215,7 @@ class PopManager:
                     if pop.second_component:
                         predictor_pops.append((pop.strength, pop.second_component.unrolled_pattern))
                 if len(predictor_pops) > 0:
-                    strengths = [i[0] for i in predictor_pops]
+                    strengths = [max(i[0],0) for i in predictor_pops]
                     total = sum(strengths)
                     words = [i[1] for i in predictor_pops]
                     probabilities = [float(i) / total for i in strengths]
@@ -329,7 +329,6 @@ def online_trainer(storage_file):
 
 if __name__ == '__main__':
     pattern_file = 'PatternStore/General.tsv'
-    pm = PopManager()
-    pm.load(pattern_file)
-    pm.similarity_all()
+    online_trainer(pattern_file)
+
 
