@@ -37,6 +37,7 @@ required_repeats = 5  # if seen less than this many times, patterns won't surviv
 decay_strength_loss = 1  # loss of strength per time step.
 feed_ratio = [0.5, 0.25, 0.25]  # ratio of self feed to child components feed. First self, next two children.
 feed_ratio_parent_category = 0.5
+generalize_intersection_ratio  = 0.75
 
 
 class Pop:
@@ -58,6 +59,17 @@ class Pop:
         self.first_component = first_component
         first_component.first_child_parents.append(self)
         self.second_component = second_component
+
+    def set_category(self, first_component, second_component):
+        """
+        Sets the member categories.
+        """
+        if not first_component or not second_component:
+            raise Exception("component cannot be None")
+        first_component.belongs_to_category = self
+        second_component.belongs_to_category = self
+        self.members_of_category.append(first_component)
+        self.members_of_category.append(second_component)
 
     def feed(self, gain):
         self.strength += int(gain * feed_ratio[0])
@@ -87,6 +99,16 @@ class Pop:
         similarity2 = self.second_component.similarity(other_pop.second_component).ratio()
         return (len(self.first_component.unrolled_pattern) * similarity1 + len(self.second_component.unrolled_pattern)
                 * similarity2) / len(self.unrolled_pattern)
+
+    def next_patterns(self):
+        """ Gives the list of patterns that are likely to ocur next. """
+        if not self.first_child_parents:
+            return []
+        next_patterns = []
+        for parent_i in self.first_child_parents:
+            if parent_i.second_component:
+                next_patterns.append(parent_i.second_component)
+        return next_patterns
 
 
 class PopManager:
@@ -293,10 +315,16 @@ class PopManager:
                     pop2)
 
     def generalize(self):
-        for key, pop in self.patterns_collection.iteritems():
-            if pop.first_component and pop.second_component and len(pop.first_child_parents) > 1:
-                pass
-                # create new cpops with members = second components of each of first_child_parents
+        pops_list = self.patterns_collection.values()
+        for pop in pops_list:
+            next_to_next = dict()
+            for next in pop.next_patterns():
+                next_to_next[next.unrolled_pattern] = next.next_patterns()
+            for next_key_a, next_list_a in next_to_next.iteritems():
+                for next_key_b, next_list_b in next_to_next.iteritems():
+                    if set(next_list_a).intersection(next_key_b) > generalize_intersection_ratio * len(next_list_a):
+                        new_category = Pop('#Cat:' + next_key_a + ':' + next_key_b)
+                        new_category.set_category(self.patterns_collection[next_key_a], self.patterns_collection[next_key_b])
 
 
 class StreamCounter:
