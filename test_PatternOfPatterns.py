@@ -50,3 +50,19 @@ class TestPatternOfPatterns(TestCase):
         sample.patterns_collection[small_pattern] = PatternOfPatternsStream.Pop(small_pattern)
         found_pattern = sample.find_next_pattern(big_pattern)
         self.assertEqual(found_pattern.unrolled_pattern, small_pattern)
+
+    def test_found_pattern(self):
+        sample = PatternOfPatternsStream.PopManager()
+        cat_ate_ = PatternOfPatternsStream.Pop('The cat ate ')
+        fruit = PatternOfPatternsStream.Pop('fruit')
+        banana = PatternOfPatternsStream.Pop('banana')
+        strawberry = PatternOfPatternsStream.Pop('strawberry')
+        sample.add_pop(cat_ate_)
+        sample.add_pop(fruit)
+        sample.add_pop(banana)
+        sample.add_pop(strawberry)
+        banana.belongs_to_category = fruit
+        strawberry.belongs_to_category = fruit
+        sample.join_pattern(cat_ate_, banana, found_pattern_feed_ratio=1)
+        self.assertTrue((cat_ate_.unrolled_pattern + fruit.unrolled_pattern) in sample.patterns_collection)
+
