@@ -1,5 +1,7 @@
 from unittest import TestCase
 import PatternOfPatternsStream
+from PatternOfPatternsStream import PopManager, Pop
+import DataObtainer
 import os
 
 test_pattern_file = 'PatternStore/test.tsv'
@@ -51,7 +53,7 @@ class TestPatternOfPatterns(TestCase):
         found_pattern = sample.find_next_pattern(big_pattern)
         self.assertEqual(found_pattern.unrolled_pattern, small_pattern)
 
-    def test_found_pattern(self):
+    def test_join_pattern(self):
         sample = PatternOfPatternsStream.PopManager()
         cat_ate_ = PatternOfPatternsStream.Pop('The cat ate ')
         fruit = PatternOfPatternsStream.Pop('fruit')
@@ -65,4 +67,46 @@ class TestPatternOfPatterns(TestCase):
         strawberry.belongs_to_category = fruit
         sample.join_pattern(cat_ate_, banana, found_pattern_feed_ratio=1)
         self.assertTrue((cat_ate_.unrolled_pattern + fruit.unrolled_pattern) in sample.patterns_collection)
+
+    def test_generailze(self):
+        pm = PatternOfPatternsStream.PopManager()
+        pm.add_pop_string('apple')
+        pm.add_pop_string('banana')
+        text = DataObtainer.get_clean_text_from_file('data/Experimental/case.txt', 100000)
+        pm.train(text)
+        pm.generalize()
+        print [i.belongs_to_category.__repr__ for i in  pm.patterns_collection.values() if i.belongs_to_category is not None]
+        self.assertTrue(pm.patterns_collection['apple'].
+                        belongs_to_category is pm.patterns_collection['banana'].belongs_to_category)
+
+    def test_change_component(self):
+        a, ab, abc, pm, b, c , bc = self.setup_simple_patterns()
+        self.assertTrue(len(a.first_child_parents) == 1)
+        self.assertTrue(len(ab.first_child_parents) == 0)
+        pm.change_components_string('ab', 'c', abc)
+        self.assertTrue(len(a.first_child_parents) == 0)
+        self.assertTrue(len(pm.patterns_collection['ab'].first_child_parents) == 1)
+
+    def setup_simple_patterns(self):
+        pm = PopManager()
+        abc = Pop('abc')
+        ab = Pop('ab')
+        bc = Pop('bc')
+        a = Pop('a')
+        b = Pop('b')
+        c = Pop('c')
+        pm.add_pop(abc)
+        pm.add_pop(bc)
+        pm.add_pop(ab)
+        pm.add_pop(a)
+        pm.add_pop(b)
+        pm.add_pop(c)
+        abc.set_components(a, bc)
+        return a, ab, abc, pm, b, c, bc
+
+    def test_is_right_child(self):
+        a, ab, abc, pm, b, c , bc = self.setup_simple_patterns()
+        self.assertTrue(abc.is_right_child(bc))
+        self.assertFalse(abc.is_right_child(c))
+
 

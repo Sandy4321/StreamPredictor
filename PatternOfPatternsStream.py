@@ -23,12 +23,9 @@ Idea:
 """
 import os
 import time
-
-import math
-
+from difflib import SequenceMatcher
 import numpy as np
 import DataObtainer
-from difflib import SequenceMatcher
 
 # constants
 max_input_stream_length = 1000000
@@ -37,7 +34,7 @@ required_repeats = 5  # if seen less than this many times, patterns won't surviv
 decay_strength_loss = 1  # loss of strength per time step.
 feed_ratio = [0.5, 0.25, 0.25]  # ratio of self feed to child components feed. First self, next two children.
 feed_ratio_parent_category = 0.5
-generalize_intersection_ratio  = 0.75
+generalize_intersection_ratio = 0.75
 
 
 class Pop:
@@ -82,14 +79,23 @@ class Pop:
     def decay(self):
         self.strength -= decay_strength_loss
 
+    def is_right_child(self, child):
+        if child.unrolled_pattern == self.unrolled_pattern:
+            return True
+        if not self.second_component:
+            return False
+        return self.second_component.is_right_child(child)
+
+
     def __repr__(self):
-        out = ""
+        out = self.unrolled_pattern + ': strength ' + str(self.strength)
         if self.first_component:
-            out += '{' + self.first_component.unrolled_pattern + ':'
+            out += '={ ' + self.first_component.unrolled_pattern + ': '
         if self.second_component:
             out += self.second_component.unrolled_pattern + '}'
-        return self.unrolled_pattern + ': strength ' + str(self.strength) + out
-        # ' components ' + \ # self.first_component.unrolled_pattern + ' and ' + self.second_component.unrolled_patternt
+        if self.belongs_to_category:
+            out += ' # ' + self.belongs_to_category.unrolled_pattern
+        return out
 
     def similarity(self, other_pop):
         if not (
@@ -149,6 +155,7 @@ class PopManager:
             if i % 100 == 0 and i > self.feed_strength_gain:  # Refactor, adopt stronger children, as long as one's
                 # unrolled pattern is same.
                 self.refactor()
+        self.refactor()
         self.cull(0)
         return self.patterns_collection
 
@@ -282,7 +289,7 @@ class PopManager:
             current_word = next_word
         return generated_output
 
-    def refactor(self, verbose=False):
+    def refactor(self):
         for key, pop in self.patterns_collection.iteritems():
             if pop.first_component and pop.second_component:
                 current_components_strength = pop.first_component.strength + pop.second_component.strength
@@ -296,17 +303,17 @@ class PopManager:
                         refactored_components_strength = self.patterns_collection[new_first_component].strength + \
                                                          self.patterns_collection[new_second_component].strength
                         if refactored_components_strength > current_components_strength:
-                            if pop.first_component and pop.second_component:
-                                old_first_component = pop.first_component.unrolled_pattern
-                                old_second_component = pop.second_component.unrolled_pattern
-                            else:
-                                old_first_component, old_second_component = "", ""
-                            pop.set_components(self.patterns_collection[new_first_component],
-                                               self.patterns_collection[new_second_component])
-                            if verbose:
-                                print 'Refactored ' + pop.unrolled_pattern + ' from {' + old_first_component + ':' \
-                                      + old_second_component + '} into {' + new_first_component + ':' + \
-                                      new_second_component + '}'
+                            self.change_components_string(new_first_component, new_second_component, pop)
+
+    def change_components_string(self, first_string, second_string, pop):
+        if first_string not in self.patterns_collection or second_string not in self.patterns_collection:
+            raise ValueError('One of these is not in pattern collection {', first_string, ' : ', second_string, '}')
+        if pop.first_component:
+            old_pop = pop.first_component
+            if pop in old_pop.first_child_parents:
+                old_pop.first_child_parents.remove(pop)
+        pop.set_components(self.patterns_collection[first_string],
+                           self.patterns_collection[second_string])
 
     def similarity_all(self):
         for key1, pop1 in self.patterns_collection.iteritems():
@@ -322,9 +329,22 @@ class PopManager:
                 next_to_next[next.unrolled_pattern] = next.next_patterns()
             for next_key_a, next_list_a in next_to_next.iteritems():
                 for next_key_b, next_list_b in next_to_next.iteritems():
-                    if set(next_list_a).intersection(next_key_b) > generalize_intersection_ratio * len(next_list_a):
-                        new_category = Pop('#Cat:' + next_key_a + ':' + next_key_b)
-                        new_category.set_category(self.patterns_collection[next_key_a], self.patterns_collection[next_key_b])
+                    if next_key_a == next_key_b:
+                        continue
+                    if self.patterns_collection[next_key_a].is_right_child(self.patterns_collection[next_key_b]) or \
+                            self.patterns_collection[next_key_b].is_right_child(self.patterns_collection[next_key_a]):
+                        continue
+                    same_length = len(set(next_list_a).intersection(next_list_b))
+                    passing_length = generalize_intersection_ratio * min(len(next_list_a), len(next_list_b))
+                    if same_length > passing_length:
+                        print 'Perhaps ', next_key_a, ' and ', next_key_b, ' are similar?'
+                        new_category_string  = '#' + next_key_a + ':' + next_key_b
+                        if new_category_string not in self.patterns_collection:
+                            new_category = Pop(new_category_string)
+                            self.patterns_collection[new_category_string] = new_category
+                            new_category.set_category(self.patterns_collection[next_key_a],
+                                                      self.patterns_collection[next_key_b])
+                        self.patterns_collection[new_category_string].feed(self.feed_strength_gain)
 
 
 class StreamCounter:

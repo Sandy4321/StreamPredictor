@@ -28,6 +28,10 @@ def get_random_book_local(folder):
     with open(folder + file) as opened_file:
         return opened_file.read()
 
+def get_clean_text_from_file(file, max_input_stream_length):
+    with open(file) as opened_file:
+        text = opened_file.read()
+        return clean_text(text, max_input_stream_length)
 
 def clean_text(text, max_input_stream_length):
     text = text.replace('\n', ' ')
