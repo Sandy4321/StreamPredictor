@@ -25,6 +25,7 @@ import os
 import time
 from difflib import SequenceMatcher
 import numpy as np
+
 import DataObtainer
 
 # constants
@@ -85,7 +86,6 @@ class Pop:
         if not self.second_component:
             return False
         return self.second_component.is_child(child) and self.first_component.is_child(child)
-
 
     def __repr__(self):
         out = self.unrolled_pattern + ': strength ' + str(self.strength)
@@ -219,7 +219,7 @@ class PopManager:
         out_string += 'Status of Pattern of patterns with ' + str(len(self.patterns_collection)) + ' pops \n'
         return out_string
 
-    def save(self, filename):
+    def save_tsv(self, filename):
         save_string = 'pattern, strength, component1, component2, parents\n'
         for key, pop in sorted(self.patterns_collection.iteritems(), key=lambda ng: ng[1].strength):
             save_string += key + '\t' + str(pop.strength) + '\t'
@@ -237,7 +237,16 @@ class PopManager:
             file.write(save_string)
         print 'Saved file ' + filename
 
-    def load(self, filename):
+    # def save(self, filename):
+    #     """ Pickle thyself. """
+    #     pickle.dump(self, gzip.open(filename, 'w'))
+    #     print 'Pattern Of Patterns saved to ', filename
+    #
+    # @staticmethod
+    # def load(filename):
+    #     return pickle.load(gzip.open(filename, 'r'))
+
+    def load_tsv(self, filename):
         with open(filename, mode='r') as file:
             all_lines = file.readlines()
             for lines in all_lines[1:]:
@@ -338,7 +347,7 @@ class PopManager:
                     passing_length = generalize_intersection_ratio * min(len(next_list_a), len(next_list_b))
                     if same_length > passing_length and same_length > 1:
                         print 'Perhaps ', next_key_a, ' and ', next_key_b, ' are similar?'
-                        new_category_string  = '#' + next_key_a + '#' + next_key_b
+                        new_category_string = '#' + next_key_a + '#' + next_key_b
                         if new_category_string not in self.patterns_collection:
                             new_category = Pop(new_category_string)
                             self.patterns_collection[new_category_string] = new_category
@@ -363,22 +372,46 @@ class StreamCounter:
         self.prediction_gain.append(prediction_gain)
 
 
+def load_pm(storage_file):
+    if os.path.isfile(storage_file):
+        pm = PopManager()
+        pm.load_tsv(storage_file)
+        print 'Loaded PopManager from ', storage_file
+    else:
+        pm = PopManager()
+        print ' Created new PopManager. Didnt find anything at ', storage_file
+    return pm
+
+
 def default_trainer(storage_file):
     for iteration in range(100):
         start_time = time.time()
         print 'Iteration number ' + str(iteration)
         text = DataObtainer.get_random_book_local('data/')
         text = DataObtainer.clean_text(text, max_input_stream_length)
-        pm = PopManager()
-        if os.path.isfile(storage_file):
-            pm.load(storage_file)
+        pm = load_pm(storage_file)
         pm.train(text)
-        pm.save(storage_file)
+        pm.save_tsv(storage_file)
         print pm.generate_stream(200)
         total_time_mins = (time.time() - start_time) / 60
         rate_chars_min = round(len(text) / total_time_mins / 1000)
         print 'Total time taken to run this is ', round(total_time_mins, ndigits=2), \
             ' mins. Rate = ', rate_chars_min, ' K chars/min'
+
+
+def default_small_trainer(storage_file):
+    start_time = time.time()
+    text = DataObtainer.get_random_book_local('data/')
+    text = DataObtainer.clean_text(text, 10000)
+    pm = load_pm(storage_file)
+    pm.train(text)
+    pm.generalize()
+    pm.save_tsv(storage_file)
+    print pm.generate_stream(200)
+    total_time_mins = (time.time() - start_time) / 60
+    rate_chars_min = round(len(text) / total_time_mins / 1000)
+    print 'Total time taken to run this is ', round(total_time_mins, ndigits=2), \
+        ' mins. Rate = ', rate_chars_min, ' K chars/min'
 
 
 def online_trainer(storage_file):
@@ -388,9 +421,7 @@ def online_trainer(storage_file):
         print 'Iteration number ' + str(iteration)
         text = DataObtainer.gutenberg_random_book()
         text = DataObtainer.clean_text(text, max_input_stream_length)
-        pm = PopManager()
-        if os.path.isfile(storage_file):
-            pm.load(storage_file)
+        pm = load_pm(storage_file)
         pm.train(text)
         pm.save(storage_file)
         print pm.generate_stream(200)
@@ -412,6 +443,4 @@ def sanity_check_run():
 
 
 if __name__ == '__main__':
-    # pattern_file = 'PatternStore/General.tsv'
-    # online_trainer(pattern_file)
-    sanity_check_run()
+    default_small_trainer('PatternStore/new_pattern_of_pattern.tsv')
