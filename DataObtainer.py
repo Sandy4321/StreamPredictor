@@ -38,6 +38,7 @@ def clean_text(text, max_input_stream_length):
     max_length = min(max_input_stream_length, len(text))
     rotation = np.random.randint(low=0, high=max_length, size=1)
     text = text[rotation:max_length] + text[:rotation]
+    # make sure to remove # for category separation
     text = ''.join(e for e in text if e.isalnum() or e in '.?", ')
     return text
 

@@ -75,7 +75,7 @@ class TestPatternOfPatterns(TestCase):
         text = DataObtainer.get_clean_text_from_file('data/Experimental/case.txt', 100000)
         pm.train(text)
         pm.generalize()
-        print [i.belongs_to_category.__repr__ for i in  pm.patterns_collection.values() if i.belongs_to_category is not None]
+        print [i.belongs_to_category.__repr__() for i in  pm.patterns_collection.values() if i.belongs_to_category is not None]
         self.assertTrue(pm.patterns_collection['apple'].
                         belongs_to_category is pm.patterns_collection['banana'].belongs_to_category)
 
@@ -106,7 +106,7 @@ class TestPatternOfPatterns(TestCase):
 
     def test_is_right_child(self):
         a, ab, abc, pm, b, c , bc = self.setup_simple_patterns()
-        self.assertTrue(abc.is_right_child(bc))
-        self.assertFalse(abc.is_right_child(c))
+        self.assertTrue(abc.is_child(bc))
+        self.assertFalse(abc.is_child(c))
 
 

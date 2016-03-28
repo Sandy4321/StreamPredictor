@@ -79,12 +79,12 @@ class Pop:
     def decay(self):
         self.strength -= decay_strength_loss
 
-    def is_right_child(self, child):
+    def is_child(self, child):
         if child.unrolled_pattern == self.unrolled_pattern:
             return True
         if not self.second_component:
             return False
-        return self.second_component.is_right_child(child)
+        return self.second_component.is_child(child) and self.first_component.is_child(child)
 
 
     def __repr__(self):
@@ -331,14 +331,14 @@ class PopManager:
                 for next_key_b, next_list_b in next_to_next.iteritems():
                     if next_key_a == next_key_b:
                         continue
-                    if self.patterns_collection[next_key_a].is_right_child(self.patterns_collection[next_key_b]) or \
-                            self.patterns_collection[next_key_b].is_right_child(self.patterns_collection[next_key_a]):
+                    if self.patterns_collection[next_key_a].is_child(self.patterns_collection[next_key_b]) or \
+                            self.patterns_collection[next_key_b].is_child(self.patterns_collection[next_key_a]):
                         continue
                     same_length = len(set(next_list_a).intersection(next_list_b))
                     passing_length = generalize_intersection_ratio * min(len(next_list_a), len(next_list_b))
-                    if same_length > passing_length:
+                    if same_length > passing_length and same_length > 1:
                         print 'Perhaps ', next_key_a, ' and ', next_key_b, ' are similar?'
-                        new_category_string  = '#' + next_key_a + ':' + next_key_b
+                        new_category_string  = '#' + next_key_a + '#' + next_key_b
                         if new_category_string not in self.patterns_collection:
                             new_category = Pop(new_category_string)
                             self.patterns_collection[new_category_string] = new_category
