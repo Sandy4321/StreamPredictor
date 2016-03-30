@@ -29,7 +29,7 @@ import numpy as np
 import DataObtainer
 
 # constants
-max_input_stream_length = 1000000
+max_input_stream_length = 10000000
 maxlen_word = 40  # maximum pattern length
 required_repeats = 5  # if seen less than this many times, patterns won't survive on the long run.
 decay_strength_loss = 1  # loss of strength per time step.
@@ -332,6 +332,15 @@ class PopManager:
                 print 'Similarity of ', pop1.unrolled_pattern, ' and ', pop2.unrolled_pattern, ' is ', pop1.similarity(
                     pop2)
 
+    def fix_first_child_parents(self):
+        for pop in self.patterns_collection.values():
+            for parent_pop in pop.first_child_parents:
+                if parent_pop.first_component:
+                    if parent_pop.first_component is pop:
+                        continue
+                pop.first_child_parents.remove(pop)
+
+
     def generalize(self):
         print 'Generalizing ..'
         pops_list = self.patterns_collection.values()
@@ -450,4 +459,9 @@ def sanity_check_run():
 
 
 if __name__ == '__main__':
-    online_trainer('PatternStore/General.tsv')
+    storage_file ='PatternStore/General.tsv'
+    pm = PopManager()
+    pm.load_tsv(storage_file)
+    pm.fix_first_child_parents()
+    pm.save_tsv(storage_file)
+
