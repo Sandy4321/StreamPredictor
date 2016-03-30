@@ -36,6 +36,7 @@ decay_strength_loss = 1  # loss of strength per time step.
 feed_ratio = [0.5, 0.25, 0.25]  # ratio of self feed to child components feed. First self, next two children.
 feed_ratio_parent_category = 0.5
 generalize_intersection_ratio = 0.75
+generalize_common_required_count = 3
 
 
 class Pop:
@@ -141,7 +142,7 @@ class PopManager:
         if second_string in self.patterns_collection:
             pop.second_component = self.patterns_collection[second_string]
 
-    def train(self, string):
+    def train(self, string, generalize=False):
         input_length = self.setup_train(string)
         previous_pop = self.patterns_collection[string[0]]
         i = 1
@@ -150,12 +151,13 @@ class PopManager:
             self.join_pattern(previous_pop, current_pop, found_pattern_feed_ratio=1)
             previous_pop = current_pop
             i += len(current_pop.unrolled_pattern)
-            if i % 10 == 0 and i > self.feed_strength_gain:  # Every now and then cull weak patterns
-                self.cull(0)
-            if i % 100 == 0 and i > self.feed_strength_gain:  # Refactor, adopt stronger children, as long as one's
+            if i % 1000 == 0 and i > self.feed_strength_gain:  # Refactor, adopt stronger children, as long as one's
                 # unrolled pattern is same.
                 self.refactor()
+                self.cull(0)
         self.refactor()
+        if generalize:
+            self.generalize()
         self.cull(0)
         return self.patterns_collection
 
@@ -265,10 +267,10 @@ class PopManager:
                             self.patterns_collection[key].first_child_parents.append(self.patterns_collection[parent_i])
         print 'Loaded file ' + filename + ' with number of patterns = ' + str(len(self.patterns_collection))
 
-    def predict_next_word(self, current_word):
+    def predict_next_word(self, input_word):
         predictor_pops = []
-        for j in range(len(current_word)):
-            current_word = current_word[j:]
+        for j in range(len(input_word)):
+            current_word = input_word[j:]
             if current_word in self.patterns_collection:
                 current_pop = self.patterns_collection[current_word]
                 if len(current_pop.first_child_parents) < 1:
@@ -331,6 +333,7 @@ class PopManager:
                     pop2)
 
     def generalize(self):
+        print 'Generalizing ..'
         pops_list = self.patterns_collection.values()
         for pop in pops_list:
             next_to_next = dict()
@@ -340,12 +343,16 @@ class PopManager:
                 for next_key_b, next_list_b in next_to_next.iteritems():
                     if next_key_a == next_key_b:
                         continue
+                    if len(''.join(e for e in next_key_a if e.isalnum())) < 3:
+                        continue
+                    if len(''.join(e for e in next_key_b if e.isalnum())) < 3:
+                        continue
                     if self.patterns_collection[next_key_a].is_child(self.patterns_collection[next_key_b]) or \
                             self.patterns_collection[next_key_b].is_child(self.patterns_collection[next_key_a]):
                         continue
                     same_length = len(set(next_list_a).intersection(next_list_b))
                     passing_length = generalize_intersection_ratio * min(len(next_list_a), len(next_list_b))
-                    if same_length > passing_length and same_length > 1:
+                    if same_length > passing_length and same_length > generalize_common_required_count:
                         print 'Perhaps ', next_key_a, ' and ', next_key_b, ' are similar?'
                         new_category_string = '#' + next_key_a + '#' + next_key_b
                         if new_category_string not in self.patterns_collection:
@@ -423,7 +430,7 @@ def online_trainer(storage_file):
         text = DataObtainer.clean_text(text, max_input_stream_length)
         pm = load_pm(storage_file)
         pm.train(text)
-        pm.save(storage_file)
+        pm.save_tsv(storage_file)
         print pm.generate_stream(200)
         total_time_mins = (time.time() - start_time) / 60
         rate_chars_min = round(len(text) / total_time_mins / 1000)
@@ -443,4 +450,4 @@ def sanity_check_run():
 
 
 if __name__ == '__main__':
-    default_small_trainer('PatternStore/new_pattern_of_pattern.tsv')
+    online_trainer('PatternStore/General.tsv')
