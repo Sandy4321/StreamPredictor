@@ -462,8 +462,4 @@ def sanity_check_run():
 
 if __name__ == '__main__':
     storage_file ='PatternStore/General.tsv'
-    pm = PopManager()
-    pm.load_tsv(storage_file)
-    pm.fix_first_child_parents()
-    pm.save_tsv(storage_file)
-
+    online_trainer(storage_file)
