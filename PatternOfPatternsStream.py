@@ -333,12 +333,14 @@ class PopManager:
                     pop2)
 
     def fix_first_child_parents(self):
+        print 'Fixing incorrect first_child_parents'
         for pop in self.patterns_collection.values():
             for parent_pop in pop.first_child_parents:
                 if parent_pop.first_component:
                     if parent_pop.first_component is pop:
                         continue
-                pop.first_child_parents.remove(pop)
+                print 'Mismatch ', pop.__repr__(), ' and ', parent_pop.__repr__()
+                pop.first_child_parents.remove(parent_pop)
 
 
     def generalize(self):
