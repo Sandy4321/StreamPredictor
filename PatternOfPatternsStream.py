@@ -461,5 +461,4 @@ def sanity_check_run():
 
 
 if __name__ == '__main__':
-    storage_file ='PatternStore/General.tsv'
-    online_trainer(storage_file)
+    sanity_check_run()
