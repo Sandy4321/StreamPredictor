@@ -101,21 +101,37 @@ class Pop:
         return out
 
     def similarity(self, other_pop):
-        if not (self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
+        if not (
+                    self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
             return SequenceMatcher(None, self.unrolled_pattern, other_pop.unrolled_pattern).ratio()
         similarity1 = self.first_component.similarity(other_pop.first_component)
         similarity2 = self.second_component.similarity(other_pop.second_component)
         return (len(self.first_component.unrolled_pattern) * similarity1 + len(self.second_component.unrolled_pattern)
                 * similarity2) / len(self.unrolled_pattern)
 
+    def get_next_distribution(self):
+        """ Gives the list of next predicted words and their associated probabilities.
+        :return: List A, B. Where A is a list of strings, B is list of floats.
+        """
+        next_words = []
+        strengths = []
+        for parent_i in self.first_child_parents:
+            if parent_i.second_component:
+                next_words.append(parent_i.second_component.unrolled_pattern)
+                strengths.append(max(parent_i.strength, 0))
+        total = sum(strengths)
+        probabilities = [float(i) / total for i in strengths]
+        return next_words, probabilities
+
     def has_common_child(self, other_pop):
-        if not (self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
+        if not (
+                    self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
             return self.unrolled_pattern == other_pop.unrolled_pattern
         return self.first_component.has_common_child(other_pop.first_component) or \
-                self.second_component.has_common_child(other_pop.second_component)
+               self.second_component.has_common_child(other_pop.second_component)
 
     def next_patterns(self):
-        """ Gives the list of patterns that are likely to ocur next. """
+        """ Gives the list of patterns that are likely to occur next. """
         if not self.first_child_parents:
             return []
         next_patterns = []
@@ -256,9 +272,16 @@ class PopManager:
     #     return pickle.load(gzip.open(filename, 'r'))
 
     def load_tsv(self, filename):
+        limit = None  # doesn't work for now, some patterns will have first parent child which is not loaded
         with open(filename, mode='r') as file:
             all_lines = file.readlines()
-            for lines in all_lines[1:]:
+            total_lines = len(all_lines)
+            if limit:
+                start_line = max(0, total_lines - limit)
+                lines_to_read = all_lines[1 + start_line:]
+            else:
+                lines_to_read = all_lines[1:]
+            for lines in lines_to_read:
                 elements = lines.split('\t')
                 key = elements[0]
                 self.patterns_collection[key] = Pop(key)
@@ -275,22 +298,16 @@ class PopManager:
         print 'Loaded file ' + filename + ' with number of patterns = ' + str(len(self.patterns_collection))
 
     def predict_next_word(self, input_word):
-        predictor_pops = []
         for j in range(len(input_word)):
             current_word = input_word[j:]
             if current_word in self.patterns_collection:
                 current_pop = self.patterns_collection[current_word]
                 if len(current_pop.first_child_parents) < 1:
                     continue
-                for pop in current_pop.first_child_parents:
-                    if pop.second_component:
-                        predictor_pops.append((pop.strength, pop.second_component.unrolled_pattern))
-                if len(predictor_pops) > 0:
-                    strengths = [max(i[0], 0) for i in predictor_pops]
-                    total = sum(strengths)
-                    words = [i[1] for i in predictor_pops]
-                    probabilities = [float(i) / total for i in strengths]
-                    return np.random.choice(words, p=probabilities)
+                words, probabilities = current_pop.get_next_distribution()
+                if len(words) < 1:
+                    raise Exception(' predict_next_word ' + current_word)
+                return np.random.choice(words, p=probabilities)
         return ''
 
     def generate_stream(self, word_length, seed=None):
@@ -299,7 +316,7 @@ class PopManager:
         current_word = current_pop.unrolled_pattern
         generated_output = current_word
         for i in range(word_length):
-            next_word = self.predict_next_word(current_word)
+            next_word = self.predict_next_word(generated_output)
             if next_word == '':
                 next_word = np.random.choice([pop.unrolled_pattern
                                               for key, pop in self.patterns_collection.iteritems()])
@@ -349,6 +366,17 @@ class PopManager:
                 print 'Mismatch ', pop.__repr__(), ' and ', parent_pop.__repr__()
                 pop.first_child_parents.remove(parent_pop)
 
+    def do_not_generalize(self, first_string, second_string):
+        if first_string == second_string:
+            return True
+        if len(''.join(e for e in first_string if e.isalnum())) < 3:
+            return True
+        if len(''.join(e for e in second_string if e.isalnum())) < 3:
+            return True
+        if self.patterns_collection[first_string].is_child(self.patterns_collection[second_string]) or \
+                self.patterns_collection[second_string].is_child(self.patterns_collection[first_string]):
+            return True
+        return False
 
     def generalize(self):
         print 'Generalizing ..'
@@ -359,14 +387,7 @@ class PopManager:
                 next_to_next[next_pop.unrolled_pattern] = next_pop.next_patterns()
             for next_key_a, next_list_a in next_to_next.iteritems():
                 for next_key_b, next_list_b in next_to_next.iteritems():
-                    if next_key_a == next_key_b:
-                        continue
-                    if len(''.join(e for e in next_key_a if e.isalnum())) < 3:
-                        continue
-                    if len(''.join(e for e in next_key_b if e.isalnum())) < 3:
-                        continue
-                    if self.patterns_collection[next_key_a].is_child(self.patterns_collection[next_key_b]) or \
-                            self.patterns_collection[next_key_b].is_child(self.patterns_collection[next_key_a]):
+                    if self.do_not_generalize(next_key_a, next_key_b):
                         continue
                     same_length = len(set(next_list_a).intersection(next_list_b))
                     passing_length = generalize_intersection_ratio * min(len(next_list_a), len(next_list_b))
@@ -382,8 +403,10 @@ class PopManager:
         if first_pop.has_common_child(second_pop):
             if first_pop.first_component and second_pop.first_component and second_pop.second_component \
                     and second_pop.second_component:
-                self.set_similarity(first_pop.first_component.unrolled_pattern, second_pop.first_component.unrolled_pattern)
-                self.set_similarity(first_pop.second_component.unrolled_pattern, second_pop.second_component.unrolled_pattern)
+                self.set_similarity(first_pop.first_component.unrolled_pattern,
+                                    second_pop.first_component.unrolled_pattern)
+                self.set_similarity(first_pop.second_component.unrolled_pattern,
+                                    second_pop.second_component.unrolled_pattern)
                 return
         print 'Perhaps ', first_pattern, ' and ', second_pattern, ' are similar?'
         new_category_string = 'category with ' + first_pattern + ' and ' + second_pattern
