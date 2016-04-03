@@ -20,6 +20,8 @@ Todos:
 Idea:
     1. (done) Refactoring: See if instead of current components, new components which are stronger can be set.
     e.g. if pattern is ABCD = {ABC:D} but AB and CD are stronger then set ABCD = {AB:CD}
+    2. same category, must split into sub patterns. e.g. if ABXC and ABYC are found to be similar then only X
+    is similar to Y
 """
 import os
 import time
@@ -99,13 +101,18 @@ class Pop:
         return out
 
     def similarity(self, other_pop):
-        if not (
-                            self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
-            return SequenceMatcher(None, self.unrolled_pattern, other_pop.unrolled_pattern)
-        similarity1 = self.first_component.similarity(other_pop.first_component).ratio()
-        similarity2 = self.second_component.similarity(other_pop.second_component).ratio()
+        if not (self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
+            return SequenceMatcher(None, self.unrolled_pattern, other_pop.unrolled_pattern).ratio()
+        similarity1 = self.first_component.similarity(other_pop.first_component)
+        similarity2 = self.second_component.similarity(other_pop.second_component)
         return (len(self.first_component.unrolled_pattern) * similarity1 + len(self.second_component.unrolled_pattern)
                 * similarity2) / len(self.unrolled_pattern)
+
+    def has_common_child(self, other_pop):
+        if not (self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
+            return self.unrolled_pattern == other_pop.unrolled_pattern
+        return self.first_component.has_common_child(other_pop.first_component) or \
+                self.second_component.has_common_child(other_pop.second_component)
 
     def next_patterns(self):
         """ Gives the list of patterns that are likely to ocur next. """
@@ -348,8 +355,8 @@ class PopManager:
         pops_list = self.patterns_collection.values()
         for pop in pops_list:
             next_to_next = dict()
-            for next in pop.next_patterns():
-                next_to_next[next.unrolled_pattern] = next.next_patterns()
+            for next_pop in pop.next_patterns():
+                next_to_next[next_pop.unrolled_pattern] = next_pop.next_patterns()
             for next_key_a, next_list_a in next_to_next.iteritems():
                 for next_key_b, next_list_b in next_to_next.iteritems():
                     if next_key_a == next_key_b:
@@ -364,14 +371,28 @@ class PopManager:
                     same_length = len(set(next_list_a).intersection(next_list_b))
                     passing_length = generalize_intersection_ratio * min(len(next_list_a), len(next_list_b))
                     if same_length > passing_length and same_length > generalize_common_required_count:
-                        print 'Perhaps ', next_key_a, ' and ', next_key_b, ' are similar?'
-                        new_category_string = '#' + next_key_a + '#' + next_key_b
-                        if new_category_string not in self.patterns_collection:
-                            new_category = Pop(new_category_string)
-                            self.patterns_collection[new_category_string] = new_category
-                            new_category.set_category(self.patterns_collection[next_key_a],
-                                                      self.patterns_collection[next_key_b])
-                        self.patterns_collection[new_category_string].feed(self.feed_strength_gain)
+                        self.set_similarity(next_key_a, next_key_b)
+
+    def set_similarity(self, first_pattern, second_pattern):
+        if first_pattern == second_pattern:
+            print first_pattern, ' and ', second_pattern, ' are same!'
+            return
+        first_pop = self.patterns_collection[first_pattern]
+        second_pop = self.patterns_collection[second_pattern]
+        if first_pop.has_common_child(second_pop):
+            if first_pop.first_component and second_pop.first_component and second_pop.second_component \
+                    and second_pop.second_component:
+                self.set_similarity(first_pop.first_component.unrolled_pattern, second_pop.first_component.unrolled_pattern)
+                self.set_similarity(first_pop.second_component.unrolled_pattern, second_pop.second_component.unrolled_pattern)
+                return
+        print 'Perhaps ', first_pattern, ' and ', second_pattern, ' are similar?'
+        new_category_string = 'category with ' + first_pattern + ' and ' + second_pattern
+        if new_category_string not in self.patterns_collection:
+            new_category = Pop(new_category_string)
+            self.patterns_collection[new_category_string] = new_category
+            new_category.set_category(self.patterns_collection[first_pattern],
+                                      self.patterns_collection[second_pattern])
+        self.patterns_collection[new_category_string].feed(self.feed_strength_gain)
 
 
 class StreamCounter:
