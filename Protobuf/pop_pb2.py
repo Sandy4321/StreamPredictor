@@ -18,7 +18,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='pop.proto',
   package='streampredictor',
-  serialized_pb=_b('\n\tpop.proto\x12\x0fstreampredictor\"\xa8\x01\n\x03Pop\x12\x18\n\x10unrolled_pattern\x18\x01 \x01(\t\x12\x10\n\x08strength\x18\x02 \x01(\x03\x12\x17\n\x0f\x66irst_component\x18\x03 \x01(\t\x12\x18\n\x10second_component\x18\x04 \x01(\t\x12\x1b\n\x13\x66irst_child_parents\x18\x05 \x03(\t\x12\x12\n\nbelongs_to\x18\x06 \x01(\t\x12\x11\n\tmember_of\x18\x07 \x03(\t\">\n\nPopManager\x12\x30\n\x12pattern_collection\x18\x01 \x03(\x0b\x32\x14.streampredictor.Pop')
+  serialized_pb=_b('\n\tpop.proto\x12\x0fstreampredictor\"\xaf\x01\n\x03Pop\x12\x18\n\x10unrolled_pattern\x18\x01 \x01(\t\x12\x10\n\x08strength\x18\x02 \x01(\x03\x12\x17\n\x0f\x66irst_component\x18\x03 \x01(\t\x12\x18\n\x10second_component\x18\x04 \x01(\t\x12\x1b\n\x13\x66irst_child_parents\x18\x05 \x03(\t\x12\x12\n\nbelongs_to\x18\x06 \x01(\t\x12\x18\n\x10\x63\x61tegory_members\x18\x07 \x03(\t\">\n\nPopManager\x12\x30\n\x12pattern_collection\x18\x01 \x03(\x0b\x32\x14.streampredictor.Pop')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -75,7 +75,7 @@ _POP = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='member_of', full_name='streampredictor.Pop.member_of', index=6,
+      name='category_members', full_name='streampredictor.Pop.category_members', index=6,
       number=7, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -93,7 +93,7 @@ _POP = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=31,
-  serialized_end=199,
+  serialized_end=206,
 )
 
 
@@ -122,8 +122,8 @@ _POPMANAGER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=201,
-  serialized_end=263,
+  serialized_start=208,
+  serialized_end=270,
 )
 
 _POPMANAGER.fields_by_name['pattern_collection'].message_type = _POP

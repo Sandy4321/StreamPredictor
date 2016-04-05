@@ -73,6 +73,11 @@ class Pop:
         self.members_of_category.append(first_component)
         self.members_of_category.append(second_component)
 
+    def get_sample(self):
+        if len(self.members_of_category) < 1:
+            return self.unrolled_pattern
+        return np.random.choice(self.members_of_category).unrolled_pattern
+
     def feed(self, gain):
         self.strength += int(gain * feed_ratio[0])
         if gain > 2:
@@ -118,10 +123,11 @@ class Pop:
         strengths = []
         for parent_i in self.first_child_parents:
             if parent_i.second_component:
-                next_words.append(parent_i.second_component.unrolled_pattern)
+                next_pop = parent_i.second_component
+                next_words.append(next_pop.get_sample())
                 strengths.append(max(parent_i.strength, 0))
         total = sum(strengths)
-        probabilities = [float(i) / total for i in strengths]
+        probabilities = np.array([float(i) / total for i in strengths])
         return next_words, probabilities
 
     def has_common_child(self, other_pop):
@@ -267,6 +273,10 @@ class PopManager:
         buf = ProtobufManager.PopManager_to_ProtobufPopManager(self)
         ProtobufManager.save_protobuf(buf, filename)
 
+    def save_pb_plain(self, filename):
+        buf = ProtobufManager.PopManager_to_ProtobufPopManager(self)
+        ProtobufManager.save_protobuf_plain(buf, filename)
+
     def load_tsv(self, filename):
         limit = None  # doesn't work for now, some patterns will have first parent child which is not loaded
         with open(filename, mode='r') as file:
@@ -296,17 +306,27 @@ class PopManager:
     def load_pb(self, filename):
         self.patterns_collection = ProtobufManager.load_PopManager(filename).patterns_collection
 
+    def load_pb_plain(self, filename):
+        buffy = ProtobufManager.load_protobuf_plain(filename)
+        pm = ProtobufManager.protobuf_to_popmanager(buffy)
+        self.patterns_collection = pm.patterns_collection
+
     def predict_next_word(self, input_word):
-        for j in range(len(input_word)):
+        start =  max(0, len(input_word)-maxlen_word)
+        for j in range(start, len(input_word)):
             current_word = input_word[j:]
             if current_word in self.patterns_collection:
                 current_pop = self.patterns_collection[current_word]
-                if len(current_pop.first_child_parents) < 1:
-                    continue
                 words, probabilities = current_pop.get_next_distribution()
+                if current_pop.belongs_to_category:
+                    category_words, category_probabilities = current_pop.belongs_to_category.get_next_distribution()
+                    words = words + category_words
+                    probabilities = np.hstack([0.5*probabilities, 0.5*category_probabilities])
                 if len(words) < 1:
-                    raise Exception(' predict_next_word ' + current_word)
+                    continue
+                probabilities /= sum(probabilities)
                 return np.random.choice(words, p=probabilities)
+        print ' nothing after ', input_word
         return ''
 
     def generate_stream(self, word_length, seed=None):
@@ -320,7 +340,6 @@ class PopManager:
                 next_word = np.random.choice([pop.unrolled_pattern
                                               for key, pop in self.patterns_collection.iteritems()])
             generated_output += next_word
-            current_word = next_word
         return generated_output
 
     def refactor(self):

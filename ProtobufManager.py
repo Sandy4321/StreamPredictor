@@ -50,7 +50,7 @@ class ProtobufManager:
         buffy_pop.first_child_parents.extend([i.unrolled_pattern for i in pop.first_child_parents])
         if pop.belongs_to_category:
             buffy_pop.belongs_to = pop.belongs_to_category.unrolled_pattern
-        buffy_pop.member_of.extend([i.unrolled_pattern for i in pop.members_of_category])
+        buffy_pop.category_members.extend([i.unrolled_pattern for i in pop.members_of_category])
 
     @staticmethod
     def protobuf_to_tsv(pbfile):
@@ -66,7 +66,7 @@ class ProtobufManager:
 
     @staticmethod
     def protobuf_to_popmanager(buffy):
-        bar, i = setup_progressbar(len(buffy.pattern_collection))
+        bar, i = setup_progressbar(2*len(buffy.pattern_collection))
         pm = PatternOfPatternsStream.PopManager()
         for bp in buffy.pattern_collection:
             pop = PatternOfPatternsStream.Pop(bp.unrolled_pattern)
@@ -74,6 +74,24 @@ class ProtobufManager:
             pm.add_pop(pop)
             bar.update(i + 1)
             i += 1
+
+        for bp in buffy.pattern_collection:
+            pop = pm.patterns_collection[bp.unrolled_pattern]
+            if bp.first_component:
+                pop.first_component = pm.patterns_collection[bp.first_component]
+            if bp.second_component:
+                pop.second_component = pm.patterns_collection[bp.second_component]
+            for parent_i in bp.first_child_parents:
+                members = pm.patterns_collection[parent_i]
+                pop.first_child_parents.append(members)
+            if bp.belongs_to:
+                pop.belongs_to_category = pm.patterns_collection[bp.belongs_to]
+            for cat in bp.category_members:
+                member = pm.patterns_collection[cat]
+                pop.members_of_category.append(member)
+            bar.update(i + 1)
+            i += 1
+
         bar.finish()
         return pm
 
@@ -85,6 +103,13 @@ class ProtobufManager:
         f.close()
         return buffy
 
+    @staticmethod
+    def load_protobuf_plain(filename):
+        buffy = Protobuf.pop_pb2.PopManager()
+        f = open(filename, "r")
+        text_format.Parse(f.read(), buffy)
+        f.close()
+        return buffy
 
 def setup_progressbar(length):
     i = 0
