@@ -155,7 +155,7 @@ class PopManager:
         string = pop.unrolled_pattern
         if string in self.patterns_collection:
             raise Exception(string + 'is already present')
-        self.patterns_collection[string] = Pop(string)
+        self.patterns_collection[string] = pop
 
     def set_components_from_string(self, pop, first_string, second_string):
         if not first_string or not second_string:
@@ -174,8 +174,8 @@ class PopManager:
             self.join_pattern(previous_pop, current_pop, found_pattern_feed_ratio=1)
             previous_pop = current_pop
             i += len(current_pop.unrolled_pattern)
-            if i % 1000 == 0 and i > self.feed_strength_gain:  # Refactor, adopt stronger children, as long as one's
-                # unrolled pattern is same.
+            if i % 1000 == 0 and i > self.feed_strength_gain:
+                # Refactor, adopt stronger children, as long as one's unrolled pattern is same.
                 self.refactor()
                 self.cull(0)
         self.refactor()
