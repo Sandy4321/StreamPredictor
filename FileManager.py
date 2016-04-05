@@ -1,5 +1,8 @@
 import PatternOfPatternsStream
 import Protobuf.pop_pb2
+import progressbar
+from google.protobuf import text_format
+
 
 
 def tsv_to_protbuf(tsv_file):
@@ -7,8 +10,8 @@ def tsv_to_protbuf(tsv_file):
     pm = PatternOfPatternsStream.PopManager()
     pm.load_tsv(tsv_file)
     buffy = Protobuf.pop_pb2.PopManager()
+    bar, i = setup_progressbar(len(pm.patterns_collection))
     for pop in pm.patterns_collection.values():
-        print pop.unrolled_pattern
         buffy_pop = buffy.pattern_collection.add()
         buffy_pop.unrolled_pattern = pop.unrolled_pattern
         buffy_pop.strength = pop.strength
@@ -20,9 +23,23 @@ def tsv_to_protbuf(tsv_file):
         if pop.belongs_to_category:
             buffy_pop.belongs_to = pop.belongs_to_category.unrolled_pattern
         buffy_pop.member_of.extend([i.unrolled_pattern for i in pop.members_of_category])
+        bar.update(i + 1)
+        i += 1
+    bar.finish()
     f = open(tsv_file[:-4] + '.pb', "wb")
     f.write(buffy.SerializeToString())
     f.close()
+    f = open(tsv_file[:-4] + '.pb.txt', "w")
+    f.write(text_format.MessageToString(buffy))
+    f.close()
+
+
+def setup_progressbar(length):
+    i = 0
+    bar = progressbar.ProgressBar(maxval=length,
+                                  widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
+    bar.start()
+    return bar, i
 
 
 def protobuf_to_tsv(pbfile):
@@ -32,10 +49,14 @@ def protobuf_to_tsv(pbfile):
     buffy.ParseFromString(f.read())
     f.close()
     pm = PatternOfPatternsStream.PopManager()
+    bar, i = setup_progressbar(len(pm.patterns_collection))
     for bp in buffy.pattern_collection:
         pop = PatternOfPatternsStream.Pop(bp.unrolled_pattern)
         pop.strength = bp.strength
         pm.add_pop(pop)
+        bar.update(i + 1)
+        i += 1
+    bar.finish()
     pm.save_tsv(pbfile + '.tsv')
 
 
