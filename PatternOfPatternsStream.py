@@ -28,6 +28,7 @@ import time
 from difflib import SequenceMatcher
 import numpy as np
 
+from ProtobufManager import ProtobufManager
 import DataObtainer
 
 # constants
@@ -102,7 +103,7 @@ class Pop:
 
     def similarity(self, other_pop):
         if not (
-                    self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
+                            self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
             return SequenceMatcher(None, self.unrolled_pattern, other_pop.unrolled_pattern).ratio()
         similarity1 = self.first_component.similarity(other_pop.first_component)
         similarity2 = self.second_component.similarity(other_pop.second_component)
@@ -125,7 +126,7 @@ class Pop:
 
     def has_common_child(self, other_pop):
         if not (
-                    self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
+                            self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
             return self.unrolled_pattern == other_pop.unrolled_pattern
         return self.first_component.has_common_child(other_pop.first_component) or \
                self.second_component.has_common_child(other_pop.second_component)
@@ -262,14 +263,9 @@ class PopManager:
             file.write(save_string)
         print 'Saved file ' + filename
 
-    # def save(self, filename):
-    #     """ Pickle thyself. """
-    #     pickle.dump(self, gzip.open(filename, 'w'))
-    #     print 'Pattern Of Patterns saved to ', filename
-    #
-    # @staticmethod
-    # def load(filename):
-    #     return pickle.load(gzip.open(filename, 'r'))
+    def save_pb(self, filename):
+        buf = ProtobufManager.PopManager_to_ProtobufPopManager(self)
+        ProtobufManager.save_protobuf(buf, filename)
 
     def load_tsv(self, filename):
         limit = None  # doesn't work for now, some patterns will have first parent child which is not loaded
@@ -296,6 +292,9 @@ class PopManager:
                         if parent_i != '' and parent_i in self.patterns_collection:
                             self.patterns_collection[key].first_child_parents.append(self.patterns_collection[parent_i])
         print 'Loaded file ' + filename + ' with number of patterns = ' + str(len(self.patterns_collection))
+
+    def load_pb(self, filename):
+        self.patterns_collection = ProtobufManager.load_PopManager(filename).patterns_collection
 
     def predict_next_word(self, input_word):
         for j in range(len(input_word)):
