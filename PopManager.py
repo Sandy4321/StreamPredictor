@@ -25,127 +25,19 @@ Idea:
 """
 import os
 import time
-from difflib import SequenceMatcher
 import numpy as np
 
-from ProtobufManager import ProtobufManager
+import ProtobufManager
 import DataObtainer
+from Pop import Pop
 
 # constants
 max_input_stream_length = 10000000
 maxlen_word = 40  # maximum pattern length
 required_repeats = 5  # if seen less than this many times, patterns won't survive on the long run.
-decay_strength_loss = 1  # loss of strength per time step.
-feed_ratio = [0.5, 0.25, 0.25]  # ratio of self feed to child components feed. First self, next two children.
 feed_ratio_parent_category = 0.5
 generalize_intersection_ratio = 0.75
 generalize_common_required_count = 3
-
-
-class Pop:
-    def __init__(self, chars):
-        self.unrolled_pattern = chars  # The actual characters that make up current pattern.
-        self.strength = 0
-        self.first_component = None  # Children
-        self.second_component = None
-        self.first_child_parents = []
-        self.belongs_to_category = None  # type Pop(), which category does this belong to?
-        self.members_of_category = []  # Pop() List, who are the members of this category?
-
-    def set_components(self, first_component, second_component):
-        """
-        Sets the children.
-        """
-        if not first_component or not second_component:
-            raise Exception("component cannot be None")
-        self.first_component = first_component
-        first_component.first_child_parents.append(self)
-        self.second_component = second_component
-
-    def set_category(self, first_component, second_component):
-        """
-        Sets the member categories.
-        """
-        if not first_component or not second_component:
-            raise Exception("component cannot be None")
-        first_component.belongs_to_category = self
-        second_component.belongs_to_category = self
-        self.members_of_category.append(first_component)
-        self.members_of_category.append(second_component)
-
-    def get_sample(self):
-        if len(self.members_of_category) < 1:
-            return self.unrolled_pattern
-        return np.random.choice(self.members_of_category).unrolled_pattern
-
-    def feed(self, gain):
-        self.strength += int(gain * feed_ratio[0])
-        if gain > 2:
-            if self.first_component:
-                self.first_component.feed(int(gain * feed_ratio[1]))
-            if self.second_component:
-                self.second_component.feed(int(gain * feed_ratio[2]))
-
-    def decay(self):
-        self.strength -= decay_strength_loss
-
-    def is_child(self, child):
-        if child.unrolled_pattern == self.unrolled_pattern:
-            return True
-        if not self.second_component:
-            return False
-        return self.second_component.is_child(child) and self.first_component.is_child(child)
-
-    def __repr__(self):
-        out = self.unrolled_pattern + ': strength ' + str(self.strength)
-        if self.first_component:
-            out += '={ ' + self.first_component.unrolled_pattern + ': '
-        if self.second_component:
-            out += self.second_component.unrolled_pattern + '}'
-        if self.belongs_to_category:
-            out += ' # ' + self.belongs_to_category.unrolled_pattern
-        return out
-
-    def similarity(self, other_pop):
-        if not (
-                            self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
-            return SequenceMatcher(None, self.unrolled_pattern, other_pop.unrolled_pattern).ratio()
-        similarity1 = self.first_component.similarity(other_pop.first_component)
-        similarity2 = self.second_component.similarity(other_pop.second_component)
-        return (len(self.first_component.unrolled_pattern) * similarity1 + len(self.second_component.unrolled_pattern)
-                * similarity2) / len(self.unrolled_pattern)
-
-    def get_next_distribution(self):
-        """ Gives the list of next predicted words and their associated probabilities.
-        :return: List A, B. Where A is a list of strings, B is list of floats.
-        """
-        next_words = []
-        strengths = []
-        for parent_i in self.first_child_parents:
-            if parent_i.second_component:
-                next_pop = parent_i.second_component
-                next_words.append(next_pop.get_sample())
-                strengths.append(max(parent_i.strength, 0))
-        total = sum(strengths)
-        probabilities = np.array([float(i) / total for i in strengths])
-        return next_words, probabilities
-
-    def has_common_child(self, other_pop):
-        if not (
-                            self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
-            return self.unrolled_pattern == other_pop.unrolled_pattern
-        return self.first_component.has_common_child(other_pop.first_component) or \
-               self.second_component.has_common_child(other_pop.second_component)
-
-    def next_patterns(self):
-        """ Gives the list of patterns that are likely to occur next. """
-        if not self.first_child_parents:
-            return []
-        next_patterns = []
-        for parent_i in self.first_child_parents:
-            if parent_i.second_component:
-                next_patterns.append(parent_i.second_component)
-        return next_patterns
 
 
 class PopManager:
@@ -270,12 +162,12 @@ class PopManager:
         print 'Saved file ' + filename
 
     def save_pb(self, filename):
-        buf = ProtobufManager.PopManager_to_ProtobufPopManager(self)
-        ProtobufManager.save_protobuf(buf, filename)
+        buf = ProtobufManager.ProtobufManager.PopManager_to_ProtobufPopManager(self)
+        ProtobufManager.ProtobufManager.save_protobuf(buf, filename)
 
     def save_pb_plain(self, filename):
-        buf = ProtobufManager.PopManager_to_ProtobufPopManager(self)
-        ProtobufManager.save_protobuf_plain(buf, filename)
+        buf = ProtobufManager.ProtobufManager.PopManager_to_ProtobufPopManager(self)
+        ProtobufManager.ProtobufManager.save_protobuf_plain(buf, filename)
 
     def load_tsv(self, filename):
         limit = None  # doesn't work for now, some patterns will have first parent child which is not loaded
@@ -304,15 +196,15 @@ class PopManager:
         print 'Loaded file ' + filename + ' with number of patterns = ' + str(len(self.patterns_collection))
 
     def load_pb(self, filename):
-        self.patterns_collection = ProtobufManager.load_PopManager(filename).patterns_collection
+        self.patterns_collection = ProtobufManager.ProtobufManager.load_PopManager(filename).patterns_collection
 
     def load_pb_plain(self, filename):
-        buffy = ProtobufManager.load_protobuf_plain(filename)
-        pm = ProtobufManager.protobuf_to_popmanager(buffy)
+        buffy = ProtobufManager.ProtobufManager.load_protobuf_plain(filename)
+        pm = ProtobufManager.ProtobufManager.protobuf_to_popmanager(buffy)
         self.patterns_collection = pm.patterns_collection
 
     def predict_next_word(self, input_word):
-        start =  max(0, len(input_word)-maxlen_word)
+        start = max(0, len(input_word) - maxlen_word)
         for j in range(start, len(input_word)):
             current_word = input_word[j:]
             if current_word in self.patterns_collection:
@@ -321,7 +213,7 @@ class PopManager:
                 if current_pop.belongs_to_category:
                     category_words, category_probabilities = current_pop.belongs_to_category.get_next_distribution()
                     words = words + category_words
-                    probabilities = np.hstack([0.5*probabilities, 0.5*category_probabilities])
+                    probabilities = np.hstack([0.5 * probabilities, 0.5 * category_probabilities])
                 if len(words) < 1:
                     continue
                 probabilities /= sum(probabilities)
@@ -434,22 +326,6 @@ class PopManager:
             new_category.set_category(self.patterns_collection[first_pattern],
                                       self.patterns_collection[second_pattern])
         self.patterns_collection[new_category_string].feed(self.feed_strength_gain)
-
-
-class StreamCounter:
-    """
-    Used to analyze few variables of Pop Manager.
-    """
-
-    def __init__(self):
-        self.time = []
-        self.pop_count = []
-        self.prediction_gain = []
-
-    def update(self, time, popcount, prediction_gain):
-        self.time.append(time)
-        self.pop_count.append(popcount)
-        self.prediction_gain.append(prediction_gain)
 
 
 def load_pm(storage_file):

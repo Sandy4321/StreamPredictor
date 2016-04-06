@@ -1,10 +1,12 @@
 from unittest import TestCase
 import PatternOfPatternsStream
-from PatternOfPatternsStream import PopManager, Pop
+from PatternOfPatternsStream import PopManager
+from Pop import Pop
 import DataObtainer
 import os
 
 test_pattern_file = 'PatternStore/test.tsv'
+test_pb = 'PatternStore/test.pb'
 
 
 class TestPatternOfPatterns(TestCase):
@@ -23,6 +25,18 @@ class TestPatternOfPatterns(TestCase):
         empty_sample = PatternOfPatternsStream.PopManager()
         self.assertFalse(len(empty_sample.patterns_collection) > 10)
         empty_sample.load_tsv(test_pattern_file)
+        self.assertTrue(len(empty_sample.patterns_collection) > 10)
+
+    def test_save_pb(self):
+        sample = self.get_sample()
+        sample.save_pb(test_pb)
+        self.assertTrue(os.path.isfile(test_pattern_file))
+
+    def test_load_pb(self):
+        self.test_save_pb()
+        empty_sample = PatternOfPatternsStream.PopManager()
+        self.assertFalse(len(empty_sample.patterns_collection) > 10)
+        empty_sample.load_pb(test_pb)
         self.assertTrue(len(empty_sample.patterns_collection) > 10)
 
     def test_save_load_equal(self):

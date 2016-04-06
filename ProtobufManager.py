@@ -1,14 +1,16 @@
-import PatternOfPatternsStream
-import Protobuf.pop_pb2
 import progressbar
 from google.protobuf import text_format
+
+import Protobuf.pop_pb2
+import PopManager
+import Pop
 
 
 class ProtobufManager:
     @staticmethod
     def tsv_to_protbuf(tsv_file):
         print 'Converting from tsv to protobuf the file ', tsv_file
-        pm = PatternOfPatternsStream.PopManager()
+        pm =PopManager.PopManager()
         pm.load_tsv(tsv_file)
         buffy = ProtobufManager.PopManager_to_ProtobufPopManager(pm)
         ProtobufManager.save_protobuf(buffy, tsv_file[:-4] + '.pb')
@@ -67,9 +69,9 @@ class ProtobufManager:
     @staticmethod
     def protobuf_to_popmanager(buffy):
         bar, i = setup_progressbar(2*len(buffy.pattern_collection))
-        pm = PatternOfPatternsStream.PopManager()
+        pm = PopManager.PopManager()
         for bp in buffy.pattern_collection:
-            pop = PatternOfPatternsStream.Pop(bp.unrolled_pattern)
+            pop = Pop.Pop(bp.unrolled_pattern)
             pop.strength = bp.strength
             pm.add_pop(pop)
             bar.update(i + 1)
