@@ -36,7 +36,7 @@ maxlen_word = 40  # maximum pattern length
 required_repeats = 5  # if seen less than this many times, patterns won't survive on the long run.
 feed_ratio_parent_category = 0.5
 generalize_intersection_ratio = 0.75
-generalize_common_required_count = 3
+generalize_common_required_count = 2
 
 
 class PopManager:
@@ -221,6 +221,7 @@ class PopManager:
         return ''
 
     def generate_stream(self, word_length, seed=None):
+        print 'Generating stream with word count = ', word_length
         current_pop = np.random.choice(self.patterns_collection.values()) \
             if seed is None or '' else self.find_next_pattern(seed)
         current_word = current_pop.unrolled_pattern
