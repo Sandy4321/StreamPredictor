@@ -22,14 +22,13 @@ Idea:
     e.g. if pattern is ABCD = {ABC:D} but AB and CD are stronger then set ABCD = {AB:CD}
     2. same category, must split into sub patterns. e.g. if ABXC and ABYC are found to be similar then only X
     is similar to Y
+    3. Create category only if the maximum probability < 1.1 * 1/N
 """
-import os
-import time
 import numpy as np
 
 import ProtobufManager
-import DataObtainer
 from Pop import Pop
+import MainFunctions
 
 # constants
 max_input_stream_length = 10000000
@@ -260,12 +259,6 @@ class PopManager:
         pop.set_components(self.patterns_collection[first_string],
                            self.patterns_collection[second_string])
 
-    def similarity_all(self):
-        for key1, pop1 in self.patterns_collection.iteritems():
-            for key2, pop2 in self.patterns_collection.iteritems():
-                print 'Similarity of ', pop1.unrolled_pattern, ' and ', pop2.unrolled_pattern, ' is ', pop1.similarity(
-                    pop2)
-
     def fix_first_child_parents(self):
         print 'Fixing incorrect first_child_parents'
         for pop in self.patterns_collection.values():
@@ -287,6 +280,12 @@ class PopManager:
                 self.patterns_collection[second_string].is_child(self.patterns_collection[first_string]):
             return True
         return False
+
+    def similarity_all(self):
+        for key1, pop1 in self.patterns_collection.iteritems():
+            for key2, pop2 in self.patterns_collection.iteritems():
+                print 'Similarity of ', pop1.unrolled_pattern, ' and ', pop2.unrolled_pattern, ' is ', pop1.similarity(
+                    pop2)
 
     def generalize(self):
         print 'Generalizing ..'
@@ -328,75 +327,7 @@ class PopManager:
         self.patterns_collection[new_category_string].feed(self.feed_strength_gain)
 
 
-def load_pm(storage_file):
-    if os.path.isfile(storage_file):
-        pm = PopManager()
-        pm.load_tsv(storage_file)
-        print 'Loaded PopManager from ', storage_file
-    else:
-        pm = PopManager()
-        print ' Created new PopManager. Didnt find anything at ', storage_file
-    return pm
-
-
-def default_trainer(storage_file):
-    for iteration in range(100):
-        start_time = time.time()
-        print 'Iteration number ' + str(iteration)
-        text = DataObtainer.get_random_book_local('data/')
-        text = DataObtainer.clean_text(text, max_input_stream_length)
-        pm = load_pm(storage_file)
-        pm.train(text)
-        pm.save_tsv(storage_file)
-        print pm.generate_stream(200)
-        total_time_mins = (time.time() - start_time) / 60
-        rate_chars_min = round(len(text) / total_time_mins / 1000)
-        print 'Total time taken to run this is ', round(total_time_mins, ndigits=2), \
-            ' mins. Rate = ', rate_chars_min, ' K chars/min'
-
-
-def default_small_trainer(storage_file):
-    start_time = time.time()
-    text = DataObtainer.get_random_book_local('data/')
-    text = DataObtainer.clean_text(text, 10000)
-    pm = load_pm(storage_file)
-    pm.train(text)
-    pm.generalize()
-    pm.save_tsv(storage_file)
-    print pm.generate_stream(200)
-    total_time_mins = (time.time() - start_time) / 60
-    rate_chars_min = round(len(text) / total_time_mins / 1000)
-    print 'Total time taken to run this is ', round(total_time_mins, ndigits=2), \
-        ' mins. Rate = ', rate_chars_min, ' K chars/min'
-
-
-def online_trainer(storage_file):
-    print 'Starting online training'
-    for iteration in range(100):
-        start_time = time.time()
-        print 'Iteration number ' + str(iteration)
-        text = DataObtainer.gutenberg_random_book()
-        text = DataObtainer.clean_text(text, max_input_stream_length)
-        pm = load_pm(storage_file)
-        pm.train(text)
-        pm.save_tsv(storage_file)
-        print pm.generate_stream(200)
-        total_time_mins = (time.time() - start_time) / 60
-        rate_chars_min = round(len(text) / total_time_mins / 1000)
-        print 'Total time taken to run this is ', round(total_time_mins, ndigits=2), \
-            ' mins. Rate = ', rate_chars_min, ' K chars/min'
-
-
-def sanity_check_run():
-    pm = PopManager()
-    text = 'hahaha this is a sanity check, just checking some text'
-    pm.train(text)
-    pm.train(text)
-    pm.train(text)
-    pm.train(text)
-    print pm.generate_stream(5)
-    print 'Everything OK'
-
 
 if __name__ == '__main__':
-    sanity_check_run()
+    MainFunctions.sanity_check_run()
+
