@@ -1,0 +1,125 @@
+\documentclass[fleqn,10pt]{olplainarticle}
+% Use option lineno for line numbers 
+
+\title{Stream Predictors}
+
+\author[1]{Abhishek Rao}
+%\author[2]{Second Author}
+\affil[1]{abhishek.rao.comm@gmail.com}
+%\affil[2]{Address of second author}
+
+\keywords{Sequence modelling, language modelling, hierarchical hidden markov model}
+
+\begin{abstract}
+We try to model sequential structured data like natural text using variety of concepts inspired by Hierarchical Hidden Markov Model, Evolution etc. 
+The aim is to get a probabilistic, language independent features for sequential data. 
+During training we learn which pattern comes after each pattern. Then each transition from pattern to pattern is made as a new pattern.
+\end{abstract}
+
+\begin{document}
+
+\flushbottom
+\maketitle
+\thispagestyle{empty}
+
+\section*{Intoduction}
+\subsection{Hierarchical Pattern Formation}
+The main concept used is somewhat similar to Hierarchical Hidden Markov Model  (\textbf{HHMM}). The idea is that every transition from pattern **A** to pattern **B** can itself be modelled as pattern **AB**. But the inference method is different.
+
+Suppose that our collection of pattern consists of \(\{A,B,C,...Z\}\). i.e. All the Alphabets. Suppose in the first iteration we are given the sequence "CATHAT". 
+
+1. In the first pass we would form patterns like this 
+CA, AT, TH, HA, AT. Now our pattern collecton would consists of  \(\{A,B,C,...Z, CA, AT, TH, HA, AT\}\).
+
+2. In the next pass if we encounter the same sequence "CATHAT" we would split the given sequence in terms of largest existing patterns to form the transformed sequence of "CATHAT" = \(\{"CA", "TH", "AT"\}\). 
+And we would form new patterns by combining 2 at a time the transformed sequence. \( \{ "CATH", "THAT"\}\). And so on. 
+
+\subsection{ Evolution of Patterns}
+With the above formation lots of spurious patterns will be formed. We need to keep only useful patterns and discard unused ones. So Every time we encounter a pattern we "feed" it and it's strength increases. Strength is just an integer number associated with each pattern. As time increases we decrement strength of all patterns. If strength falls below certain threshold we cull the patterns. Hence patterns that are not repeated will die out. Also when we feed a pattern it's children are also given a share. It is essential that all formed pattern are given sufficient time before being killed as they maybe useful later on as children of other more complicated patterns.
+
+\section*{Code}
+The given code uses the above concepts for text. 
+
+\subsection{Pop}
+Each unit of pattern is called Pop (Pattern of Pattern). It consists of an unrolled pattern which is the complete text representation of the pattern. It uniquely identifies each pop. Each pop also contains two children called first component and second component. 
+The following relationship holds 
+*Pop.unrolled pattern = Pop.first component.unrolled pattern + Pop.second component.unrolled pattern*
+Where the + symbol denotes concatenation. 
+
+\subsection{Pop Manager}
+Consists of collection of Pops as a dictionary where the keys are the string associated with the \textit{Pop.unrolled pattern} and the values are the corresponding Pops.
+
+Some of the methods of this class are 
+
+1. *Train()* Takes a string as input and trains the model. Essentialy forms a collection of patterns.
+2. *Generate()* Using the patterns collection generates a stream of likely text. 
+Thanks for using Overleaf to write your article. Your introduction goes here! Some examples of commonly used commands and features are listed below, to help you get started.
+
+\section*{Methods and Materials}
+
+Guidelines can be included for standard research article sections, such as this one.
+
+\section*{Some \LaTeX{} Examples}
+\label{sec:examples}
+
+Use section and subsection commands to organize your document. \LaTeX{} handles all the formatting and numbering automatically. Use ref and label commands for cross-references.
+
+\subsection*{Figures and Tables}
+
+Use the table and tabular commands for basic tables --- see Table~\ref{tab:widgets}, for example. You can upload a figure (JPEG, PNG or PDF) using the project menu. To include it in your document, use the includegraphics command as in the code for Figure~\ref{fig:view} below.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.7\linewidth]{frog}
+\caption{An example image of a frog.}
+\label{fig:view}
+\end{figure}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{l|r}
+Item & Quantity \\\hline
+Candles & 4 \\
+Fork handles & ?  
+\end{tabular}
+\caption{\label{tab:widgets}An example table.}
+\end{table}
+
+\subsection*{Citations}
+
+LaTeX formats citations and references automatically using the bibliography records in your .bib file, which you can edit via the project menu. Use the cite command for an inline citation, like \cite{lees2010theoretical}, and the citep command for a citation in parentheses \citep{lees2010theoretical}.
+
+\subsection*{Mathematics}
+
+\LaTeX{} is great at typesetting mathematics. Let $X_1, X_2, \ldots, X_n$ be a sequence of independent and identically distributed random variables with $\text{E}[X_i] = \mu$ and $\text{Var}[X_i] = \sigma^2 < \infty$, and let
+$$S_n = \frac{X_1 + X_2 + \cdots + X_n}{n}
+      = \frac{1}{n}\sum_{i}^{n} X_i$$
+denote their mean. Then as $n$ approaches infinity, the random variables $\sqrt{n}(S_n - \mu)$ converge in distribution to a normal $\mathcal{N}(0, \sigma^2)$.
+
+\subsection*{Lists}
+
+You can make lists with automatic numbering \dots
+
+\begin{enumerate}[noitemsep] 
+\item Like this,
+\item and like this.
+\end{enumerate}
+\dots or bullet points \dots
+\begin{itemize}[noitemsep] 
+\item Like this,
+\item and like this.
+\end{itemize}
+\dots or with words and descriptions \dots
+\begin{description}
+\item[Word] Definition
+\item[Concept] Explanation
+\item[Idea] Text
+\end{description}
+
+\section*{Acknowledgments}
+
+Additional information can be given in the template, such as to not include funder information in the acknowledgments section.
+
+\bibliography{sample}
+
+\end{document}
