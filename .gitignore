@@ -16,4 +16,8 @@ scratch/*
 *.zip
 *~
 *.lnk
+*.jpg
+*.aux
+*.pdf
+*.log
 
