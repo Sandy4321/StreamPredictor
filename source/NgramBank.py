@@ -6,9 +6,7 @@ unique vectors management.
 """
 
 # constants
-import operator
 import numpy as np
-import keras
 
 starting_ngram_strength = 100
 feed_strength_gain = 100

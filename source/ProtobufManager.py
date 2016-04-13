@@ -1,18 +1,19 @@
 import progressbar
 from google.protobuf import text_format
 
-import Protobuf.pop_pb2
+import pop_pb2
 import PopManager
 import Pop
+import StreamPredictor
 
 
 class ProtobufManager:
     @staticmethod
     def tsv_to_protbuf(tsv_file):
         print 'Converting from tsv to protobuf the file ', tsv_file
-        pm =PopManager.PopManager()
-        pm.load_tsv(tsv_file)
-        buffy = ProtobufManager.PopManager_to_ProtobufPopManager(pm)
+        sp= StreamPredictor.StreamPredictor()
+        sp.pop_manager.load_tsv(tsv_file)
+        buffy = ProtobufManager.PopManager_to_ProtobufPopManager(sp.pop_manager)
         ProtobufManager.save_protobuf(buffy, tsv_file[:-4] + '.pb')
         ProtobufManager.save_protobuf_plain(buffy, tsv_file[:-4] + '.pb.txt')
 
@@ -29,13 +30,13 @@ class ProtobufManager:
         f.close()
 
     @staticmethod
-    def PopManager_to_ProtobufPopManager(pm):
+    def PopManager_to_ProtobufPopManager(sp):
         print 'Converting from PopManager to ProtobufPopManager'
-        buffy = Protobuf.pop_pb2.PopManager()
-        bar, i = setup_progressbar(len(pm.patterns_collection))
-        for pop in pm.patterns_collection.values():
+        buffy = pop_pb2.PopManager()
+        bar, i = setup_progressbar(len(sp.pop_manager.patterns_collection))
+        for pop in sp.pop_manager.patterns_collection.values():
             buffy_pop = buffy.pattern_collection.add()
-            ProtobufManager.pop_to_protopop(buffy_pop, pop)
+            pop_to_protopop(buffy_pop, pop)
             bar.update(i + 1)
             i += 1
         bar.finish()
@@ -57,49 +58,49 @@ class ProtobufManager:
     @staticmethod
     def protobuf_to_tsv(pbfile):
         print 'Converting from protobuf to tsv the file ', pbfile
-        pm = ProtobufManager.load_PopManager(pbfile)
-        pm.save_tsv(pbfile + '.tsv')
+        sp.pop_manager = ProtobufManager.load_PopManager(pbfile)
+        sp.pop_manager.save_tsv(pbfile + '.tsv')
 
     @staticmethod
     def load_PopManager(pbfile):
         buffy = ProtobufManager.load_buf(pbfile)
-        pm = ProtobufManager.protobuf_to_popmanager(buffy)
-        return pm
+        sp.pop_manager = ProtobufManager.protobuf_to_posp.pop_manageranager(buffy)
+        return sp.pop_manager
 
     @staticmethod
-    def protobuf_to_popmanager(buffy):
+    def protobuf_to_posp.pop_manageranager(buffy):
         bar, i = setup_progressbar(2*len(buffy.pattern_collection))
-        pm = PopManager.PopManager()
+        sp = StreamPredictor.StreamPredictor()
         for bp in buffy.pattern_collection:
             pop = Pop.Pop(bp.unrolled_pattern)
             pop.strength = bp.strength
-            pm.add_pop(pop)
+            sp.pop_manager.add_pop(pop)
             bar.update(i + 1)
             i += 1
 
         for bp in buffy.pattern_collection:
-            pop = pm.patterns_collection[bp.unrolled_pattern]
+            pop = sp.pop_manager.patterns_collection[bp.unrolled_pattern]
             if bp.first_component:
-                pop.first_component = pm.patterns_collection[bp.first_component]
+                pop.first_component = sp.pop_manager.patterns_collection[bp.first_component]
             if bp.second_component:
-                pop.second_component = pm.patterns_collection[bp.second_component]
+                pop.second_component = sp.pop_manager.patterns_collection[bp.second_component]
             for parent_i in bp.first_child_parents:
-                members = pm.patterns_collection[parent_i]
+                members = sp.pop_manager.patterns_collection[parent_i]
                 pop.first_child_parents.append(members)
             if bp.belongs_to:
-                pop.belongs_to_category = pm.patterns_collection[bp.belongs_to]
+                pop.belongs_to_category = sp.pop_manager.patterns_collection[bp.belongs_to]
             for cat in bp.category_members:
-                member = pm.patterns_collection[cat]
+                member = sp.pop_manager.patterns_collection[cat]
                 pop.members_of_category.append(member)
             bar.update(i + 1)
             i += 1
 
         bar.finish()
-        return pm
+        return sp
 
     @staticmethod
     def load_buf(pbfile):
-        buffy = Protobuf.pop_pb2.PopManager()
+        buffy = pop_pb2.PopManager()
         f = open(pbfile, "rb")
         buffy.ParseFromString(f.read())
         f.close()
@@ -107,7 +108,7 @@ class ProtobufManager:
 
     @staticmethod
     def load_protobuf_plain(filename):
-        buffy = Protobuf.pop_pb2.PopManager()
+        buffy = pop_pb2.PopManager()
         f = open(filename, "r")
         text_format.Parse(f.read(), buffy)
         f.close()

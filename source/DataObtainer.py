@@ -44,5 +44,5 @@ def clean_text(text, max_input_stream_length):
 
 
 if __name__ == '__main__':
-    text = get_random_book_local()
+    text = get_random_book_local('../data')
     print text

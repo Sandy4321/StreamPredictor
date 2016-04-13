@@ -31,3 +31,20 @@ Some of the methods of this class are
 
 1. *Train()* Takes a string as input and trains the model. Essentialy forms a collection of patterns.
 2. *Generate()* Using the patterns collection generates a stream of likely text. 
+
+
+
+
+## Todos:
+1. Graphs - done
+2. Multi step look ahead
+3. Single character prediction
+4. Measure of prediction , avg prediction rate
+5. Measure of interesting, find interesting stuff to learn.
+6. (done) Crawl web.
+7. Binary search in find next pattern()
+
+## Ideas:
+1. (done) Refactoring: See if instead of current components, new components which are stronger can be set. e.g. if pattern is ABCD = {ABC:D} but AB and CD are stronger then set ABCD = {AB:CD}
+2. same category, must split into sub patterns. e.g. if ABXC and ABYC are found to be similar then only X is similar to Y
+3. Create category only if the maximum probability < 1.1 * 1/N
