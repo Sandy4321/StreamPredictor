@@ -24,6 +24,10 @@ class PopManager:
         self.patterns_collection = dict()
         self.feed_strength_gain = 10000
 
+    def __repr__(self):
+        return 'Has ' + str(len(self.patterns_collection)) + ' few are ' + \
+               '-'.join([i.__repr__() for i in self.patterns_collection.values()[:5]])
+
     def add_pop_string(self, string):
         if string in self.patterns_collection:
             raise Exception(string + 'is already present')
@@ -98,7 +102,7 @@ class PopManager:
 
     def status(self):
         out_string = ''
-        for key, pop in sorted(self.patterns_collection.iteritems(), key=lambda ng: ng[1].strength):
+        for key, pop in sorted(self.patterns_collection.iteritems(), key=lambda ng: ng[0]):
             out_string += pop.__repr__()
         out_string += 'Status of Pattern of patterns with ' + str(len(self.patterns_collection)) + ' pops \n'
         return out_string

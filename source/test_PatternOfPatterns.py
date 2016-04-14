@@ -6,12 +6,14 @@ from Pop import Pop
 from StreamPredictor import StreamPredictor
 
 test_pb = '../PatternStore/test.pb'
+test_pb_plain = '../PatternStore/test.txt'
+training_text = 'cat hat mat bat sat in the barn'
 
 
 class TestPatternOfPatterns(TestCase):
     def get_sample(self):
         sample =StreamPredictor()
-        sample.train('cat hat mat bat sat in the barn')
+        sample.train(training_text)
         return sample
 
     def test_save(self):
@@ -31,12 +33,31 @@ class TestPatternOfPatterns(TestCase):
         sample.file_manager.save_pb(test_pb)
         self.assertTrue(os.path.isfile(test_pb))
 
+    def test_save_pb_plain(self):
+        sample = self.get_sample()
+        sample.file_manager.save_pb_plain(test_pb_plain)
+        self.assertTrue(os.path.isfile(test_pb_plain))
+
     def test_load_pb(self):
         self.test_save_pb()
         empty_sample = StreamPredictor()
         self.assertFalse(len(empty_sample.pop_manager.patterns_collection) > 10)
         empty_sample.file_manager.load_pb(test_pb)
         self.assertTrue(len(empty_sample.pop_manager.patterns_collection) > 10)
+
+    def test_load_pb_plain(self):
+        self.test_save_pb_plain()
+        empty_sample = StreamPredictor()
+        self.assertFalse(len(empty_sample.pop_manager.patterns_collection) > 10)
+        empty_sample.file_manager.load_pb_plain(test_pb_plain)
+        self.assertTrue(len(empty_sample.pop_manager.patterns_collection) > 10)
+
+    def test_train_increases_patterns(self):
+        sample = self.get_sample()
+        pattern_count = len(sample.pop_manager.patterns_collection)
+        sample.train(training_text)
+        self.assertGreater(len(sample.pop_manager.patterns_collection), pattern_count)
+
 
     def test_save_load_equal(self):
         sample = self.get_sample()
@@ -80,6 +101,11 @@ class TestPatternOfPatterns(TestCase):
         strawberry.belongs_to_category = fruit
         sample.pop_manager.join_pattern(cat_ate_, banana, found_pattern_feed_ratio=1)
         self.assertTrue((cat_ate_.unrolled_pattern + fruit.unrolled_pattern) in sample.pop_manager.patterns_collection)
+
+    def test_generate_stream(self):
+        sample = self.get_sample()
+        generated = sample.generate_stream(10)
+        self.assertGreater(len(generated), 9)
 
     # def test_generailze(self):
     #     sp = StreamPredictor()
@@ -153,3 +179,8 @@ class TestPatternOfPatterns(TestCase):
         self.assertTrue(abxe.has_common_child(abyd))
         self.assertTrue(ab.has_common_child(ab))
         self.assertFalse(xe.has_common_child(yd))
+
+    def test_pop_manager_repr(self):
+        sample = self.get_sample()
+        spm = sample.pop_manager.__repr__()
+        self.assertGreater(len(spm), 10)

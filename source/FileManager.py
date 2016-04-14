@@ -33,7 +33,7 @@ class FileManager():
         ProtobufManager.ProtobufManager.save_protobuf(buf, filename)
 
     def save_pb_plain(self, filename):
-        buf = ProtobufManager.ProtobufManager.PopManager_to_ProtobufPopManager(self)
+        buf = ProtobufManager.ProtobufManager.PopManager_to_ProtobufPopManager(self.pop_manager)
         ProtobufManager.ProtobufManager.save_protobuf_plain(buf, filename)
 
     def load_tsv(self, filename):

@@ -20,7 +20,7 @@ class StreamPredictor:
         input_length = self.pop_manager.setup_train(string)
         previous_pop = self.pop_manager.patterns_collection[string[0]]
         i = 1
-        while i < input_length - maximum_pattern_length:
+        while i < input_length:
             current_pop = self.pop_manager.find_next_pattern(string[i:i + maximum_pattern_length])
             self.pop_manager.join_pattern(previous_pop, current_pop, found_pattern_feed_ratio=1)
             previous_pop = current_pop
