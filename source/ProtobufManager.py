@@ -1,5 +1,5 @@
 import progressbar
-from protobuf import text_format
+from google.protobuf import text_format
 
 import pop_pb2
 import PopManager
@@ -12,7 +12,7 @@ class ProtobufManager:
     def tsv_to_protbuf(tsv_file):
         print 'Converting from tsv to protobuf the file ', tsv_file
         sp= StreamPredictor.StreamPredictor()
-        sp.pop_manager.load_tsv(tsv_file)
+        sp.file_manager.load_tsv(tsv_file)
         buffy = ProtobufManager.PopManager_to_ProtobufPopManager(sp.pop_manager)
         ProtobufManager.save_protobuf(buffy, tsv_file[:-4] + '.pb')
         ProtobufManager.save_protobuf_plain(buffy, tsv_file[:-4] + '.pb.txt')
@@ -30,11 +30,11 @@ class ProtobufManager:
         f.close()
 
     @staticmethod
-    def PopManager_to_ProtobufPopManager(sp):
+    def PopManager_to_ProtobufPopManager(pop_manager):
         print 'Converting from PopManager to ProtobufPopManager'
         buffy = pop_pb2.PopManager()
-        bar, i = setup_progressbar(len(sp.pop_manager.patterns_collection))
-        for pop in sp.pop_manager.patterns_collection.values():
+        bar, i = setup_progressbar(len(pop_manager.patterns_collection))
+        for pop in pop_manager.patterns_collection.values():
             buffy_pop = buffy.pattern_collection.add()
             ProtobufManager.pop_to_protopop(buffy_pop, pop)
             bar.update(i + 1)

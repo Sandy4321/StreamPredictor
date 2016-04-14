@@ -8,11 +8,11 @@ class FileManager():
     """
 
     def __init__(self, pm):
-        self.patterns_collection = pm
+        self.pop_manager = pm
 
     def save_tsv(self, filename):
         save_string = 'pattern, strength, component1, component2, parents\n'
-        for key, pop in sorted(self.patterns_collection.iteritems(), key=lambda ng: ng[1].strength):
+        for key, pop in sorted(self.pop_manager.patterns_collection.iteritems(), key=lambda ng: ng[1].strength):
             save_string += key + '\t' + str(pop.strength) + '\t'
             if pop.first_component:
                 save_string += pop.first_component.unrolled_pattern
@@ -29,7 +29,7 @@ class FileManager():
         print 'Saved file ' + filename
 
     def save_pb(self, filename):
-        buf = ProtobufManager.ProtobufManager.PopManager_to_ProtobufPopManager(self.patterns_collection)
+        buf = ProtobufManager.ProtobufManager.PopManager_to_ProtobufPopManager(self.pop_manager)
         ProtobufManager.ProtobufManager.save_protobuf(buf, filename)
 
     def save_pb_plain(self, filename):
@@ -50,23 +50,24 @@ class FileManager():
             for lines in lines_to_read:
                 elements = lines.split('\t')
                 key = elements[0]
-                self.patterns_collection[key] = Pop(key)
-                self.patterns_collection[key].strength = int(elements[1])
+                self.pop_manager.patterns_collection[key] = Pop(key)
+                self.pop_manager.patterns_collection[key].strength = int(elements[1])
             for lines in all_lines[1:]:
                 elements = lines.strip('\n').split('\t')
                 key = elements[0]
                 if elements[2] is not '' and elements[3] is not '':
-                    self.patterns_collection.set_components_from_string(self.patterns_collection[key], elements[2], elements[3])
+                    self.pop_manager.set_components_from_string(self.pop_manager.patterns_collection[key], elements[2], elements[3])
                 if elements[4] != '':
                     for parent_i in elements[4:]:
-                        if parent_i != '' and parent_i in self.patterns_collection:
-                            self.patterns_collection[key].first_child_parents.append(self.patterns_collection[parent_i])
-        print 'Loaded file ' + filename + ' with number of patterns = ' + str(len(self.patterns_collection))
+                        if parent_i != '' and parent_i in self.pop_manager.patterns_collection:
+                            self.pop_manager.patterns_collection[key].first_child_parents.append(self.pop_manager.patterns_collection[parent_i])
+        print 'Loaded file ' + filename + ' with number of patterns = ' + str(len(self.pop_manager.patterns_collection))
 
     def load_pb(self, filename):
-        self.patterns_collection = ProtobufManager.ProtobufManager.load_PopManager(filename).patterns_collection
+        pop_manager = ProtobufManager.ProtobufManager.load_PopManager(filename)
+        self.pop_manager.patterns_collection = pop_manager.patterns_collection
 
     def load_pb_plain(self, filename):
         buffy = ProtobufManager.ProtobufManager.load_protobuf_plain(filename)
-        pm = ProtobufManager.ProtobufManager.protobuf_to_popmanager(buffy)
-        self.patterns_collection = pm.patterns_collection
+        pm = ProtobufManager.ProtobufManager.protobuf_to_pop_manager(buffy)
+        self.pop_manager.patterns_collection = pm.patterns_collection

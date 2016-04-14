@@ -5,7 +5,6 @@ import DataObtainer
 from Pop import Pop
 from StreamPredictor import StreamPredictor
 
-test_pattern_file = '../PatternStore/test.tsv'
 test_pb = '../PatternStore/test.pb'
 
 
@@ -17,20 +16,20 @@ class TestPatternOfPatterns(TestCase):
 
     def test_save(self):
         sample = self.get_sample()
-        sample.file_manager.save_tsv(test_pattern_file)
-        self.assertTrue(os.path.isfile(test_pattern_file))
+        sample.file_manager.save_tsv(test_pb)
+        self.assertTrue(os.path.isfile(test_pb))
 
     def test_load(self):
         self.test_save()
         empty_sample = StreamPredictor()
         self.assertFalse(len(empty_sample.pop_manager.patterns_collection) > 10)
-        empty_sample.file_manager.load_tsv(test_pattern_file)
+        empty_sample.file_manager.load_tsv(test_pb)
         self.assertTrue(len(empty_sample.pop_manager.patterns_collection) > 10)
 
     def test_save_pb(self):
         sample = self.get_sample()
         sample.file_manager.save_pb(test_pb)
-        self.assertTrue(os.path.isfile(test_pattern_file))
+        self.assertTrue(os.path.isfile(test_pb))
 
     def test_load_pb(self):
         self.test_save_pb()
@@ -43,9 +42,9 @@ class TestPatternOfPatterns(TestCase):
         sample = self.get_sample()
         sample.pop_manager.patterns_collection['karma'] = Pop('karma')
         first_string = sample.pop_manager.status()
-        sample.file_manager.save_tsv(test_pattern_file)
+        sample.file_manager.save_pb(test_pb)
         second = StreamPredictor()
-        second.pop_manager.load_tsv(test_pattern_file)
+        second.file_manager.load_pb(test_pb)
         second_string = second.pop_manager.status()
         self.assertEqual(first_string, second_string)
 
@@ -82,17 +81,17 @@ class TestPatternOfPatterns(TestCase):
         sample.pop_manager.join_pattern(cat_ate_, banana, found_pattern_feed_ratio=1)
         self.assertTrue((cat_ate_.unrolled_pattern + fruit.unrolled_pattern) in sample.pop_manager.patterns_collection)
 
-    def test_generailze(self):
-        sp = StreamPredictor()
-        sp.pop_manager.add_pop_string('apple')
-        sp.pop_manager.add_pop_string('banana')
-        text = DataObtainer.get_clean_text_from_file('data/Experimental/case.txt', 100000)
-        sp.pop_manager.train(text)
-        sp.pop_manager.generalize()
-        print [i.belongs_to_category.__repr__() for i in sp.pop_manager.patterns_collection.values() if
-               i.belongs_to_category is not None]
-        self.assertTrue(sp.pop_manager.patterns_collection['apple'].
-                        belongs_to_category is sp.pop_manager.patterns_collection['banana'].belongs_to_category)
+    # def test_generailze(self):
+    #     sp = StreamPredictor()
+    #     sp.pop_manager.add_pop_string('apple')
+    #     sp.pop_manager.add_pop_string('banana')
+    #     text = DataObtainer.get_clean_text_from_file('data/Experimental/case.txt', 100000)
+    #     sp.pop_manager.train(text)
+    #     sp.pop_manager.generalize()
+    #     print [i.belongs_to_category.__repr__() for i in sp.pop_manager.patterns_collection.values() if
+    #            i.belongs_to_category is not None]
+    #     self.assertTrue(sp.pop_manager.patterns_collection['apple'].
+    #                     belongs_to_category is sp.pop_manager.patterns_collection['banana'].belongs_to_category)
 
     def test_change_component(self):
         a, ab, abc, sp, b, c, bc = self.setup_simple_patterns()

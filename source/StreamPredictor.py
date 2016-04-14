@@ -12,7 +12,7 @@ class StreamPredictor:
             self.pop_manager = pm
         else:
             self.pop_manager = PopManager()
-        self.file_manager = FileManager(self.pop_manager.patterns_collection)
+        self.file_manager = FileManager(self.pop_manager)
         self.generalizer = Generalizer(self.pop_manager.patterns_collection, self.pop_manager.feed_strength_gain)
 
     def train(self, string, generalize=False):
