@@ -1,5 +1,5 @@
 import progressbar
-from google.protobuf import text_format
+from protobuf import text_format
 
 import pop_pb2
 import PopManager
@@ -36,7 +36,7 @@ class ProtobufManager:
         bar, i = setup_progressbar(len(sp.pop_manager.patterns_collection))
         for pop in sp.pop_manager.patterns_collection.values():
             buffy_pop = buffy.pattern_collection.add()
-            pop_to_protopop(buffy_pop, pop)
+            ProtobufManager.pop_to_protopop(buffy_pop, pop)
             bar.update(i + 1)
             i += 1
         bar.finish()
@@ -58,45 +58,44 @@ class ProtobufManager:
     @staticmethod
     def protobuf_to_tsv(pbfile):
         print 'Converting from protobuf to tsv the file ', pbfile
-        sp.pop_manager = ProtobufManager.load_PopManager(pbfile)
-        sp.pop_manager.save_tsv(pbfile + '.tsv')
+        pm = ProtobufManager.load_PopManager(pbfile)
+        sp = StreamPredictor.StreamPredictor(pm)
+        sp.file_manager.save_tsv(pbfile + '.tsv')
 
     @staticmethod
     def load_PopManager(pbfile):
         buffy = ProtobufManager.load_buf(pbfile)
-        sp.pop_manager = ProtobufManager.protobuf_to_posp.pop_manageranager(buffy)
-        return sp.pop_manager
+        pop_manager = ProtobufManager.protobuf_to_pop_manager(buffy)
+        return pop_manager
 
     @staticmethod
-    def protobuf_to_posp.pop_manageranager(buffy):
+    def protobuf_to_pop_manager(buffy):
         bar, i = setup_progressbar(2*len(buffy.pattern_collection))
-        sp = StreamPredictor.StreamPredictor()
+        pop_manager = PopManager.PopManager()
         for bp in buffy.pattern_collection:
             pop = Pop.Pop(bp.unrolled_pattern)
             pop.strength = bp.strength
-            sp.pop_manager.add_pop(pop)
+            pop_manager.add_pop(pop)
             bar.update(i + 1)
             i += 1
-
         for bp in buffy.pattern_collection:
-            pop = sp.pop_manager.patterns_collection[bp.unrolled_pattern]
+            pop = pop_manager.patterns_collection[bp.unrolled_pattern]
             if bp.first_component:
-                pop.first_component = sp.pop_manager.patterns_collection[bp.first_component]
+                pop.first_component = pop_manager.patterns_collection[bp.first_component]
             if bp.second_component:
-                pop.second_component = sp.pop_manager.patterns_collection[bp.second_component]
+                pop.second_component = pop_manager.patterns_collection[bp.second_component]
             for parent_i in bp.first_child_parents:
-                members = sp.pop_manager.patterns_collection[parent_i]
+                members = pop_manager.patterns_collection[parent_i]
                 pop.first_child_parents.append(members)
             if bp.belongs_to:
-                pop.belongs_to_category = sp.pop_manager.patterns_collection[bp.belongs_to]
+                pop.belongs_to_category = pop_manager.patterns_collection[bp.belongs_to]
             for cat in bp.category_members:
-                member = sp.pop_manager.patterns_collection[cat]
+                member = pop_manager.patterns_collection[cat]
                 pop.members_of_category.append(member)
             bar.update(i + 1)
             i += 1
-
         bar.finish()
-        return sp
+        return pop_manager
 
     @staticmethod
     def load_buf(pbfile):
@@ -124,5 +123,5 @@ def setup_progressbar(length):
 
 if __name__ == '__main__':
     print 'File manager'
-    ProtobufManager.tsv_to_protbuf('PatternStore/test.tsv')
-    ProtobufManager.protobuf_to_tsv('PatternStore/test.pb')
+    ProtobufManager.tsv_to_protbuf('../PatternStore/test.tsv')
+    ProtobufManager.protobuf_to_tsv('../PatternStore/test.pb')

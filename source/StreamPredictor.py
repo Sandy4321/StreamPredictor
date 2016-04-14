@@ -7,8 +7,11 @@ import MainFunctions
 
 
 class StreamPredictor:
-    def __init__(self):
-        self.pop_manager = PopManager()
+    def __init__(self, pm=None):
+        if pm:
+            self.pop_manager = pm
+        else:
+            self.pop_manager = PopManager()
         self.file_manager = FileManager(self.pop_manager.patterns_collection)
         self.generalizer = Generalizer(self.pop_manager.patterns_collection, self.pop_manager.feed_strength_gain)
 
