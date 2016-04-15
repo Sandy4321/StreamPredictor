@@ -63,7 +63,7 @@ class PopManager:
     def perplexity_experiment(self, string):
         words = nltk.word_tokenize(string)
         word_count = len(words)
-        train_count = int(0.75 * word_count)
+        train_count = int(0.9 * word_count)
         train_words = words[:train_count]
         test_words = words[train_count:]
         self.train_token(train_words)
@@ -112,21 +112,19 @@ class PopManager:
             self.patterns_collection[word] = Pop(word)
             self.patterns_collection[word].feed(self.feed_strength_gain)
         print 'There are ', len(unique_words), ' unique words.'
-        previous_pop = self.patterns_collection.values()[0]
-        i = 1
         perplexity = 1
         perplexity_list = []
-        N = 0
-        while i < word_count:
-            next_words, probabilites = self.next_word_distribution(words[:i])
-            actual_next_word = words[i]
+        N = 1
+        while N < word_count:
+            next_words, probabilites = self.next_word_distribution(words[:N])
+            actual_next_word = words[N]
             if actual_next_word in next_words:
                 chosen_prob = probabilites[next_words.index(actual_next_word)]
             else:
                 chosen_prob = 0.01
             perplexity = perplexity * (1/chosen_prob)
-            N += 1
             perplexity_list.append(pow(perplexity, 1/float(N)))
+            N += 1
         perplexity = pow(perplexity, 1/float(N))
         print 'Final perplexity is ', perplexity
         return perplexity_list
