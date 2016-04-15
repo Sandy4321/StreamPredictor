@@ -1,9 +1,9 @@
 import numpy as np
 
-from PopManager import PopManager
-from FileManager import FileManager
-from Generalizer import Generalizer
-import MainFunctions
+import PopManager
+import FileManager
+import Generalizer
+import DataObtainer
 
 
 class StreamPredictor:
@@ -11,9 +11,10 @@ class StreamPredictor:
         if pm:
             self.pop_manager = pm
         else:
-            self.pop_manager = PopManager()
-        self.file_manager = FileManager(self.pop_manager)
-        self.generalizer = Generalizer(self.pop_manager.patterns_collection, self.pop_manager.feed_strength_gain)
+            self.pop_manager = PopManager.PopManager()
+        self.file_manager = FileManager.FileManager(self.pop_manager)
+        self.generalizer = Generalizer.Generalizer(self.pop_manager.patterns_collection,
+                                                   self.pop_manager.feed_strength_gain)
 
     def train(self, string, generalize=False):
         maximum_pattern_length = self.pop_manager.maximum_pattern_length
@@ -51,4 +52,6 @@ class StreamPredictor:
 
 
 if __name__ == '__main__':
-    MainFunctions.sanity_check_run()
+    sp = StreamPredictor()
+    text = DataObtainer.get_clean_text_from_file('../data/pride.txt', 1000000)
+    sp.pop_manager.perplexity_experiment(text)

@@ -9,13 +9,16 @@ Patterns decay over time, if not seen are culled. Patterns are fed if they are s
 half of them. Kind of adaptive coding.
 """
 import numpy as np
+import nltk
 
 from Pop import Pop
+import matplotlib.pyplot as plt
 
 
 class PopManager:
     def __init__(self):
         #  Constants
+        self.maximum_word_count = 40
         self.max_input_stream_length = 10000000
         self.maximum_pattern_length = 40  # maximum pattern length
         self.required_repeats = 5  # if seen less than this many times, patterns won't survive on the long run.
@@ -56,6 +59,88 @@ class PopManager:
             self.patterns_collection[char] = Pop(char)
             self.patterns_collection[char].feed(self.feed_strength_gain)
         return input_length
+
+    def perplexity_experiment(self, string):
+        words = nltk.word_tokenize(string)
+        word_count = len(words)
+        train_count = int(0.75 * word_count)
+        train_words = words[:train_count]
+        test_words = words[train_count:]
+        self.train_token(train_words)
+        perplexity_list = self.calculate_perplexity(test_words)
+        plt.plot(perplexity_list)
+
+    def train_token(self,words):
+        word_count = len(words)
+        print 'Started training with word count = ' + str(word_count)
+        unique_words = set(words)
+        for word in unique_words:
+            self.patterns_collection[word] = Pop(word)
+            self.patterns_collection[word].feed(self.feed_strength_gain)
+        print 'There are ', len(unique_words), ' unique words.'
+        previous_pop = self.patterns_collection.values()[0]
+        i = 1
+        while i < word_count:
+            current_pop, increment = self.find_next_word(words[i:i + self.maximum_word_count])
+            self.join_pattern(previous_pop, current_pop, found_pattern_feed_ratio=1)
+            previous_pop = current_pop
+            i += increment
+            if i % 1000 == 0 and i > self.feed_strength_gain:
+                self.refactor()
+                self.cull(0)
+        self.refactor()
+        self.cull(0)
+        return self.patterns_collection
+
+    def find_next_word(self, words_list):
+        """
+        Returns the longest pattern in the given word.
+        :param long_word: a string
+        :return: PoP(), longest pattern from start.
+        """
+        for j in range(self.maximum_word_count, 0, -1):  # how many chars to look ahead
+            current_word = ''.join(words_list[:j])
+            if current_word in self.patterns_collection:
+                return self.patterns_collection[current_word], j
+        return words_list[0], 1
+
+    def calculate_perplexity(self, words):
+        word_count = len(words)
+        print 'Started calculating perplexity with word count = ' + str(word_count)
+        unique_words = set(words)
+        for word in unique_words:
+            self.patterns_collection[word] = Pop(word)
+            self.patterns_collection[word].feed(self.feed_strength_gain)
+        print 'There are ', len(unique_words), ' unique words.'
+        previous_pop = self.patterns_collection.values()[0]
+        i = 1
+        perplexity = 1
+        perplexity_list = []
+        N = 0
+        while i < word_count:
+            next_words, probabilites = self.next_word_distribution(words[:i])
+            actual_next_word = words[i]
+            if actual_next_word in next_words:
+                chosen_prob = probabilites[next_words.index(actual_next_word)]
+            else:
+                chosen_prob = 0.01
+            perplexity = perplexity * (1/chosen_prob)
+            N += 1
+            perplexity_list.append(pow(perplexity, 1/float(N)))
+        perplexity = pow(perplexity, 1/float(N))
+        print 'Final perplexity is ', perplexity
+        return perplexity_list
+
+    def next_word_distribution(self, previous_words_list):
+        start = max(0, len(previous_words_list) - self.maximum_word_count)
+        for j in range(start, len(previous_words_list)):
+            current_word = ''.join(previous_words_list[j:])
+            if current_word in self.patterns_collection:
+                current_pop = self.patterns_collection[current_word]
+                words, probabilities = current_pop.get_next_smallest_distribution()
+                return words, probabilities
+        print 'Warning. Nothing after ', ''.join(previous_words_list)
+        return previous_words_list[0], np.array([1])
 
     def join_pattern(self, first_pattern, second_pattern, found_pattern_feed_ratio):
         new_pattern = first_pattern.unrolled_pattern + second_pattern.unrolled_pattern

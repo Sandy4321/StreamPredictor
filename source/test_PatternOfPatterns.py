@@ -150,9 +150,17 @@ class TestPatternOfPatterns(TestCase):
         self.assertFalse(abc.is_child(c))
 
     def test_has_common_child(self):
+        sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
+        self.assertTrue(abxe.has_common_child(abyd))
+        self.assertTrue(ab.has_common_child(ab))
+        self.assertFalse(xe.has_common_child(yd))
+
+    def form_simple_tree(self):
         sp = StreamPredictor()
         abxe = Pop('abxe')
+        abxe.strength = 600
         abyd = Pop('abyd')
+        abyd.strength = 400
         ab = Pop('ab')
         xe = Pop('xe')
         yd = Pop('yd')
@@ -176,11 +184,27 @@ class TestPatternOfPatterns(TestCase):
         yd.set_components(y, d)
         abxe.set_components(ab, xe)
         abyd.set_components(ab, yd)
-        self.assertTrue(abxe.has_common_child(abyd))
-        self.assertTrue(ab.has_common_child(ab))
-        self.assertFalse(xe.has_common_child(yd))
+        return sp, ab, abxe, abyd, xe, yd
 
     def test_pop_manager_repr(self):
         sample = self.get_sample()
         spm = sample.pop_manager.__repr__()
         self.assertGreater(len(spm), 10)
+
+    def test_pop_get_next_prediction(self):
+        sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
+        words, probabilites = ab.get_next_distribution()
+        self.assertTrue(len(words) > 1)
+        self.assertEqual(probabilites[0], 0.6)
+        self.assertEqual(probabilites[1], 0.4)
+        self.assertTrue('xe' in words)
+        self.assertTrue('yd' in words)
+
+    def test_pop_get_smallest_next_prediction(self):
+        sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
+        words, probabilites = ab.get_next_smallest_distribution()
+        self.assertTrue(len(words) > 1)
+        self.assertEqual(probabilites[0], 0.6)
+        self.assertEqual(probabilites[1], 0.4)
+        self.assertTrue('x' in words)
+        self.assertTrue('y' in words)

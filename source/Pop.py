@@ -87,6 +87,23 @@ class Pop:
         probabilities = np.array([float(i) / total for i in strengths])
         return next_words, probabilities
 
+    def get_next_smallest_distribution(self):
+        """
+        Returns the smallest pattern that will come next.
+        """
+        next_words = []
+        strengths = []
+        for parent_i in self.first_child_parents:
+            if parent_i.second_component:
+                next_pop = parent_i.second_component
+                while next_pop.first_component:
+                    next_pop = next_pop.first_component
+                next_words.append(next_pop.get_sample())
+                strengths.append(max(parent_i.strength, 0))
+        total = sum(strengths)
+        probabilities = np.array([float(i) / total for i in strengths])
+        return next_words, probabilities
+
     def has_common_child(self, other_pop):
         if not (self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
             return self.unrolled_pattern == other_pop.unrolled_pattern

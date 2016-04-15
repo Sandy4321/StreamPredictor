@@ -43,6 +43,8 @@ Some of the methods of this class are
 5. Measure of interesting, find interesting stuff to learn.
 6. (done) Crawl web.
 7. Binary search in find next pattern()
+8. Perplexity
+9. Token based
 
 ## Ideas:
 1. (done) Refactoring: See if instead of current components, new components which are stronger can be set. e.g. if pattern is ABCD = {ABC:D} but AB and CD are stronger then set ABCD = {AB:CD}
