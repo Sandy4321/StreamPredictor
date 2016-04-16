@@ -16,6 +16,7 @@ def gutenberg_random_book():
             print 'Didnt get book, waiting for some time, seconds = ' + str(10 + book_number / 10)
             time.sleep(10 + book_number / 10)
 
+
 def is_english(text):
     english_words = ['here', 'there', 'where', 'some', 'and', 'but']
     for word in english_words:
@@ -23,15 +24,18 @@ def is_english(text):
             return False
     return True
 
+
 def get_random_book_local(folder):
     file = np.random.choice(os.listdir(folder))
     with open(folder + file) as opened_file:
         return opened_file.read()
 
+
 def get_clean_text_from_file(file, max_input_stream_length):
     with open(file) as opened_file:
         text = opened_file.read()
         return clean_text(text, max_input_stream_length)
+
 
 def clean_text(text, max_input_stream_length):
     text = text.replace('\n', ' ')

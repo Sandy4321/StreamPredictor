@@ -208,3 +208,34 @@ class TestPatternOfPatterns(TestCase):
         self.assertEqual(probabilites[1], 0.4)
         self.assertTrue('x' in words)
         self.assertTrue('y' in words)
+
+    def test_perplexity_step(self):
+        sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
+        words = ['ab', 'x']
+        N = 1
+        log_running_perplexity = 0
+        perplexity_list = []
+        abxe.strength = 500
+        abyd.strength = 500
+        N, log_running_perplexity = sp.pop_manager.perplexity_step(N, log_running_perplexity, perplexity_list, words)
+        self.assertEqual(N, 2)
+        self.assertAlmostEqual(perplexity_list[0], 2, places=2)
+
+    def test_train_token_step(self):
+        sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
+        words = ['ab', 'd']
+        N = 1
+        N = sp.pop_manager.train_token_step(N, ab, words)
+        self.assertEqual(N, 2)
+        self.assertTrue('abd' in sp.pop_manager.patterns_collection)
+
+    def test_find_next_word(self):
+        sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
+        words = ['ab', 'd']
+        current_pop, increment =sp.pop_manager.find_next_word(words[1:])
+        self.assertEqual(current_pop.unrolled_pattern, 'd')
+        self.assertEqual(increment, 1)
+        words = ['ab', 'x','e']
+        current_pop, increment =sp.pop_manager.find_next_word(words[1:])
+        self.assertEqual(current_pop.unrolled_pattern, 'xe')
+        self.assertEqual(increment, 2)

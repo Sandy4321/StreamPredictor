@@ -76,13 +76,7 @@ class PopManager:
         previous_pop = self.patterns_collection.values()[0]
         i = 1
         while i < word_count:
-            current_pop, increment = self.find_next_word(words[i:i + self.maximum_word_count])
-            self.join_pattern(previous_pop, current_pop, found_pattern_feed_ratio=1)
-            previous_pop = current_pop
-            i += increment
-            if i % 1000 == 0 and i > self.feed_strength_gain:
-                self.refactor()
-                self.cull(0)
+            i = self.train_token_step(i, previous_pop, words)
         self.refactor()
         self.cull(0)
         return self.patterns_collection
@@ -93,7 +87,8 @@ class PopManager:
         :param long_word: a string
         :return: PoP(), longest pattern from start.
         """
-        for j in range(self.maximum_word_count, 0, -1):  # how many chars to look ahead
+        end = min(len(words_list), self.maximum_word_count)
+        for j in range(end, 0, -1):  # how many chars to look ahead
             current_word = ''.join(words_list[:j])
             if current_word in self.patterns_collection:
                 return self.patterns_collection[current_word], j
@@ -106,19 +101,52 @@ class PopManager:
         perplexity_list = []
         N = 1
         while N < word_count:
-            next_words, probabilites = self.next_word_distribution(words[:N])
-            actual_next_word = words[N]
-            if actual_next_word in next_words:
-                chosen_prob = probabilites[next_words.index(actual_next_word)]
-            else:
-                chosen_prob = 0.001
-            log_running_perplexity -= np.log2(chosen_prob)
-            perplexity_list.append(2 ** (log_running_perplexity * (1 / float(N))))
-            N += 1
+            N, log_running_perplexity = self.perplexity_step(N, log_running_perplexity, perplexity_list, words[:N])
         final_log_perplexity = log_running_perplexity * (1 / float(N))
         final_perplexity = 2 ** final_log_perplexity
         print 'Final perplexity is ', final_perplexity
         return perplexity_list
+
+    def train_token_and_perplexity(self, words):
+        word_count = self.add_words_to_patterns_collection(words)
+        print 'Started training and calculating perplexity with ', str(word_count), ' words.'
+        previous_pop = self.patterns_collection.values()[0]
+        log_running_perplexity = 0
+        perplexity_list = []
+        i = 1
+        N = 1
+        while i < word_count:
+            i = self.train_token_step(i, previous_pop, words)
+            N, log_running_perplexity = self.perplexity_step(N, log_running_perplexity, perplexity_list, words[:i])
+        self.refactor()
+        self.cull(0)
+
+        final_perplexity = perplexity_list[-1]
+        print 'Final perplexity is ', final_perplexity
+        return perplexity_list
+
+    def perplexity_step(self, N, log_running_perplexity, perplexity_list, words):
+        next_words, probabilites = self.next_word_distribution(words[:-1])
+        actual_next_word = words[-1]
+        if actual_next_word in next_words:
+            chosen_prob = probabilites[next_words.index(actual_next_word)]
+        else:
+            chosen_prob = 0.001
+        log_running_perplexity -= np.log2(chosen_prob)
+        perplexity_list.append(2 ** (log_running_perplexity * (1 / float(N))))
+        N += 1
+        return N, log_running_perplexity
+
+    def train_token_step(self, index, previous_pop, words):
+        """ A single step in training. Joins patterns, updates counter i"""
+        current_pop, increment = self.find_next_word(words[index:index + self.maximum_word_count])
+        self.join_pattern(previous_pop, current_pop, found_pattern_feed_ratio=1)
+        previous_pop = current_pop
+        index += increment
+        if index % 1000 == 0 and index > self.feed_strength_gain:
+            self.refactor()
+            self.cull(0)
+        return index
 
     def add_words_to_patterns_collection(self, words):
         word_count = len(words)
@@ -127,7 +155,7 @@ class PopManager:
             if word not in self.patterns_collection:
                 self.patterns_collection[word] = Pop(word)
                 self.patterns_collection[word].feed(self.feed_strength_gain)
-        print 'There are ', len(unique_words), ' unique words.'
+        print 'There are ', len(unique_words), ' words in vocabulary.'
         return word_count
 
     def next_word_distribution(self, previous_words_list):

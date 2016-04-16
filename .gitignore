@@ -8,7 +8,6 @@
 data/*
 PatternStore/*
 output/*
-notebook/*
 scratch/*
 *.csv
 *.swp
