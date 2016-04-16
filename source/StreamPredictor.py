@@ -51,7 +51,3 @@ class StreamPredictor:
         return generated_output
 
 
-if __name__ == '__main__':
-    sp = StreamPredictor()
-    text = DataObtainer.get_clean_text_from_file('../data/pride.txt', 1000000)
-    sp.pop_manager.perplexity_experiment(text)

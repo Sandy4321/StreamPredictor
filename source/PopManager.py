@@ -12,20 +12,19 @@ import numpy as np
 import nltk
 
 from Pop import Pop
-import matplotlib.pyplot as plt
 
 
 class PopManager:
     def __init__(self):
         #  Constants
         self.maximum_word_count = 40
-        self.max_input_stream_length = 10000000
+        self.max_input_stream_length = 10 ** 7
         self.maximum_pattern_length = 40  # maximum pattern length
         self.required_repeats = 5  # if seen less than this many times, patterns won't survive on the long run.
         self.feed_ratio_parent_category = 0.5
         #  Fields
         self.patterns_collection = dict()
-        self.feed_strength_gain = 10000
+        self.feed_strength_gain = 10 ** 5
 
     def __repr__(self):
         return 'Has ' + str(len(self.patterns_collection)) + ' few are ' + \
@@ -60,23 +59,14 @@ class PopManager:
             self.patterns_collection[char].feed(self.feed_strength_gain)
         return input_length
 
-    def perplexity_experiment(self, string):
-        words = nltk.word_tokenize(string)
-        word_count = len(words)
-        train_count = int(0.99 * word_count)
-        train_words = words[:train_count]
-        test_words = words[train_count:]
-        self.train_token(train_words)
-        perplexity_list = self.calculate_perplexity(test_words)
-        plt.plot(perplexity_list)
-
     def train_token(self, words):
         word_count = self.add_words_to_patterns_collection(words)
         print 'Started training with word count = ' + str(word_count)
         previous_pop = self.patterns_collection.values()[0]
         i = 1
         while i < word_count:
-            i = self.train_token_step(i, previous_pop, words)
+            i, current_pop = self.train_token_step(i, previous_pop, words[i:i + self.maximum_word_count])
+            previous_pop = current_pop
         self.refactor()
         self.cull(0)
         return self.patterns_collection
@@ -100,8 +90,9 @@ class PopManager:
         log_running_perplexity = 0
         perplexity_list = []
         N = 1
-        while N < word_count:
-            N, log_running_perplexity = self.perplexity_step(N, log_running_perplexity, perplexity_list, words[:N])
+        while N < word_count + 1:
+            N, log_running_perplexity = self.perplexity_step(N, log_running_perplexity, perplexity_list, words[:N],
+                                                             words[N])
         final_log_perplexity = log_running_perplexity * (1 / float(N))
         final_perplexity = 2 ** final_log_perplexity
         print 'Final perplexity is ', final_perplexity
@@ -115,38 +106,39 @@ class PopManager:
         perplexity_list = []
         i = 1
         N = 1
-        while i < word_count:
-            i = self.train_token_step(i, previous_pop, words)
-            N, log_running_perplexity = self.perplexity_step(N, log_running_perplexity, perplexity_list, words[:i])
+        while i < word_count - 1:
+            i, current_pop = self.train_token_step(i, previous_pop, words[i:i + self.maximum_word_count])
+            previous_pop = current_pop
+            # calculate perplexity for next word
+            N, log_running_perplexity = self.perplexity_step(N, log_running_perplexity, perplexity_list, words[:i],
+                                                             words[i])
         self.refactor()
         self.cull(0)
-
         final_perplexity = perplexity_list[-1]
         print 'Final perplexity is ', final_perplexity
         return perplexity_list
 
-    def perplexity_step(self, N, log_running_perplexity, perplexity_list, words):
-        next_words, probabilites = self.next_word_distribution(words[:-1])
-        actual_next_word = words[-1]
+    def perplexity_step(self, N, log_running_perplexity, perplexity_list, previous_words, actual_next_word):
+        next_words, probabilities = self.next_word_distribution(previous_words)
         if actual_next_word in next_words:
-            chosen_prob = probabilites[next_words.index(actual_next_word)]
+            chosen_prob = probabilities[next_words.index(actual_next_word)]
         else:
             chosen_prob = 0.001
         log_running_perplexity -= np.log2(chosen_prob)
         perplexity_list.append(2 ** (log_running_perplexity * (1 / float(N))))
+        print 'Current Perplexity = {0}\r'.format(perplexity_list[-1]),
         N += 1
         return N, log_running_perplexity
 
-    def train_token_step(self, index, previous_pop, words):
+    def train_token_step(self, index, previous_pop, next_words_list):
         """ A single step in training. Joins patterns, updates counter i"""
-        current_pop, increment = self.find_next_word(words[index:index + self.maximum_word_count])
+        current_pop, increment = self.find_next_word(next_words_list)
         self.join_pattern(previous_pop, current_pop, found_pattern_feed_ratio=1)
-        previous_pop = current_pop
         index += increment
         if index % 1000 == 0 and index > self.feed_strength_gain:
             self.refactor()
             self.cull(0)
-        return index
+        return index, current_pop
 
     def add_words_to_patterns_collection(self, words):
         word_count = len(words)
@@ -156,6 +148,7 @@ class PopManager:
                 self.patterns_collection[word] = Pop(word)
                 self.patterns_collection[word].feed(self.feed_strength_gain)
         print 'There are ', len(unique_words), ' words in vocabulary.'
+        print 'The first few words are ', ','.join(words[:10])
         return word_count
 
     def next_word_distribution(self, previous_words_list):

@@ -12,7 +12,7 @@ training_text = 'cat hat mat bat sat in the barn'
 
 class TestPatternOfPatterns(TestCase):
     def get_sample(self):
-        sample =StreamPredictor()
+        sample = StreamPredictor()
         sample.train(training_text)
         return sample
 
@@ -57,7 +57,6 @@ class TestPatternOfPatterns(TestCase):
         pattern_count = len(sample.pop_manager.patterns_collection)
         sample.train(training_text)
         self.assertGreater(len(sample.pop_manager.patterns_collection), pattern_count)
-
 
     def test_save_load_equal(self):
         sample = self.get_sample()
@@ -212,30 +211,34 @@ class TestPatternOfPatterns(TestCase):
     def test_perplexity_step(self):
         sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
         words = ['ab', 'x']
+        previous_words = ['ab']
+        actual_next_word = 'x'
         N = 1
         log_running_perplexity = 0
         perplexity_list = []
         abxe.strength = 500
         abyd.strength = 500
-        N, log_running_perplexity = sp.pop_manager.perplexity_step(N, log_running_perplexity, perplexity_list, words)
+        N, log_running_perplexity = sp.pop_manager.perplexity_step(N, log_running_perplexity, perplexity_list,
+                                                                   previous_words, actual_next_word)
         self.assertEqual(N, 2)
         self.assertAlmostEqual(perplexity_list[0], 2, places=2)
 
     def test_train_token_step(self):
         sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
-        words = ['ab', 'd']
+        next_words = [ 'd', 'garbage']
         N = 1
-        N = sp.pop_manager.train_token_step(N, ab, words)
+        N, previous_pop = sp.pop_manager.train_token_step(N, ab, next_words)
         self.assertEqual(N, 2)
         self.assertTrue('abd' in sp.pop_manager.patterns_collection)
+        self.assertEqual(previous_pop.unrolled_pattern, 'd')
 
     def test_find_next_word(self):
         sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
         words = ['ab', 'd']
-        current_pop, increment =sp.pop_manager.find_next_word(words[1:])
+        current_pop, increment = sp.pop_manager.find_next_word(words[1:])
         self.assertEqual(current_pop.unrolled_pattern, 'd')
         self.assertEqual(increment, 1)
-        words = ['ab', 'x','e']
-        current_pop, increment =sp.pop_manager.find_next_word(words[1:])
+        words = ['ab', 'x', 'e']
+        current_pop, increment = sp.pop_manager.find_next_word(words[1:])
         self.assertEqual(current_pop.unrolled_pattern, 'xe')
         self.assertEqual(increment, 2)
