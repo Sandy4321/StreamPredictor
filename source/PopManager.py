@@ -90,7 +90,7 @@ class PopManager:
         log_running_perplexity = 0
         perplexity_list = []
         N = 1
-        while N < word_count + 1:
+        while N < word_count - 1:
             N, log_running_perplexity = self.perplexity_step(N, log_running_perplexity, perplexity_list, words[:N],
                                                              words[N])
         final_log_perplexity = log_running_perplexity * (1 / float(N))
@@ -106,7 +106,7 @@ class PopManager:
         perplexity_list = []
         i = 1
         N = 1
-        while i < word_count - 1:
+        while i < word_count - self.maximum_pattern_length:
             i, current_pop = self.train_token_step(i, previous_pop, words[i:i + self.maximum_word_count])
             previous_pop = current_pop
             # calculate perplexity for next word
