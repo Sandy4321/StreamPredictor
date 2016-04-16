@@ -63,21 +63,16 @@ class PopManager:
     def perplexity_experiment(self, string):
         words = nltk.word_tokenize(string)
         word_count = len(words)
-        train_count = int(0.9 * word_count)
+        train_count = int(0.99 * word_count)
         train_words = words[:train_count]
         test_words = words[train_count:]
         self.train_token(train_words)
         perplexity_list = self.calculate_perplexity(test_words)
         plt.plot(perplexity_list)
 
-    def train_token(self,words):
-        word_count = len(words)
+    def train_token(self, words):
+        word_count = self.add_words_to_patterns_collection(words)
         print 'Started training with word count = ' + str(word_count)
-        unique_words = set(words)
-        for word in unique_words:
-            self.patterns_collection[word] = Pop(word)
-            self.patterns_collection[word].feed(self.feed_strength_gain)
-        print 'There are ', len(unique_words), ' unique words.'
         previous_pop = self.patterns_collection.values()[0]
         i = 1
         while i < word_count:
@@ -105,14 +100,9 @@ class PopManager:
         return words_list[0], 1
 
     def calculate_perplexity(self, words):
-        word_count = len(words)
+        word_count = self.add_words_to_patterns_collection(words)
         print 'Started calculating perplexity with word count = ' + str(word_count)
-        unique_words = set(words)
-        for word in unique_words:
-            self.patterns_collection[word] = Pop(word)
-            self.patterns_collection[word].feed(self.feed_strength_gain)
-        print 'There are ', len(unique_words), ' unique words.'
-        perplexity = 1
+        log_running_perplexity = 0
         perplexity_list = []
         N = 1
         while N < word_count:
@@ -121,13 +111,24 @@ class PopManager:
             if actual_next_word in next_words:
                 chosen_prob = probabilites[next_words.index(actual_next_word)]
             else:
-                chosen_prob = 0.01
-            perplexity = perplexity * (1/chosen_prob)
-            perplexity_list.append(pow(perplexity, 1/float(N)))
+                chosen_prob = 0.001
+            log_running_perplexity -= np.log2(chosen_prob)
+            perplexity_list.append(2 ** (log_running_perplexity * (1 / float(N))))
             N += 1
-        perplexity = pow(perplexity, 1/float(N))
-        print 'Final perplexity is ', perplexity
+        final_log_perplexity = log_running_perplexity * (1 / float(N))
+        final_perplexity = 2 ** final_log_perplexity
+        print 'Final perplexity is ', final_perplexity
         return perplexity_list
+
+    def add_words_to_patterns_collection(self, words):
+        word_count = len(words)
+        unique_words = set(words)
+        for word in unique_words:
+            if word not in self.patterns_collection:
+                self.patterns_collection[word] = Pop(word)
+                self.patterns_collection[word].feed(self.feed_strength_gain)
+        print 'There are ', len(unique_words), ' unique words.'
+        return word_count
 
     def next_word_distribution(self, previous_words_list):
         start = max(0, len(previous_words_list) - self.maximum_word_count)
