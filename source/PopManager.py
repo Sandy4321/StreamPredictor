@@ -9,14 +9,16 @@ Patterns decay over time, if not seen are culled. Patterns are fed if they are s
 half of them. Kind of adaptive coding.
 """
 import numpy as np
-import nltk
 
 from Pop import Pop
+
+# constants
 
 
 class PopManager:
     def __init__(self):
         #  Constants
+        self.perplexity_count = 300
         self.maximum_word_count = 40
         self.max_input_stream_length = 10 ** 7
         self.maximum_pattern_length = 40  # maximum pattern length
@@ -84,9 +86,10 @@ class PopManager:
                 return self.patterns_collection[current_word], j
         return words_list[0], 1
 
-    def calculate_perplexity(self, words):
-        word_count = self.add_words_to_patterns_collection(words)
-        print 'Started calculating perplexity with word count = ' + str(word_count)
+    def calculate_perplexity(self, words, verbose=True):
+        word_count = self.add_words_to_patterns_collection(words, verbose)
+        if verbose:
+            print 'Started calculating perplexity with word count = ' + str(word_count)
         log_running_perplexity = 0
         perplexity_list = []
         N = 1
@@ -95,7 +98,8 @@ class PopManager:
                                                              words[N])
         final_log_perplexity = log_running_perplexity * (1 / float(N))
         final_perplexity = 2 ** final_log_perplexity
-        print 'Final perplexity is ', final_perplexity
+        if verbose:
+            print 'Final perplexity is ', final_perplexity
         return perplexity_list
 
     def train_token_and_perplexity(self, words):
@@ -104,19 +108,19 @@ class PopManager:
         previous_pop = self.patterns_collection.values()[0]
         log_running_perplexity = 0
         perplexity_list = []
+        i_list = []
         i = 1
-        N = 1
         while i < word_count - self.maximum_pattern_length:
             i, current_pop = self.train_token_step(i, previous_pop, words[i:i + self.maximum_word_count])
             previous_pop = current_pop
-            # calculate perplexity for next word
-            N, log_running_perplexity = self.perplexity_step(N, log_running_perplexity, perplexity_list, words[:i],
-                                                             words[i])
+            if i % 1000 == 0:
+                perplexity_list.append(self.calculate_perplexity(words[i:i + self.perplexity_count], verbose=False)[-1])
+                i_list.append(i)
         self.refactor()
         self.cull(0)
         final_perplexity = perplexity_list[-1]
         print 'Final perplexity is ', final_perplexity
-        return perplexity_list
+        return perplexity_list, i_list
 
     def perplexity_step(self, N, log_running_perplexity, perplexity_list, previous_words, actual_next_word):
         next_words, probabilities = self.next_word_distribution(previous_words)
@@ -140,15 +144,16 @@ class PopManager:
             self.cull(0)
         return index, current_pop
 
-    def add_words_to_patterns_collection(self, words):
+    def add_words_to_patterns_collection(self, words, verbose=True):
         word_count = len(words)
         unique_words = set(words)
         for word in unique_words:
             if word not in self.patterns_collection:
                 self.patterns_collection[word] = Pop(word)
                 self.patterns_collection[word].feed(self.feed_strength_gain)
-        print 'There are ', len(unique_words), ' words in vocabulary.'
-        print 'The first few words are ', ','.join(words[:10])
+        if verbose:
+            print 'There are ', len(unique_words), ' words in vocabulary.'
+            print 'The first few words are ', ','.join(words[:10])
         return word_count
 
     def next_word_distribution(self, previous_words_list):
