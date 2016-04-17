@@ -70,7 +70,7 @@ class PopManager:
             i, current_pop = self.train_token_step(i, previous_pop, words[i:i + self.maximum_word_count])
             previous_pop = current_pop
         self.refactor()
-        self.cull(0)
+        self.cull(i)
         return self.patterns_collection
 
     def find_next_word(self, words_list):
@@ -84,7 +84,10 @@ class PopManager:
             current_word = ''.join(words_list[:j])
             if current_word in self.patterns_collection:
                 return self.patterns_collection[current_word], j
-        return words_list[0], 1
+        new_pop = Pop(words_list[0])
+        new_pop.feed(self.feed_strength_gain)
+        self.patterns_collection[words_list[0]] = new_pop
+        return new_pop, 1
 
     def calculate_perplexity(self, words, verbose=True):
         word_count = self.add_words_to_patterns_collection(words, verbose)
@@ -106,21 +109,24 @@ class PopManager:
         word_count = self.add_words_to_patterns_collection(words)
         print 'Started training and calculating perplexity with ', str(word_count), ' words.'
         previous_pop = self.patterns_collection.values()[0]
-        log_running_perplexity = 0
-        perplexity_list = []
-        i_list = []
+        perplexity_over_training = []
+        training_time = []
         i = 1
         while i < word_count - self.maximum_pattern_length:
             i, current_pop = self.train_token_step(i, previous_pop, words[i:i + self.maximum_word_count])
             previous_pop = current_pop
             if i % 1000 == 0:
-                perplexity_list.append(self.calculate_perplexity(words[i:i + self.perplexity_count], verbose=False)[-1])
-                i_list.append(i)
-        self.refactor()
-        self.cull(0)
-        final_perplexity = perplexity_list[-1]
+                self.occasional_step(i, perplexity_over_training, training_time, words)
+        final_perplexity = perplexity_over_training[-1]
         print 'Final perplexity is ', final_perplexity
-        return perplexity_list, i_list
+        return perplexity_over_training, training_time
+
+    def occasional_step(self, i, perplexity_over_training, training_time, words):
+        perplexity_over_training.append(
+            self.calculate_perplexity(words[i:i + self.perplexity_count], verbose=False)[-1])
+        training_time.append(i)
+        self.refactor()
+        self.cull(i)
 
     def perplexity_step(self, N, log_running_perplexity, perplexity_list, previous_words, actual_next_word):
         next_words, probabilities = self.next_word_distribution(previous_words)
@@ -141,7 +147,6 @@ class PopManager:
         index += increment
         if index % 1000 == 0 and index > self.feed_strength_gain:
             self.refactor()
-            self.cull(0)
         return index, current_pop
 
     def add_words_to_patterns_collection(self, words, verbose=True):

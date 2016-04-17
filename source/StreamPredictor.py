@@ -24,11 +24,11 @@ class StreamPredictor:
             current_pop = self.pop_manager.find_next_pattern(string[i:i + maximum_pattern_length])
             self.pop_manager.join_pattern(previous_pop, current_pop, found_pattern_feed_ratio=1)
             previous_pop = current_pop
+            self.pop_manager.cull(0)
             i += len(current_pop.unrolled_pattern)
             if i % 1000 == 0 and i > self.pop_manager.feed_strength_gain:
                 # Refactor, adopt stronger children, as long as one's unrolled pattern is same.
                 self.pop_manager.refactor()
-                self.pop_manager.cull(0)
         self.pop_manager.refactor()
         if generalize:
             self.generalizer.generalize()

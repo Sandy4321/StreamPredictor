@@ -29,8 +29,9 @@ class Experiment:
         plt.plot(perplexity_list)
         plt.show()
 
-    def train_and_perplexity(self, string):
-        words = nltk.word_tokenize(string)
+    @staticmethod
+    def train_and_perplexity():
+        words = DataObtainer.get_clean_words_from_file('../Data/pride.txt', 10**9)
         sp = StreamPredictor.StreamPredictor()
         perplexity_list, x_list = sp.pop_manager.train_token_and_perplexity(words)
         plt.plot(x_list, perplexity_list)
@@ -48,5 +49,5 @@ class Experiment:
 if __name__ == '__main__':
     # experiment.perplexity_experiment(text)
     # experiment.perplexity_experiment(text)
-    # experiment.train_and_perplexity(text)
-    Experiment.generalize_token()
+    Experiment.train_and_perplexity()
+    # Experiment.generalize_token()
