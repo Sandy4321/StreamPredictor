@@ -11,13 +11,11 @@ The main concept used is somewhat similar to [Hierarchical Hidden Markov Model] 
 
 Suppose that our collection of pattern consists of {A,B,C,...Z}. i.e. All the Alphabets.Suppose in the first iteration we are given the sequence "CATHAT". 
 
+![Pattern of Patterns image][logo]
+[logo]: docs/pop.png "Pattern of patterns"
+
 1. In the first pass we would form patterns like this 
 CA, AT, TH, HA, AT. Now our pattern collecton would consists of  {A,B,C,...Z, CA, AT, TH, HA, AT}
-
-Reference-style: 
-![alt text][logo]
-
-[logo]: docs/pop.png "Pattern of patterns"
 
 2. In the next pass if we encounter the same sequence "CATHAT" we would split the given sequence in terms of largest existing patterns to form the transformed sequence of "CATHAT" = {"CA", "TH", "AT"}. And we would form new patterns by combining 2 at a time the transformed sequence. {{"CATH"}, {"THAT"}}. And so on. 
 
