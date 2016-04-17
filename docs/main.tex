@@ -8,7 +8,7 @@
 
 \author[1]{Abhishek Rao}
 %\author[2]{Second Author}
-\affil[1]{Unaffiliated}
+%\affil[1]{Unaffiliated}
 %\affil[2]{Address of second author}
 
 \keywords{Sequence modelling, language modelling, hierarchical hidden markov model}
@@ -29,12 +29,20 @@ Many spurious patterns are formed but only ones that are repeated are retained. 
 
 \section*{Intoduction}
 \subsection{Hierarchical Pattern Formation}
-The main concept used is somewhat similar to Hierarchical Hidden Markov Model  (\textbf{HHMM}). The idea is that every transition from pattern **A** to pattern **B** can itself be modelled as pattern **AB**. But the inference method is different.
+The main concept used is somewhat similar to Hierarchical Hidden Markov Model  (\textbf{HHMM}). The idea is that every transition from pattern A to pattern B can itself be modelled as pattern AB. But the inference method is different.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.7\linewidth]{pop}
+\caption{Pops. Pattern of Patterns. The bottom row shows the given sequence along time for modelling. In this case it is the characters
+cathat. The second row shows the patterns learned in the first pass. The third row patterns learned in the second pass and so on. Note: not all patterns (e.g. "ha") are shown in the diagram.}
+\label{fig:view}
+\end{figure}
 
 Suppose that our collection of pattern consists of \(\{A,B,C,...Z\}\). i.e. All the Alphabets. Suppose in the first iteration we are given the sequence "CATHAT". 
 
 1. In the first pass we would form patterns like this 
-CA, AT, TH, HA, AT. Now our pattern collecton would consists of  \(\{A,B,C,...Z, CA, AT, TH, HA, AT\}\).
+CA, AT, TH, HA, AT. Now our pattern collection would consists of  \(\{A,B,C,...Z, CA, AT, TH, HA, AT\}\).
 
 2. In the next pass if we encounter the same sequence "CATHAT" we would split the given sequence in terms of largest existing patterns to form the transformed sequence of "CATHAT" = \(\{"CA", "TH", "AT"\}\). 
 And we would form new patterns by combining 2 at a time the transformed sequence. \( \{ "CATH", "THAT"\}\). And so on. 
@@ -108,12 +116,7 @@ Use section and subsection commands to organize your document. \LaTeX{} handles 
 
 Use the table and tabular commands for basic tables --- see Table~\ref{tab:widgets}, for example. You can upload a figure (JPEG, PNG or PDF) using the project menu. To include it in your document, use the includegraphics command as in the code for Figure~\ref{fig:view} below.
 
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.7\linewidth]{frog}
-\caption{An example image of a frog.}
-\label{fig:view}
-\end{figure}
+
 
 \begin{table}[ht]
 \centering
