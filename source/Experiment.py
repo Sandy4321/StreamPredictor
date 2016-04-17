@@ -36,10 +36,17 @@ class Experiment:
         plt.plot(x_list, perplexity_list)
         plt.show()
 
+    @staticmethod
+    def generalize_token():
+        sp = StreamPredictor.StreamPredictor()
+        words = DataObtainer.get_clean_words_from_file('../Data/pride.txt', 10**9)
+        sp.pop_manager.train_token(words)
+        sp.generalizer.generalize()
+        sp.file_manager.save_pb_plain('../PatternStore/pride_generalized.txt')
+
 
 if __name__ == '__main__':
-    text = DataObtainer.get_clean_text_from_file('../data/pride.txt', 1000000)
-    experiment = Experiment()
     # experiment.perplexity_experiment(text)
     # experiment.perplexity_experiment(text)
-    experiment.train_and_perplexity(text)
+    # experiment.train_and_perplexity(text)
+    Experiment.generalize_token()

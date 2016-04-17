@@ -1,4 +1,5 @@
 import numpy as np
+import nltk
 import urllib2
 import time
 import os
@@ -36,6 +37,10 @@ def get_clean_text_from_file(file, max_input_stream_length):
         text = opened_file.read()
         return clean_text(text, max_input_stream_length)
 
+def get_clean_words_from_file(file, max_input_stream_length):
+    with open(file) as opened_file:
+        text = opened_file.read()
+        return nltk.word_tokenize(clean_text(text, max_input_stream_length))
 
 def clean_text(text, max_input_stream_length):
     text = text.replace('\n', ' ')

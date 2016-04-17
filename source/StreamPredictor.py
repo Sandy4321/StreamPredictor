@@ -1,9 +1,8 @@
 import numpy as np
 
-import PopManager
 import FileManager
 import Generalizer
-import DataObtainer
+import PopManager
 
 
 class StreamPredictor:
