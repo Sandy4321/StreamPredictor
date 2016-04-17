@@ -1,5 +1,9 @@
 # StreamPredictor
-We try to model sequential structured data like natural text using variety of concepts inspired by HHMM, Evolution etc. The aim is to get a probabilistic, language independent features for sequential data. 
+We try to model sequential structured data like natural text using a combinatino of Hierarchical Patterns and Evolution. 
+The aim is to get a probabilistic, language independent model for sequential data. 
+During training we learn which pattern comes after each pattern similar to a bigram. 
+Then each transition from pattern to pattern is made as a new pattern.
+Many spurious patterns are formed but only ones that are repeated are retained. Performance is calculated by measuring the perplexity for words from some Enlgish novels.
 
 # Concepts
 ## Hierarchical Pattern Formation
@@ -9,6 +13,11 @@ Suppose that our collection of pattern consists of {A,B,C,...Z}. i.e. All the Al
 
 1. In the first pass we would form patterns like this 
 CA, AT, TH, HA, AT. Now our pattern collecton would consists of  {A,B,C,...Z, CA, AT, TH, HA, AT}
+
+Reference-style: 
+![alt text][logo]
+
+[logo]: docs/pop.png "Pattern of patterns"
 
 2. In the next pass if we encounter the same sequence "CATHAT" we would split the given sequence in terms of largest existing patterns to form the transformed sequence of "CATHAT" = {"CA", "TH", "AT"}. And we would form new patterns by combining 2 at a time the transformed sequence. {{"CATH"}, {"THAT"}}. And so on. 
 
@@ -35,18 +44,3 @@ Some of the methods of this class are
 
 
 
-## Todos:
-1. Graphs - done
-2. Multi step look ahead
-3. Single character prediction
-4. Measure of prediction , avg prediction rate
-5. Measure of interesting, find interesting stuff to learn.
-6. (done) Crawl web.
-7. Binary search in find next pattern()
-8. Perplexity
-9. Token based
-
-## Ideas:
-1. (done) Refactoring: See if instead of current components, new components which are stronger can be set. e.g. if pattern is ABCD = {ABC:D} but AB and CD are stronger then set ABCD = {AB:CD}
-2. same category, must split into sub patterns. e.g. if ABXC and ABYC are found to be similar then only X is similar to Y
-3. Create category only if the maximum probability < 1.1 * 1/N
