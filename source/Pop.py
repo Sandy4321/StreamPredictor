@@ -100,12 +100,16 @@ class Pop:
                     next_pop = next_pop.first_component
                 next_words.append(next_pop.get_sample())
                 strengths.append(max(parent_i.strength, 0))
+        if len(next_words) == 0:
+            if self.second_component:
+                return self.second_component.get_next_smallest_distribution()
         total = sum(strengths)
         probabilities = np.array([float(i) / total for i in strengths])
         return next_words, probabilities
 
     def has_common_child(self, other_pop):
-        if not (self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
+        if not (
+                    self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
             return self.unrolled_pattern == other_pop.unrolled_pattern
         return self.first_component.has_common_child(other_pop.first_component) or \
                self.second_component.has_common_child(other_pop.second_component)
