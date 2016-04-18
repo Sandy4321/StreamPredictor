@@ -18,7 +18,8 @@ from Pop import Pop
 class PopManager:
     def __init__(self):
         #  Constants
-        self.perplexity_count = 300
+        self.occasional_step_period = 2000
+        self.perplexity_count = 6000
         self.maximum_word_count = 40
         self.max_input_stream_length = 10 ** 7
         self.maximum_pattern_length = 40  # maximum pattern length
@@ -27,6 +28,10 @@ class PopManager:
         #  Fields
         self.patterns_collection = dict()
         self.feed_strength_gain = 10 ** 5
+
+    def stats(self):
+        return 'The perplexity count constant is ' + str(self.perplexity_count) +\
+               '\nThe occasional step periods is ' + str(self.occasional_step_period)
 
     def __repr__(self):
         return 'Has ' + str(len(self.patterns_collection)) + ' few are ' + \
@@ -115,7 +120,7 @@ class PopManager:
         while i < word_count - self.maximum_pattern_length:
             i, current_pop = self.train_token_step(i, previous_pop, words[i:i + self.maximum_word_count])
             previous_pop = current_pop
-            if i % 1000 == 0:
+            if i % self.occasional_step_period == 0:
                 self.occasional_step(i, perplexity_over_training, training_time, words)
         final_perplexity = perplexity_over_training[-1]
         print 'Final perplexity is ', final_perplexity

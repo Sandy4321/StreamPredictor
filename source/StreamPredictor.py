@@ -14,6 +14,7 @@ class StreamPredictor:
         self.file_manager = FileManager.FileManager(self.pop_manager)
         self.generalizer = Generalizer.Generalizer(self.pop_manager.patterns_collection,
                                                    self.pop_manager.feed_strength_gain)
+        print self.pop_manager.stats()
 
     def train(self, string, generalize=False):
         maximum_pattern_length = self.pop_manager.maximum_pattern_length
