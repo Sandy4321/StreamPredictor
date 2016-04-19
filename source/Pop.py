@@ -50,8 +50,11 @@ class Pop:
             if self.second_component:
                 self.second_component.feed(int(gain * feed_ratio[2]))
 
-    def decay(self):
-        self.strength -= decay_strength_loss
+    def decay(self, decay_amount=None):
+        if decay_amount:
+            self.strength -=  decay_amount
+        else:
+            self.strength -= decay_strength_loss
 
     def __repr__(self):
         out = self.unrolled_pattern + ': strength ' + str(self.strength)

@@ -27,11 +27,12 @@ class PopManager:
         self.feed_ratio_parent_category = 0.5
         #  Fields
         self.patterns_collection = dict()
-        self.feed_strength_gain = 10 ** 5
+        self.feed_strength_gain = 10 ** 6
 
     def stats(self):
         return 'The perplexity count constant is ' + str(self.perplexity_count) +\
-               '\nThe occasional step periods is ' + str(self.occasional_step_period)
+               '\nThe occasional step periods is ' + str(self.occasional_step_period) + \
+               '\nFeed strength gain is ' + str(self.feed_strength_gain)
 
     def __repr__(self):
         return 'Has ' + str(len(self.patterns_collection)) + ' few are ' + \
@@ -122,9 +123,15 @@ class PopManager:
             previous_pop = current_pop
             if i % self.occasional_step_period == 0:
                 self.occasional_step(i, perplexity_over_training, training_time, words)
+        self.decay(i)
+        self.cull(i)
         final_perplexity = perplexity_over_training[-1]
-        print 'Final perplexity is ', final_perplexity
+        print 'Final perplexity is ', final_perplexity, ' number of patterns is ', len(self.patterns_collection)
         return perplexity_over_training, training_time
+
+    def decay(self, i):
+        for key, pop in self.patterns_collection.iteritems():
+            pop.decay(i)
 
     def occasional_step(self, i, perplexity_over_training, training_time, words):
         perplexity_over_training.append(
