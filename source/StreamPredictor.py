@@ -1,8 +1,14 @@
 import numpy as np
+import time
+import os
+import matplotlib.pyplot as plt
 
 import FileManager
 import Generalizer
 import PopManager
+import DataObtainer
+
+storage_file = '../PatternStore/OnlineTokens.pb'
 
 
 class StreamPredictor:
@@ -50,4 +56,28 @@ class StreamPredictor:
             generated_output += next_word
         return generated_output
 
+    @staticmethod
+    def online_token_perplexity_trainer():
+        print 'Starting online training with tokens and perplexity calculation'
+        sp = StreamPredictor()
+        if os.path.isfile(storage_file):
+            sp.file_manager.load_pb(storage_file)
+            print 'Loaded PopManager.PopManager from ', storage_file
+        else:
+            print ' Created new PopManager.PopManager. Didnt find anything at ', storage_file
+        for iteration in range(10):
+            start_time = time.time()
+            print 'Iteration number ' + str(iteration)
+            words = DataObtainer.get_online_words(10 ** 10)
+            perplexity_over_training, training_time = sp.pop_manager.train_token_and_perplexity(words)
+            plt.plot(training_time, perplexity_over_training,'d-')
+            plt.show()
+            sp.file_manager.save_pb(storage_file)
+            total_time_mins = (time.time() - start_time) / 60
+            rate_words_min = round(len(words) / total_time_mins / 1000)
+            print 'Total time taken to run this is ', round(total_time_mins, ndigits=2), \
+                ' mins. Rate = ', rate_words_min, ' K words/min'
 
+
+if __name__ == '__main__':
+    StreamPredictor.online_token_perplexity_trainer()

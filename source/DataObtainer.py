@@ -12,6 +12,7 @@ def gutenberg_random_book():
         response = urllib2.urlopen(url)
         text = response.read()
         if len(text) > 1000 and is_english(text):
+            print 'Got book from ', url
             return text
         else:
             print 'Didnt get book, waiting for some time, seconds = ' + str(10 + book_number / 10)
@@ -37,10 +38,12 @@ def get_clean_text_from_file(file, max_input_stream_length):
         text = opened_file.read()
         return clean_text(text, max_input_stream_length)
 
+
 def get_clean_words_from_file(file, max_input_stream_length):
     with open(file) as opened_file:
         text = opened_file.read()
         return nltk.word_tokenize(clean_text(text, max_input_stream_length))
+
 
 def clean_text(text, max_input_stream_length):
     text = text.replace('\n', ' ')
@@ -50,6 +53,12 @@ def clean_text(text, max_input_stream_length):
     # make sure to remove # for category separation
     text = ''.join(e for e in text if e.isalnum() or e in '.?", ')
     return text
+
+
+def get_online_words(max_input_length):
+    text = gutenberg_random_book()
+    words = nltk.word_tokenize(clean_text(text, max_input_length))
+    return words
 
 
 if __name__ == '__main__':
