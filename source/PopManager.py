@@ -32,6 +32,7 @@ class PopManager:
         self.patterns_collection = dict()
         self.feed_strength_gain = 10 ** 6
         self.previous_decay_time = 0
+        self.vocabulary_count = 0
 
     def stats(self):
         return 'The perplexity count constant is ' + str(self.perplexity_count) + \
@@ -157,10 +158,12 @@ class PopManager:
         return N, log_running_perplexity
 
     def get_prediction_probability(self, actual_next_word, next_words, probabilities):
+        word_count = len(next_words)
+        remaining_words_in_vocabulary = self.vocabulary_count - word_count
         if actual_next_word in next_words:
             chosen_prob = (1 - self.not_found_ratio) * probabilities[next_words.index(actual_next_word)]
         else:
-            chosen_prob = self.not_found_ratio * self.not_found_probability
+            chosen_prob = self.not_found_ratio * (self.not_found_probability/remaining_words_in_vocabulary)
         return chosen_prob
 
     def train_token_step(self, index, previous_pop, next_words_list):
@@ -179,8 +182,9 @@ class PopManager:
             if word not in self.patterns_collection:
                 self.patterns_collection[word] = Pop(word)
                 self.patterns_collection[word].feed(self.feed_strength_gain)
+                self.vocabulary_count += 1
         if verbose:
-            print 'There are ', len(unique_words), ' words in vocabulary.'
+            print 'There are ', self.vocabulary_count, ' words in vocabulary.'
             print 'The first few words are ', ','.join(words[:10])
         return word_count
 
