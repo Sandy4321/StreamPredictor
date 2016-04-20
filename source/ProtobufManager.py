@@ -66,6 +66,7 @@ class ProtobufManager:
     def load_PopManager(pbfile):
         buffy = ProtobufManager.load_buf(pbfile)
         pop_manager = ProtobufManager.protobuf_to_pop_manager(buffy)
+        print 'Loaded pop manager with ', len(pop_manager.patterns_collection), ' patterns.'
         return pop_manager
 
     @staticmethod
@@ -81,12 +82,15 @@ class ProtobufManager:
         for bp in buffy.pattern_collection:
             pop = pop_manager.patterns_collection[bp.unrolled_pattern]
             if bp.first_component:
-                pop.first_component = pop_manager.patterns_collection[bp.first_component]
+                if bp.first_component in pop_manager.patterns_collection:
+                    pop.first_component = pop_manager.patterns_collection[bp.first_component]
             if bp.second_component:
-                pop.second_component = pop_manager.patterns_collection[bp.second_component]
+                if bp.second_component in pop_manager.patterns_collection:
+                    pop.second_component = pop_manager.patterns_collection[bp.second_component]
             for parent_i in bp.first_child_parents:
-                members = pop_manager.patterns_collection[parent_i]
-                pop.first_child_parents.append(members)
+                if parent_i in pop_manager.patterns_collection:
+                    members = pop_manager.patterns_collection[parent_i]
+                    pop.first_child_parents.append(members)
             if bp.belongs_to:
                 pop.belongs_to_category = pop_manager.patterns_collection[bp.belongs_to]
             for cat in bp.category_members:

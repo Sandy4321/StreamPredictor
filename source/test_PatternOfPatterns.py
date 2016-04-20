@@ -12,7 +12,7 @@ training_text = 'cat hat mat bat sat in the barn'
 
 class TestPatternOfPatterns(TestCase):
     def get_sample(self):
-        sample =StreamPredictor()
+        sample = StreamPredictor()
         sample.train(training_text)
         return sample
 
@@ -57,7 +57,6 @@ class TestPatternOfPatterns(TestCase):
         pattern_count = len(sample.pop_manager.patterns_collection)
         sample.train(training_text)
         self.assertGreater(len(sample.pop_manager.patterns_collection), pattern_count)
-
 
     def test_save_load_equal(self):
         sample = self.get_sample()
@@ -150,9 +149,17 @@ class TestPatternOfPatterns(TestCase):
         self.assertFalse(abc.is_child(c))
 
     def test_has_common_child(self):
+        sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
+        self.assertTrue(abxe.has_common_child(abyd))
+        self.assertTrue(ab.has_common_child(ab))
+        self.assertFalse(xe.has_common_child(yd))
+
+    def form_simple_tree(self):
         sp = StreamPredictor()
         abxe = Pop('abxe')
+        abxe.strength = 600
         abyd = Pop('abyd')
+        abyd.strength = 400
         ab = Pop('ab')
         xe = Pop('xe')
         yd = Pop('yd')
@@ -176,11 +183,69 @@ class TestPatternOfPatterns(TestCase):
         yd.set_components(y, d)
         abxe.set_components(ab, xe)
         abyd.set_components(ab, yd)
-        self.assertTrue(abxe.has_common_child(abyd))
-        self.assertTrue(ab.has_common_child(ab))
-        self.assertFalse(xe.has_common_child(yd))
+        return sp, ab, abxe, abyd, xe, yd
 
     def test_pop_manager_repr(self):
         sample = self.get_sample()
         spm = sample.pop_manager.__repr__()
         self.assertGreater(len(spm), 10)
+
+    def test_pop_get_next_prediction(self):
+        sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
+        words, probabilites = ab.get_next_distribution()
+        self.assertTrue(len(words) > 1)
+        self.assertEqual(probabilites[0], 0.6)
+        self.assertEqual(probabilites[1], 0.4)
+        self.assertTrue('xe' in words)
+        self.assertTrue('yd' in words)
+
+    def test_pop_get_smallest_next_prediction(self):
+        sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
+        words, probabilites = ab.get_next_smallest_distribution()
+        self.assertTrue(len(words) > 1)
+        self.assertEqual(probabilites[0], 0.6)
+        self.assertEqual(probabilites[1], 0.4)
+        self.assertTrue('x' in words)
+        self.assertTrue('y' in words)
+
+    def test_perplexity_step(self):
+        sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
+        words = ['ab', 'x']
+        previous_words = ['ab']
+        actual_next_word = 'x'
+        N = 1
+        log_running_perplexity = 0
+        perplexity_list = []
+        abxe.strength = 500
+        abyd.strength = 500
+        N, log_running_perplexity = sp.pop_manager.perplexity_step(N, log_running_perplexity, perplexity_list,
+                                                                   previous_words, actual_next_word)
+        self.assertEqual(N, 2)
+        self.assertAlmostEqual(perplexity_list[0], 2, places=2)
+
+    def test_train_token_perplexity_350(self):
+        words = DataObtainer.get_clean_words_from_file('../data/pride.txt', 20000)
+        sp = StreamPredictor()
+        sp.pop_manager.train_token(words[:15000])
+        perplexity_list = sp.pop_manager.calculate_perplexity(words[15000:])
+        self.assertLess(perplexity_list[-1], 350)
+
+    def test_train_token_step(self):
+        sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
+        next_words = [ 'd', 'garbage']
+        N = 1
+        N, previous_pop = sp.pop_manager.train_token_step(N, ab, next_words)
+        self.assertEqual(N, 2)
+        self.assertTrue('abd' in sp.pop_manager.patterns_collection)
+        self.assertEqual(previous_pop.unrolled_pattern, 'd')
+
+    def test_find_next_word(self):
+        sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
+        words = ['ab', 'd']
+        current_pop, increment = sp.pop_manager.find_next_word(words[1:])
+        self.assertEqual(current_pop.unrolled_pattern, 'd')
+        self.assertEqual(increment, 1)
+        words = ['ab', 'x', 'e']
+        current_pop, increment = sp.pop_manager.find_next_word(words[1:])
+        self.assertEqual(current_pop.unrolled_pattern, 'xe')
+        self.assertEqual(increment, 2)

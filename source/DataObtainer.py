@@ -1,4 +1,5 @@
 import numpy as np
+import nltk
 import urllib2
 import time
 import os
@@ -11,10 +12,12 @@ def gutenberg_random_book():
         response = urllib2.urlopen(url)
         text = response.read()
         if len(text) > 1000 and is_english(text):
+            print 'Got book from ', url
             return text
         else:
             print 'Didnt get book, waiting for some time, seconds = ' + str(10 + book_number / 10)
             time.sleep(10 + book_number / 10)
+
 
 def is_english(text):
     english_words = ['here', 'there', 'where', 'some', 'and', 'but']
@@ -23,24 +26,39 @@ def is_english(text):
             return False
     return True
 
+
 def get_random_book_local(folder):
     file = np.random.choice(os.listdir(folder))
     with open(folder + file) as opened_file:
         return opened_file.read()
+
 
 def get_clean_text_from_file(file, max_input_stream_length):
     with open(file) as opened_file:
         text = opened_file.read()
         return clean_text(text, max_input_stream_length)
 
-def clean_text(text, max_input_stream_length):
+
+def get_clean_words_from_file(file, max_input_length):
+    with open(file) as opened_file:
+        text = opened_file.read()
+        return nltk.word_tokenize(clean_text(text))[:max_input_length]
+
+
+def clean_text(text, max_input_length=10**10000):
     text = text.replace('\n', ' ')
-    max_length = min(max_input_stream_length, len(text))
+    max_length = min(max_input_length, len(text))
     rotation = np.random.randint(low=0, high=max_length, size=1)
     text = text[rotation:max_length] + text[:rotation]
     # make sure to remove # for category separation
     text = ''.join(e for e in text if e.isalnum() or e in '.?", ')
     return text
+
+
+def get_online_words(max_input_length):
+    text = gutenberg_random_book()
+    words = nltk.word_tokenize(clean_text(text, max_input_length))
+    return words
 
 
 if __name__ == '__main__':

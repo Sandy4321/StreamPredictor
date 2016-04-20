@@ -50,8 +50,11 @@ class Pop:
             if self.second_component:
                 self.second_component.feed(int(gain * feed_ratio[2]))
 
-    def decay(self):
-        self.strength -= decay_strength_loss
+    def decay(self, decay_amount=None):
+        if decay_amount:
+            self.strength -=  decay_amount
+        else:
+            self.strength -= decay_strength_loss
 
     def __repr__(self):
         out = self.unrolled_pattern + ': strength ' + str(self.strength)
@@ -87,8 +90,29 @@ class Pop:
         probabilities = np.array([float(i) / total for i in strengths])
         return next_words, probabilities
 
+    def get_next_smallest_distribution(self):
+        """
+        Returns the smallest pattern that will come next.
+        """
+        next_words = []
+        strengths = []
+        for parent_i in self.first_child_parents:
+            if parent_i.second_component:
+                next_pop = parent_i.second_component
+                while next_pop.first_component:
+                    next_pop = next_pop.first_component
+                next_words.append(next_pop.get_sample())
+                strengths.append(max(parent_i.strength, 0))
+        if len(next_words) == 0:
+            if self.second_component:
+                return self.second_component.get_next_smallest_distribution()
+        total = sum(strengths)
+        probabilities = np.array([float(i) / total for i in strengths])
+        return next_words, probabilities
+
     def has_common_child(self, other_pop):
-        if not (self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
+        if not (
+                    self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
             return self.unrolled_pattern == other_pop.unrolled_pattern
         return self.first_component.has_common_child(other_pop.first_component) or \
                self.second_component.has_common_child(other_pop.second_component)

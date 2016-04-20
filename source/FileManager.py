@@ -68,6 +68,7 @@ class FileManager():
         self.pop_manager.patterns_collection = pop_manager.patterns_collection
 
     def load_pb_plain(self, filename):
+        print 'Loading ', filename
         buffy = ProtobufManager.ProtobufManager.load_protobuf_plain(filename)
         pm = ProtobufManager.ProtobufManager.protobuf_to_pop_manager(buffy)
         self.pop_manager.patterns_collection = pm.patterns_collection

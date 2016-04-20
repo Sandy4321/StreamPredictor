@@ -1,9 +1,8 @@
 import numpy as np
 
-from PopManager import PopManager
-from FileManager import FileManager
-from Generalizer import Generalizer
-import MainFunctions
+import FileManager
+import Generalizer
+import PopManager
 
 
 class StreamPredictor:
@@ -11,9 +10,11 @@ class StreamPredictor:
         if pm:
             self.pop_manager = pm
         else:
-            self.pop_manager = PopManager()
-        self.file_manager = FileManager(self.pop_manager)
-        self.generalizer = Generalizer(self.pop_manager.patterns_collection, self.pop_manager.feed_strength_gain)
+            self.pop_manager = PopManager.PopManager()
+        self.file_manager = FileManager.FileManager(self.pop_manager)
+        self.generalizer = Generalizer.Generalizer(self.pop_manager.patterns_collection,
+                                                   self.pop_manager.feed_strength_gain)
+        print self.pop_manager.stats()
 
     def train(self, string, generalize=False):
         maximum_pattern_length = self.pop_manager.maximum_pattern_length
@@ -24,11 +25,11 @@ class StreamPredictor:
             current_pop = self.pop_manager.find_next_pattern(string[i:i + maximum_pattern_length])
             self.pop_manager.join_pattern(previous_pop, current_pop, found_pattern_feed_ratio=1)
             previous_pop = current_pop
+            self.pop_manager.cull(0)
             i += len(current_pop.unrolled_pattern)
             if i % 1000 == 0 and i > self.pop_manager.feed_strength_gain:
                 # Refactor, adopt stronger children, as long as one's unrolled pattern is same.
                 self.pop_manager.refactor()
-                self.pop_manager.cull(0)
         self.pop_manager.refactor()
         if generalize:
             self.generalizer.generalize()
@@ -49,6 +50,3 @@ class StreamPredictor:
             generated_output += next_word
         return generated_output
 
-
-if __name__ == '__main__':
-    MainFunctions.sanity_check_run()

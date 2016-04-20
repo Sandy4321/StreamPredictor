@@ -12,17 +12,28 @@ import numpy as np
 
 from Pop import Pop
 
+# constants
+
 
 class PopManager:
     def __init__(self):
         #  Constants
-        self.max_input_stream_length = 10000000
+        self.occasional_step_period = 2000
+        self.perplexity_count = 6000
+        self.maximum_word_count = 40
+        self.max_input_stream_length = 10 ** 7
         self.maximum_pattern_length = 40  # maximum pattern length
         self.required_repeats = 5  # if seen less than this many times, patterns won't survive on the long run.
         self.feed_ratio_parent_category = 0.5
         #  Fields
         self.patterns_collection = dict()
-        self.feed_strength_gain = 10000
+        self.feed_strength_gain = 10 ** 6
+        self.previous_decay_time = 0
+
+    def stats(self):
+        return 'The perplexity count constant is ' + str(self.perplexity_count) +\
+               '\nThe occasional step periods is ' + str(self.occasional_step_period) + \
+               '\nFeed strength gain is ' + str(self.feed_strength_gain)
 
     def __repr__(self):
         return 'Has ' + str(len(self.patterns_collection)) + ' few are ' + \
@@ -57,6 +68,126 @@ class PopManager:
             self.patterns_collection[char].feed(self.feed_strength_gain)
         return input_length
 
+    def train_token(self, words):
+        word_count = self.add_words_to_patterns_collection(words)
+        print 'Started training with word count = ' + str(word_count)
+        previous_pop = self.patterns_collection.values()[0]
+        i = 1
+        while i < word_count:
+            i, current_pop = self.train_token_step(i, previous_pop, words[i:i + self.maximum_word_count])
+            previous_pop = current_pop
+        self.refactor()
+        self.cull(i)
+        return self.patterns_collection
+
+    def find_next_word(self, words_list):
+        """
+        Returns the longest pattern in the given word.
+        :param long_word: a string
+        :return: PoP(), longest pattern from start.
+        """
+        end = min(len(words_list), self.maximum_word_count)
+        for j in range(end, 0, -1):  # how many chars to look ahead
+            current_word = ''.join(words_list[:j])
+            if current_word in self.patterns_collection:
+                return self.patterns_collection[current_word], j
+        new_pop = Pop(words_list[0])
+        new_pop.feed(self.feed_strength_gain)
+        self.patterns_collection[words_list[0]] = new_pop
+        return new_pop, 1
+
+    def calculate_perplexity(self, words, verbose=True):
+        word_count = self.add_words_to_patterns_collection(words, verbose)
+        if verbose:
+            print 'Started calculating perplexity with word count = ' + str(word_count)
+        log_running_perplexity = 0
+        perplexity_list = []
+        N = 1
+        while N < word_count - 1:
+            N, log_running_perplexity = self.perplexity_step(N, log_running_perplexity, perplexity_list, words[:N],
+                                                             words[N])
+        final_log_perplexity = log_running_perplexity * (1 / float(N))
+        final_perplexity = 2 ** final_log_perplexity
+        if verbose:
+            print 'Final perplexity is ', final_perplexity
+        return perplexity_list
+
+    def train_token_and_perplexity(self, words):
+        word_count = self.add_words_to_patterns_collection(words)
+        print 'Started training and calculating perplexity with ', str(word_count), ' words.'
+        previous_pop = self.patterns_collection.values()[0]
+        perplexity_over_training = []
+        training_time = []
+        i = 1
+        while i < word_count - self.maximum_pattern_length:
+            i, current_pop = self.train_token_step(i, previous_pop, words[i:i + self.maximum_word_count])
+            previous_pop = current_pop
+            if i % self.occasional_step_period == 0:
+                self.occasional_step(i, perplexity_over_training, training_time, words)
+        self.occasional_step(i, perplexity_over_training, training_time, words)
+        self.fix_first_child_parents()
+        final_perplexity = perplexity_over_training[-1]
+        print 'Final perplexity is ', final_perplexity, ' number of patterns is ', len(self.patterns_collection)
+        return perplexity_over_training, training_time
+
+    def decay(self, i):
+        for key, pop in self.patterns_collection.iteritems():
+            pop.decay(i)
+
+    def occasional_step(self, i, perplexity_over_training, training_time, words):
+        decay_amount = i - self.previous_decay_time
+        training_time.append(i)
+        self.decay(decay_amount)
+        self.previous_decay_time = i
+        self.cull(i)
+        self.refactor()
+        perplexity_over_training.append(
+            self.calculate_perplexity(words[i:i + self.perplexity_count], verbose=False)[-1])
+
+    def perplexity_step(self, N, log_running_perplexity, perplexity_list, previous_words, actual_next_word):
+        next_words, probabilities = self.next_word_distribution(previous_words)
+        if actual_next_word in next_words:
+            chosen_prob = probabilities[next_words.index(actual_next_word)]
+        else:
+            chosen_prob = 0.001
+        log_running_perplexity -= np.log2(chosen_prob)
+        perplexity_list.append(2 ** (log_running_perplexity * (1 / float(N))))
+        print 'Current Perplexity = {0}\r'.format(perplexity_list[-1]),
+        N += 1
+        return N, log_running_perplexity
+
+    def train_token_step(self, index, previous_pop, next_words_list):
+        """ A single step in training. Joins patterns, updates counter i"""
+        current_pop, increment = self.find_next_word(next_words_list)
+        self.join_pattern(previous_pop, current_pop, found_pattern_feed_ratio=1)
+        index += increment
+        if index % 1000 == 0 and index > self.feed_strength_gain:
+            self.refactor()
+        return index, current_pop
+
+    def add_words_to_patterns_collection(self, words, verbose=True):
+        word_count = len(words)
+        unique_words = set(words)
+        for word in unique_words:
+            if word not in self.patterns_collection:
+                self.patterns_collection[word] = Pop(word)
+                self.patterns_collection[word].feed(self.feed_strength_gain)
+        if verbose:
+            print 'There are ', len(unique_words), ' words in vocabulary.'
+            print 'The first few words are ', ','.join(words[:10])
+        return word_count
+
+    def next_word_distribution(self, previous_words_list):
+        start = max(0, len(previous_words_list) - self.maximum_word_count)
+        for j in range(start, len(previous_words_list)):
+            current_word = ''.join(previous_words_list[j:])
+            if current_word in self.patterns_collection:
+                current_pop = self.patterns_collection[current_word]
+                words, probabilities = current_pop.get_next_smallest_distribution()
+                return words, probabilities
+        print 'Warning. Nothing after ', ''.join(previous_words_list)
+        return previous_words_list[0], np.array([1])
+
     def join_pattern(self, first_pattern, second_pattern, found_pattern_feed_ratio):
         new_pattern = first_pattern.unrolled_pattern + second_pattern.unrolled_pattern
         if new_pattern not in self.patterns_collection:
@@ -84,14 +215,17 @@ class PopManager:
     def cull(self, limit):
         cull_list = self.cull_child_and_mark_self(limit)
         for cull_key in cull_list:
+            first_component = self.patterns_collection[cull_key].first_component
+            if first_component:
+                first_component.first_child_parents.remove(self.patterns_collection[cull_key])
             self.patterns_collection.pop(cull_key)
 
     def cull_child_and_mark_self(self, limit):
         cull_list = []
         for key, pop in self.patterns_collection.iteritems():
-            pop.decay()
             if pop.first_component:
                 if pop.first_component.strength < limit:
+                    pop.first_component.first_child_parents.remove(pop)
                     pop.first_component = None
             if pop.second_component:
                 if pop.second_component.strength < limit:
@@ -152,6 +286,10 @@ class PopManager:
                            self.patterns_collection[second_string])
 
     def fix_first_child_parents(self):
+        """
+        Fixes mismatch between first_child_parents by going through each pattern and checking if pop is
+        pop.first_child_parents.first component
+        """
         print 'Fixing incorrect first_child_parents'
         for pop in self.patterns_collection.values():
             for parent_pop in pop.first_child_parents:
