@@ -39,15 +39,15 @@ def get_clean_text_from_file(file, max_input_stream_length):
         return clean_text(text, max_input_stream_length)
 
 
-def get_clean_words_from_file(file, max_input_stream_length):
+def get_clean_words_from_file(file, max_input_length):
     with open(file) as opened_file:
         text = opened_file.read()
-        return nltk.word_tokenize(clean_text(text, max_input_stream_length))
+        return nltk.word_tokenize(clean_text(text))[:max_input_length]
 
 
-def clean_text(text, max_input_stream_length):
+def clean_text(text, max_input_length=10**10000):
     text = text.replace('\n', ' ')
-    max_length = min(max_input_stream_length, len(text))
+    max_length = min(max_input_length, len(text))
     rotation = np.random.randint(low=0, high=max_length, size=1)
     text = text[rotation:max_length] + text[:rotation]
     # make sure to remove # for category separation

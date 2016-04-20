@@ -223,6 +223,13 @@ class TestPatternOfPatterns(TestCase):
         self.assertEqual(N, 2)
         self.assertAlmostEqual(perplexity_list[0], 2, places=2)
 
+    def test_train_token_perplexity_350(self):
+        words = DataObtainer.get_clean_words_from_file('../data/pride.txt', 20000)
+        sp = StreamPredictor()
+        sp.pop_manager.train_token(words[:15000])
+        perplexity_list = sp.pop_manager.calculate_perplexity(words[15000:])
+        self.assertLess(perplexity_list[-1], 350)
+
     def test_train_token_step(self):
         sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
         next_words = [ 'd', 'garbage']
