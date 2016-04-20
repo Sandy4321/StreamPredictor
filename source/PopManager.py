@@ -12,6 +12,7 @@ import numpy as np
 
 from Pop import Pop
 
+
 # constants
 
 
@@ -25,13 +26,15 @@ class PopManager:
         self.maximum_pattern_length = 40  # maximum pattern length
         self.required_repeats = 5  # if seen less than this many times, patterns won't survive on the long run.
         self.feed_ratio_parent_category = 0.5
+        self.not_found_probability = 0.001
+        self.not_found_ratio = 0.2
         #  Fields
         self.patterns_collection = dict()
         self.feed_strength_gain = 10 ** 6
         self.previous_decay_time = 0
 
     def stats(self):
-        return 'The perplexity count constant is ' + str(self.perplexity_count) +\
+        return 'The perplexity count constant is ' + str(self.perplexity_count) + \
                '\nThe occasional step periods is ' + str(self.occasional_step_period) + \
                '\nFeed strength gain is ' + str(self.feed_strength_gain)
 
@@ -146,15 +149,19 @@ class PopManager:
 
     def perplexity_step(self, N, log_running_perplexity, perplexity_list, previous_words, actual_next_word):
         next_words, probabilities = self.next_word_distribution(previous_words)
-        if actual_next_word in next_words:
-            chosen_prob = probabilities[next_words.index(actual_next_word)]
-        else:
-            chosen_prob = 0.001
+        chosen_prob = self.get_prediction_probability(actual_next_word, next_words, probabilities)
         log_running_perplexity -= np.log2(chosen_prob)
         perplexity_list.append(2 ** (log_running_perplexity * (1 / float(N))))
         print 'Current Perplexity = {0}\r'.format(perplexity_list[-1]),
         N += 1
         return N, log_running_perplexity
+
+    def get_prediction_probability(self, actual_next_word, next_words, probabilities):
+        if actual_next_word in next_words:
+            chosen_prob = (1 - self.not_found_ratio) * probabilities[next_words.index(actual_next_word)]
+        else:
+            chosen_prob = self.not_found_ratio * self.not_found_probability
+        return chosen_prob
 
     def train_token_step(self, index, previous_pop, next_words_list):
         """ A single step in training. Joins patterns, updates counter i"""

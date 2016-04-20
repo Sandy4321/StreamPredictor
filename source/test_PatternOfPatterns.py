@@ -249,3 +249,7 @@ class TestPatternOfPatterns(TestCase):
         current_pop, increment = sp.pop_manager.find_next_word(words[1:])
         self.assertEqual(current_pop.unrolled_pattern, 'xe')
         self.assertEqual(increment, 2)
+
+    def test_get_prediction_probability(self):
+        words = ['and', 'what', 'where']
+        sp = StreamPredictor()
