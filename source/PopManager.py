@@ -28,6 +28,7 @@ class PopManager:
         #  Fields
         self.patterns_collection = dict()
         self.feed_strength_gain = 10 ** 6
+        self.previous_decay_time = 0
 
     def stats(self):
         return 'The perplexity count constant is ' + str(self.perplexity_count) +\
@@ -123,8 +124,8 @@ class PopManager:
             previous_pop = current_pop
             if i % self.occasional_step_period == 0:
                 self.occasional_step(i, perplexity_over_training, training_time, words)
-        self.decay(i)
-        self.cull(i)
+        self.occasional_step(i, perplexity_over_training, training_time, words)
+        self.fix_first_child_parents()
         final_perplexity = perplexity_over_training[-1]
         print 'Final perplexity is ', final_perplexity, ' number of patterns is ', len(self.patterns_collection)
         return perplexity_over_training, training_time
@@ -134,11 +135,14 @@ class PopManager:
             pop.decay(i)
 
     def occasional_step(self, i, perplexity_over_training, training_time, words):
+        decay_amount = i - self.previous_decay_time
+        training_time.append(i)
+        self.decay(decay_amount)
+        self.previous_decay_time = i
+        self.cull(i)
+        self.refactor()
         perplexity_over_training.append(
             self.calculate_perplexity(words[i:i + self.perplexity_count], verbose=False)[-1])
-        training_time.append(i)
-        self.refactor()
-        self.cull(i)
 
     def perplexity_step(self, N, log_running_perplexity, perplexity_list, previous_words, actual_next_word):
         next_words, probabilities = self.next_word_distribution(previous_words)
@@ -211,14 +215,17 @@ class PopManager:
     def cull(self, limit):
         cull_list = self.cull_child_and_mark_self(limit)
         for cull_key in cull_list:
+            first_component = self.patterns_collection[cull_key].first_component
+            if first_component:
+                first_component.first_child_parents.remove(self.patterns_collection[cull_key])
             self.patterns_collection.pop(cull_key)
 
     def cull_child_and_mark_self(self, limit):
         cull_list = []
         for key, pop in self.patterns_collection.iteritems():
-            pop.decay()
             if pop.first_component:
                 if pop.first_component.strength < limit:
+                    pop.first_component.first_child_parents.remove(pop)
                     pop.first_component = None
             if pop.second_component:
                 if pop.second_component.strength < limit:
@@ -279,6 +286,10 @@ class PopManager:
                            self.patterns_collection[second_string])
 
     def fix_first_child_parents(self):
+        """
+        Fixes mismatch between first_child_parents by going through each pattern and checking if pop is
+        pop.first_child_parents.first component
+        """
         print 'Fixing incorrect first_child_parents'
         for pop in self.patterns_collection.values():
             for parent_pop in pop.first_child_parents:
