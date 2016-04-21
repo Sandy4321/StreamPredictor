@@ -210,6 +210,7 @@ class TestPatternOfPatterns(TestCase):
 
     def test_perplexity_step(self):
         sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
+        sp.pop_manager.not_found_ratio = 0.2
         previous_words = ['ab']
         actual_next_word = 'x'
         N = 1
@@ -222,12 +223,12 @@ class TestPatternOfPatterns(TestCase):
         self.assertEqual(N, 2)
         self.assertAlmostEqual(perplexity_list[0], 2.5, places=2)
 
-    def test_train_token_perplexity_350(self):
+    def test_train_token_perplexity_limit(self):
         words = DataObtainer.get_clean_words_from_file('../data/pride.txt', 20000)
         sp = StreamPredictor()
         sp.pop_manager.train_token(words[:15000])
         perplexity_list = sp.pop_manager.calculate_perplexity(words[15000:])
-        self.assertLess(perplexity_list[-1], 350)
+        self.assertLess(perplexity_list[-1],2500)
 
     def test_train_token_step(self):
         sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
@@ -254,6 +255,7 @@ class TestPatternOfPatterns(TestCase):
         probabilities = [0.3, 0.3, 0.4]
         sp = StreamPredictor()
         sp.pop_manager.vocabulary_count = 4
+        sp.pop_manager.not_found_ratio = 0.2
         returned_probability = sp.pop_manager.get_prediction_probability('and', words, probabilities)
         self.assertEqual(returned_probability, 0.8 * 0.3)
         returned_probability = sp.pop_manager.get_prediction_probability('not', words, probabilities)
