@@ -296,7 +296,7 @@ class PopManager:
         pop.set_components(self.patterns_collection[first_string],
                            self.patterns_collection[second_string])
 
-    def fix_first_child_parents(self):
+    def fix_first_child_parents(self, verbose=False):
         """
         Fixes mismatch between first_child_parents by going through each pattern and checking if pop is
         pop.first_child_parents.first component
@@ -307,5 +307,6 @@ class PopManager:
                 if parent_pop.first_component:
                     if parent_pop.first_component is pop:
                         continue
-                print 'Mismatch ', pop.__repr__(), ' and ', parent_pop.__repr__()
+                if verbose:
+                    print 'Mismatch ', pop.__repr__(), ' and ', parent_pop.__repr__()
                 pop.first_child_parents.remove(parent_pop)
