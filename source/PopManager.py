@@ -26,8 +26,7 @@ class PopManager:
         self.maximum_pattern_length = 40  # maximum pattern length
         self.required_repeats = 5  # if seen less than this many times, patterns won't survive on the long run.
         self.feed_ratio_parent_category = 0.5
-        self.not_found_probability = 0.001
-        self.not_found_ratio = 0.2
+        self.not_found_ratio = 0.9
         #  Fields
         self.patterns_collection = dict()
         self.feed_strength_gain = 10 ** 6
@@ -37,6 +36,7 @@ class PopManager:
     def stats(self):
         return 'The perplexity count constant is ' + str(self.perplexity_count) + \
                '\nThe occasional step periods is ' + str(self.occasional_step_period) + \
+               '\nThe not found raitio is' + str(self.not_found_ratio) + \
                '\nFeed strength gain is ' + str(self.feed_strength_gain)
 
     def __repr__(self):
@@ -163,7 +163,7 @@ class PopManager:
         if actual_next_word in next_words:
             chosen_prob = (1 - self.not_found_ratio) * probabilities[next_words.index(actual_next_word)]
         else:
-            chosen_prob = self.not_found_ratio * (self.not_found_probability/remaining_words_in_vocabulary)
+            chosen_prob = self.not_found_ratio / remaining_words_in_vocabulary
         return chosen_prob
 
     def train_token_step(self, index, previous_pop, next_words_list):
