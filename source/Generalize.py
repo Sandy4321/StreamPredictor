@@ -8,7 +8,7 @@ def fruit_generalization():
     sp.pop_manager.add_pop_string('apple')
     sp.pop_manager.add_pop_string('banana')
     text = DataObtainer.get_clean_text_from_file('data/Experimental/case.txt', 100000)
-    sp.train(text)
+    sp.train_characters(text)
     sp.pop_manager.refactor()
     # sp.generalize()
     # sp.train(text)
@@ -43,7 +43,7 @@ def cat_dog_generation():
     sp.pop_manager.add_pop_string(' ate food. ')
     sp.pop_manager.add_pop_string('The ')
     for i in range(3):
-        sp.train(cat_dog_text)
+        sp.train_characters(cat_dog_text)
         sp.pop_manager.save_pb_plain('PatternStore/cat_dog_' + str(i) + '.txt')
         generated = sp.generate_stream(100)
         print generated
@@ -53,7 +53,7 @@ def cat_dog_train_category():
     cat_dog_text = simple_generation(999)
     sp = StreamPredictor()
     sp.pop_manager.load_pb_plain('PatternStore/cat_dog_gen.txt')
-    sp.train(cat_dog_text)
+    sp.train_characters(cat_dog_text)
     sp.pop_manager.save_pb_plain('PatternStore/cat_dog_gen2.txt')
 
 

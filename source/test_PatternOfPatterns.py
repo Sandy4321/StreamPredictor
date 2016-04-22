@@ -13,7 +13,7 @@ training_text = 'cat hat mat bat sat in the barn'
 class TestPatternOfPatterns(TestCase):
     def get_sample(self):
         sample = StreamPredictor()
-        sample.train(training_text)
+        sample.train_characters(training_text)
         return sample
 
     def test_save(self):
@@ -55,7 +55,7 @@ class TestPatternOfPatterns(TestCase):
     def test_train_increases_patterns(self):
         sample = self.get_sample()
         pattern_count = len(sample.pop_manager.patterns_collection)
-        sample.train(training_text)
+        sample.train_characters(training_text)
         self.assertGreater(len(sample.pop_manager.patterns_collection), pattern_count)
 
     def test_save_load_equal(self):

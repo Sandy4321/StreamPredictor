@@ -16,7 +16,7 @@ class StreamPredictor:
                                                    self.pop_manager.feed_strength_gain)
         print self.pop_manager.stats()
 
-    def train(self, string, generalize=False):
+    def train_characters(self, string, generalize=False):
         maximum_pattern_length = self.pop_manager.maximum_pattern_length
         input_length = self.pop_manager.setup_train(string)
         previous_pop = self.pop_manager.patterns_collection[string[0]]
@@ -43,10 +43,9 @@ class StreamPredictor:
         current_word = current_pop.unrolled_pattern
         generated_output = current_word
         for i in range(word_length):
-            next_word = self.pop_manager.predict_next_word(generated_output)
+            next_word = self.pop_manager.choose_next_word(generated_output)
             if next_word == '':
                 next_word = np.random.choice([pop.unrolled_pattern
                                               for key, pop in self.pop_manager.patterns_collection.iteritems()])
             generated_output += next_word
         return generated_output
-

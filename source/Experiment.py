@@ -27,7 +27,7 @@ def default_trainer(storage_file):
         text = DataObtainer.get_random_book_local('data/')
         text = DataObtainer.clean_text(text, max_input_stream_length)
         sp = load_sp(storage_file)
-        sp.train(text)
+        sp.train_characters(text)
         sp.file_manager.save_tsv(storage_file)
         print sp.generate_stream(200)
         total_time_mins = (time.time() - start_time) / 60
@@ -41,7 +41,7 @@ def default_small_trainer(storage_file):
     text = DataObtainer.get_random_book_local('data/')
     text = DataObtainer.clean_text(text, 10000)
     sp = load_sp(storage_file)
-    sp.train(text)
+    sp.train_characters(text)
     sp.generalizer.generalize()
     sp.file_manager.save_tsv(storage_file)
     print sp.generate_stream(200)
@@ -59,7 +59,7 @@ def online_trainer(storage_file):
         text = DataObtainer.gutenberg_random_book()
         text = DataObtainer.clean_text(text, max_input_stream_length)
         sp = load_sp(storage_file)
-        sp.train(text)
+        sp.train_characters(text)
         sp.file_manager.save_tsv(storage_file)
         print sp.generate_stream(200)
         total_time_mins = (time.time() - start_time) / 60
@@ -71,10 +71,10 @@ def online_trainer(storage_file):
 def sanity_check_run():
     sp = StreamPredictor.StreamPredictor()
     text = 'hahaha this is a sanity check, just checking some text'
-    sp.train(text)
-    sp.train(text)
-    sp.train(text)
-    sp.train(text)
+    sp.train_characters(text)
+    sp.train_characters(text)
+    sp.train_characters(text)
+    sp.train_characters(text)
     print sp.generate_stream(5)
     print 'Everything OK'
 

@@ -252,7 +252,7 @@ class PopManager:
         out_string += 'Status of Pattern of patterns with ' + str(len(self.patterns_collection)) + ' pops \n'
         return out_string
 
-    def predict_next_word(self, input_word):
+    def choose_next_word(self, input_word):
         start = max(0, len(input_word) - self.maximum_pattern_length)
         for j in range(start, len(input_word)):
             current_word = input_word[j:]
