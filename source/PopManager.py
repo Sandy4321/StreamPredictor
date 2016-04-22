@@ -175,6 +175,20 @@ class PopManager:
             self.refactor()
         return index, current_pop
 
+    def generate_words(self, word_length, seed=None):
+        print 'Generating words with word count = ', word_length
+        current_pop = np.random.choice(self.patterns_collection.values()) \
+            if seed is None or '' else self.find_next_pattern(seed)
+        current_word = current_pop.unrolled_pattern
+        generated_output = [current_word]
+        for i in range(word_length):
+            next_word = self.choose_next_word(generated_output)
+            if next_word == '':
+                next_word = np.random.choice([pop.unrolled_pattern
+                                              for key, pop in self.patterns_collection.iteritems()])
+            generated_output += next_word
+        return generated_output
+
     def add_words_to_patterns_collection(self, words, verbose=True):
         word_count = len(words)
         unique_words = set(words)
