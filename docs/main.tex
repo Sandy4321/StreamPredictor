@@ -50,6 +50,11 @@ And we would form new patterns by combining 2 at a time the transformed sequence
 \subsection{ Evolution of Patterns}
 With the above formation lots of spurious patterns will be formed. We need to keep only useful patterns and discard unused ones. So Every time we encounter a pattern we "feed" it and it's strength increases. Strength is just an integer number associated with each pattern. As time increases we decrement strength of all patterns. If strength falls below certain threshold we cull the patterns. Hence patterns that are not repeated will die out. Also when we feed a pattern it's children are also given a share. It is essential that all formed pattern are given sufficient time before being killed as they maybe useful later on as children of other more complicated patterns.
 
+\subsection{Categories}
+We can find words that occur in similar position and categorize them into classes. 
+e.g. If we see the sentences \textit{He lives in a house}and \textit{She lives in a house} we can conclude that He and She are similar. 
+This way we can find classes of words. This is similar to \cite{brown1992class}
+
 \section*{Algorithm}
 The algorithm for Stream Predictors is given in Table Algorithm \ref{sp_algo}.
 \begin{algorithm}
@@ -85,6 +90,8 @@ The algorithm for Stream Predictors is given in Table Algorithm \ref{sp_algo}.
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
+
+
 \section*{Code}
 The given code uses the above concepts for text. 
 
@@ -103,65 +110,20 @@ Some of the methods of this class are
 2. *Generate()* Using the patterns collection generates a stream of likely text. 
 Thanks for using Overleaf to write your article. Your introduction goes here! Some examples of commonly used commands and features are listed below, to help you get started.
 
-\section*{Methods and Materials}
-
-Guidelines can be included for standard research article sections, such as this one.
-
-\section*{Some \LaTeX{} Examples}
-\label{sec:examples}
-
-Use section and subsection commands to organize your document. \LaTeX{} handles all the formatting and numbering automatically. Use ref and label commands for cross-references.
-
-\subsection*{Figures and Tables}
-
-Use the table and tabular commands for basic tables --- see Table~\ref{tab:widgets}, for example. You can upload a figure (JPEG, PNG or PDF) using the project menu. To include it in your document, use the includegraphics command as in the code for Figure~\ref{fig:view} below.
+\section*{Experiment}
+For the experiment, given a collection of text like novel, we split the words into test and training set. We train the model on the training set and then calculate the perplexity in the test set.
 
 
 
-\begin{table}[ht]
-\centering
-\begin{tabular}{l|r}
-Item & Quantity \\\hline
-Candles & 4 \\
-Fork handles & ?  
-\end{tabular}
-\caption{\label{tab:widgets}An example table.}
-\end{table}
 
-\subsection*{Citations}
 
-LaTeX formats citations and references automatically using the bibliography records in your .bib file, which you can edit via the project menu. Use the cite command for an inline citation, like \cite{lees2010theoretical}, and the citep command for a citation in parentheses \citep{lees2010theoretical}.
 
-\subsection*{Mathematics}
 
-\LaTeX{} is great at typesetting mathematics. Let $X_1, X_2, \ldots, X_n$ be a sequence of independent and identically distributed random variables with $\text{E}[X_i] = \mu$ and $\text{Var}[X_i] = \sigma^2 < \infty$, and let
-$$S_n = \frac{X_1 + X_2 + \cdots + X_n}{n}
-      = \frac{1}{n}\sum_{i}^{n} X_i$$
-denote their mean. Then as $n$ approaches infinity, the random variables $\sqrt{n}(S_n - \mu)$ converge in distribution to a normal $\mathcal{N}(0, \sigma^2)$.
 
-\subsection*{Lists}
 
-You can make lists with automatic numbering \dots
 
-\begin{enumerate}[noitemsep] 
-\item Like this,
-\item and like this.
-\end{enumerate}
-\dots or bullet points \dots
-\begin{itemize}[noitemsep] 
-\item Like this,
-\item and like this.
-\end{itemize}
-\dots or with words and descriptions \dots
-\begin{description}
-\item[Word] Definition
-\item[Concept] Explanation
-\item[Idea] Text
-\end{description}
 
-\section*{Acknowledgments}
 
-Additional information can be given in the template, such as to not include funder information in the acknowledgments section.
 
 \bibliography{sample}
 
