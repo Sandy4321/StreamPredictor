@@ -3,6 +3,8 @@
 
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}
+\usepackage{hyperref}
+
 
 \title{Stream Predictors}
 
@@ -11,14 +13,14 @@
 %\affil[1]{Unaffiliated}
 %\affil[2]{Address of second author}
 
-\keywords{Sequence modelling, language modelling, hierarchical hidden markov model}
+\keywords{Sequence modelling, language modelling, hierarchical hidden Markov model}
 
 \begin{abstract}
-We try to model sequential structured data like natural text using a combinatino of Hierarchical Patterns and Evolution. 
+We try to model sequential structured data like natural text using a combination of Hierarchical Patterns and Evolution. 
 The aim is to get a probabilistic, language independent model for sequential data. 
 During training we learn which pattern comes after each pattern similar to a bigram. 
 Then each transition from pattern to pattern is made as a new pattern.
-Many spurious patterns are formed but only ones that are repeated are retained. Performance is calculated by measuring the perplexity for words from some Enlgish novels.
+Many spurious patterns are formed but only ones that are repeated are retained. Performance is calculated by measuring the perplexity for words from some English novels.
 \end{abstract}
 
 \begin{document}
@@ -94,6 +96,7 @@ The algorithm for Stream Predictors is given in Table Algorithm \ref{sp_algo}.
 
 \section*{Code}
 The given code uses the above concepts for text. 
+It can be found at author's Github page \url{https://github.com/abhishekraok/StreamPredictor} 
 
 \subsection{Pop}
 Each unit of pattern is called Pop (Pattern of Pattern). It consists of an unrolled pattern which is the complete text representation of the pattern. It uniquely identifies each pop. Each pop also contains two children called first component and second component. 
@@ -106,7 +109,7 @@ Consists of collection of Pops as a dictionary where the keys are the string ass
 
 Some of the methods of this class are 
 
-1. *Train()* Takes a string as input and trains the model. Essentialy forms a collection of patterns.
+1. *Train()* Takes a string as input and trains the model. Essentially forms a collection of patterns.
 2. *Generate()* Using the patterns collection generates a stream of likely text. 
 Thanks for using Overleaf to write your article. Your introduction goes here! Some examples of commonly used commands and features are listed below, to help you get started.
 
@@ -128,4 +131,5 @@ For the experiment, given a collection of text like novel, we split the words in
 \bibliography{sample}
 
 \end{document}
+
 
