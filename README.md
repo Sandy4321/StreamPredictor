@@ -24,6 +24,9 @@ CA, AT, TH, HA, AT. Now our pattern collecton would consists of  {A,B,C,...Z, CA
 ## Evolution of Patterns
 With the above formation lots of spurious patterns will be formed. We need to keep only useful patterns and discard unused ones. So Every time we encounter a pattern we "feed" it and it's strength increases. Strength is just an integer number associated with each pattern. As time increases we decrement strength of all patterns. If strength falls below certain threshold we cull the patterns. Hence patterns that are not repeated will die out. Also when we feed a pattern it's children are also given a share. It is essential that all formed pattern are given sufficient time before being killed as they maybe useful later on as children of other more complicated patterns.
 
+#Demo 
+The demo is given in this [notebook](https://github.com/abhishekraok/StreamPredictor/blob/master/notebook/LanguageDemo.ipynb).
+
 # Code
 The given code uses the above concepts for text. 
 
