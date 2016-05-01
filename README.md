@@ -5,6 +5,8 @@ During training we learn which pattern comes after each pattern similar to a big
 Then each transition from pattern to pattern is made as a new pattern.
 Many spurious patterns are formed but only ones that are repeated are retained. Performance is calculated by measuring the perplexity for words from some Enlgish novels.
 
+More details are given here [Paper](https://www.researchgate.net/publication/301594438_Hierarchical_evolutionary_sequence_patterns)
+
 # Concepts
 ## Hierarchical Pattern Formation
 The main concept used is somewhat similar to [Hierarchical Hidden Markov Model] (https://en.wikipedia.org/wiki/Hierarchical_hidden_Markov_model) (HHMM). The idea is that every transition from pattern **A** to pattern **B** can itself be modelled as pattern **AB**. But the inference method is different.
