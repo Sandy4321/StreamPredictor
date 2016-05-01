@@ -181,8 +181,24 @@ class PopManager:
             if seed is None or '' else self.find_next_pattern(seed)
         current_word = current_pop.unrolled_pattern
         generated_output = [current_word]
+        printable_output = self.patterns_collection[current_word].print_components()
         for i in range(word_length):
-            next_word = self.choose_next_word(generated_output)
+            next_word = self.choose_next_word_word_list(generated_output)
+            if next_word == '':
+                next_word = np.random.choice([pop.unrolled_pattern
+                                              for key, pop in self.patterns_collection.iteritems()])
+            generated_output.append(next_word)
+            printable_output += self.patterns_collection[next_word].print_components()
+        return printable_output
+
+    def generate_strings(self, word_length, seed=None):
+        print 'Generating words with word count = ', word_length
+        current_pop = np.random.choice(self.patterns_collection.values()) \
+            if seed is None or '' else self.find_next_pattern(seed)
+        current_word = current_pop.unrolled_pattern
+        generated_output = [current_word]
+        for i in range(word_length):
+            next_word = self.choose_next_word_string(generated_output)
             if next_word == '':
                 next_word = np.random.choice([pop.unrolled_pattern
                                               for key, pop in self.patterns_collection.iteritems()])
@@ -266,7 +282,7 @@ class PopManager:
         out_string += 'Status of Pattern of patterns with ' + str(len(self.patterns_collection)) + ' pops \n'
         return out_string
 
-    def choose_next_word(self, input_word):
+    def choose_next_word_string(self, input_word):
         start = max(0, len(input_word) - self.maximum_pattern_length)
         for j in range(start, len(input_word)):
             current_word = input_word[j:]
@@ -282,6 +298,25 @@ class PopManager:
                 probabilities /= sum(probabilities)
                 return np.random.choice(words, p=probabilities)
         print ' nothing after ', input_word
+        return ''
+
+    def choose_next_word_word_list(self, input_word, Verbose=False):
+        start = max(0, len(input_word) - self.maximum_pattern_length)
+        for j in range(start, len(input_word)):
+            current_word = ''.join(input_word[j:])
+            if current_word in self.patterns_collection:
+                current_pop = self.patterns_collection[current_word]
+                words, probabilities = current_pop.get_next_distribution()
+                if current_pop.belongs_to_category:
+                    category_words, category_probabilities = current_pop.belongs_to_category.get_next_distribution()
+                    words = words + category_words
+                    probabilities = np.hstack([0.5 * probabilities, 0.5 * category_probabilities])
+                if len(words) < 1:
+                    continue
+                probabilities /= sum(probabilities)
+                return np.random.choice(words, p=probabilities)
+        if Verbose:
+            print ' nothing after ', input_word
         return ''
 
     def refactor(self):

@@ -1,5 +1,3 @@
-import numpy as np
-
 import FileManager
 import Generalizer
 import PopManager
@@ -10,6 +8,7 @@ class WordPredictor:
     Creates language model by training on given words and then generating sample words or
     calculating perplexity for test words.
     """
+
     def __init__(self, pm=None):
         if pm:
             self.pop_manager = pm
@@ -24,4 +23,7 @@ class WordPredictor:
         self.pop_manager.train_token(training_words)
 
     def generate(self, sample_length):
-        self.pop_manager.generate_words(sample_length)
+        return self.pop_manager.generate_words(sample_length)
+
+    def calculate_perplexity(self, words):
+        return self.pop_manager.calculate_perplexity(words=words, verbose=False)

@@ -133,3 +133,9 @@ class Pop:
             if parent_i.second_component:
                 next_patterns.append(parent_i.second_component)
         return next_patterns
+
+    def print_components(self):
+        if self.first_component and self.second_component:
+            return self.first_component.print_components() + ' ' + self.second_component.print_components()
+        return ' ' + self.unrolled_pattern
+
