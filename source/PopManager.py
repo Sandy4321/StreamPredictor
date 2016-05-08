@@ -107,7 +107,7 @@ class PopManager:
         log_running_perplexity = 0
         perplexity_list = []
         N = 1
-        while N < word_count - 1:
+        while N < word_count:
             N, log_running_perplexity = self.perplexity_step(N, log_running_perplexity, perplexity_list, words[:N],
                                                              words[N])
         final_log_perplexity = log_running_perplexity * (1 / float(N))
