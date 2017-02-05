@@ -1,8 +1,7 @@
-import numpy as np
-
 import FileManager
 import Generalizer
 import PopManager
+import random
 
 
 class StreamPredictor:
@@ -38,14 +37,14 @@ class StreamPredictor:
 
     def generate_stream(self, word_length, seed=None):
         print 'Generating stream with word count = ', word_length
-        current_pop = np.random.choice(self.pop_manager.patterns_collection.values()) \
+        current_pop = random.choice(self.pop_manager.patterns_collection.values()) \
             if seed is None or '' else self.pop_manager.find_next_pattern(seed)
         current_word = current_pop.unrolled_pattern
         generated_output = current_word
         for i in range(word_length):
-            next_word = self.pop_manager.choose_next_word(generated_output)
+            next_word = self.pop_manager.choose_next_word_string(generated_output)
             if next_word == '':
-                next_word = np.random.choice([pop.unrolled_pattern
+                next_word = random.choice([pop.unrolled_pattern
                                               for key, pop in self.pop_manager.patterns_collection.iteritems()])
             generated_output += next_word
         return generated_output
