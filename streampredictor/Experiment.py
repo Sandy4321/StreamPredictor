@@ -110,6 +110,9 @@ def train_and_perplexity():
     sp = StreamPredictor.StreamPredictor()
     perplexity_list, x_list = sp.pop_manager.train_token_and_perplexity(words)
     plt.plot(x_list, perplexity_list)
+    plt.xlabel('Time')
+    plt.ylabel('Perplexity')
+    plt.title('Perplexity during training')
     plt.show()
 
 
