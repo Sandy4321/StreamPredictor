@@ -17,7 +17,7 @@ class WordPredictor:
         self.file_manager = FileManager.FileManager(self.pop_manager)
         self.generalizer = Generalizer.Generalizer(self.pop_manager.patterns_collection,
                                                    self.pop_manager.feed_strength_gain)
-        print self.pop_manager.stats()
+        print(self.pop_manager.stats())
 
     def train(self, training_words):
         self.pop_manager.train_token(training_words)

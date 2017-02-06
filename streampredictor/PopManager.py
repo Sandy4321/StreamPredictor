@@ -182,7 +182,7 @@ class PopManager:
         current_word = current_pop.unrolled_pattern
         generated_output = [current_word]
         printable_output = self.patterns_collection[current_word].print_components()
-        for i in range(word_length):
+        for i in range(word_length - 1):
             next_word = self.choose_next_word_word_list(generated_output)
             if next_word == '':
                 next_word = np.random.choice([pop.unrolled_pattern

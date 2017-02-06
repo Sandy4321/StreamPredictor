@@ -1,7 +1,7 @@
 import os
 from unittest import TestCase
 
-import DataObtainer
+from . import DataObtainer
 from Pop import Pop
 from StreamPredictor import StreamPredictor
 

@@ -12,10 +12,10 @@ def gutenberg_random_book():
         response = urllib2.urlopen(url)
         text = response.read()
         if len(text) > 1000 and is_english(text):
-            print 'Got book from ', url
+            print('Got book from ', url)
             return text
         else:
-            print 'Didnt get book, waiting for some time, seconds = ' + str(10 + book_number / 10)
+            print('Didnt get book, waiting for some time, seconds = ' + str(10 + book_number / 10))
             time.sleep(10 + book_number / 10)
 
 
@@ -63,4 +63,4 @@ def get_online_words(max_input_length):
 
 if __name__ == '__main__':
     text = get_random_book_local('../data')
-    print text
+    print(text)
