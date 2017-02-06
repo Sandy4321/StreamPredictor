@@ -18,4 +18,4 @@ scratch/*
 *.jpg
 *.pdf
 *.log
-
+notebook/.ipynb_checkpoints/*

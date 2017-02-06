@@ -1,21 +1,21 @@
-import numpy as np
 import nltk
 import urllib2
 import time
 import os
+import random
 
 
 def gutenberg_random_book():
     for i in range(100):
-        book_number = np.random.randint(low=9, high=2000, size=1)[0]
+        book_number = random.randint(9, 2000)
         url = 'http://www.gutenberg.org/cache/epub/' + str(book_number) + '/pg' + str(book_number) + '.txt'
         response = urllib2.urlopen(url)
         text = response.read()
         if len(text) > 1000 and is_english(text):
-            print 'Got book from ', url
+            print('Got book from ', url)
             return text
         else:
-            print 'Didnt get book, waiting for some time, seconds = ' + str(10 + book_number / 10)
+            print('Didnt get book, waiting for some time, seconds = ' + str(10 + book_number / 10))
             time.sleep(10 + book_number / 10)
 
 
@@ -28,7 +28,7 @@ def is_english(text):
 
 
 def get_random_book_local(folder):
-    file = np.random.choice(os.listdir(folder))
+    file = random.choice(os.listdir(folder))
     with open(folder + file) as opened_file:
         return opened_file.read()
 
@@ -48,7 +48,7 @@ def get_clean_words_from_file(file, max_input_length):
 def clean_text(text, max_input_length=10**10000):
     text = text.replace('\n', ' ')
     max_length = min(max_input_length, len(text))
-    rotation = np.random.randint(low=0, high=max_length, size=1)
+    rotation = random.randint(0,max_length)
     text = text[rotation:max_length] + text[:rotation]
     # make sure to remove # for category separation
     text = ''.join(e for e in text if e.isalnum() or e in '.?", ')
@@ -63,4 +63,4 @@ def get_online_words(max_input_length):
 
 if __name__ == '__main__':
     text = get_random_book_local('../data')
-    print text
+    print(text)
