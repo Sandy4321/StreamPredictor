@@ -1,4 +1,7 @@
 # StreamPredictor
+
+[![Build Status](https://travis-ci.org/abhishekraok/StreamPredictor.svg?branch=master)](https://travis-ci.org/abhishekraok/StreamPredictor)
+
 We try to model sequential structured data like natural text using a combinatino of Hierarchical Patterns and Evolution. 
 The aim is to get a probabilistic, language independent model for sequential data. 
 During training we learn which pattern comes after each pattern similar to a bigram. 
