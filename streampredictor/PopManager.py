@@ -9,11 +9,9 @@ Patterns decay over time, if not seen are culled. Patterns are fed if they are s
 half of them. Kind of adaptive coding.
 """
 import numpy as np
+import random
 
 from Pop import Pop
-
-
-# constants
 
 
 class PopManager:
@@ -177,7 +175,7 @@ class PopManager:
 
     def generate_words(self, word_length, seed=None):
         print 'Generating words with word count = ', word_length
-        current_pop = np.random.choice(self.patterns_collection.values()) \
+        current_pop = random.choice(self.patterns_collection.values()) \
             if seed is None or '' else self.find_next_pattern(seed)
         current_word = current_pop.unrolled_pattern
         generated_output = [current_word]
@@ -185,7 +183,7 @@ class PopManager:
         for i in range(word_length - 1):
             next_word = self.choose_next_word_word_list(generated_output)
             if next_word == '':
-                next_word = np.random.choice([pop.unrolled_pattern
+                next_word = random.choice([pop.unrolled_pattern
                                               for key, pop in self.patterns_collection.iteritems()])
             generated_output.append(next_word)
             printable_output += self.patterns_collection[next_word].print_components()
@@ -193,14 +191,14 @@ class PopManager:
 
     def generate_strings(self, word_length, seed=None):
         print 'Generating words with word count = ', word_length
-        current_pop = np.random.choice(self.patterns_collection.values()) \
+        current_pop = random.choice(self.patterns_collection.values()) \
             if seed is None or '' else self.find_next_pattern(seed)
         current_word = current_pop.unrolled_pattern
         generated_output = [current_word]
         for i in range(word_length):
             next_word = self.choose_next_word_string(generated_output)
             if next_word == '':
-                next_word = np.random.choice([pop.unrolled_pattern
+                next_word = random.choice([pop.unrolled_pattern
                                               for key, pop in self.patterns_collection.iteritems()])
             generated_output += next_word
         return generated_output
@@ -296,7 +294,7 @@ class PopManager:
                 if len(words) < 1:
                     continue
                 probabilities /= sum(probabilities)
-                return np.random.choice(words, p=probabilities)
+                return random.choice(words, p=probabilities)
         print ' nothing after ', input_word
         return ''
 
@@ -314,7 +312,7 @@ class PopManager:
                 if len(words) < 1:
                     continue
                 probabilities /= sum(probabilities)
-                return np.random.choice(words, p=probabilities)
+                return random.choice(words, p=probabilities)
         if Verbose:
             print ' nothing after ', input_word
         return ''
