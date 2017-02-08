@@ -2,4 +2,4 @@ nltk
 numpy
 protobuf
 matplotlib
-progressbar2
+progressbar
