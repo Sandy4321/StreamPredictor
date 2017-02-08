@@ -1,7 +1,7 @@
 """
 Author: Abhishek Rao
 """
-import Pop
+from . import Pop
 
 
 class Generalizer():
@@ -30,20 +30,20 @@ class Generalizer():
         return False
 
     def similarity_all(self):
-        for key1, pop1 in self.patterns_collection.iteritems():
-            for key2, pop2 in self.patterns_collection.iteritems():
-                print 'Similarity of ', pop1.unrolled_pattern, ' and ', pop2.unrolled_pattern, ' is ', pop1.similarity(
-                    pop2)
+        for key1, pop1 in self.patterns_collection.items():
+            for key2, pop2 in self.patterns_collection.items():
+                print('Similarity of ', pop1.unrolled_pattern, ' and ', pop2.unrolled_pattern, ' is ', pop1.similarity(
+                    pop2))
 
     def generalize(self):
-        print 'Generalizing ..'
-        pops_list = self.patterns_collection.values()
+        print('Generalizing ..')
+        pops_list = list(self.patterns_collection.values())
         for pop in pops_list:
             next_to_next = dict()
             for next_pop in pop.next_patterns():
                 next_to_next[next_pop.unrolled_pattern] = next_pop.next_patterns()
-            for next_key_a, next_list_a in next_to_next.iteritems():
-                for next_key_b, next_list_b in next_to_next.iteritems():
+            for next_key_a, next_list_a in next_to_next.items():
+                for next_key_b, next_list_b in next_to_next.items():
                     if self.do_not_generalize(next_key_a, next_key_b):
                         continue
                     same_length = len(set(next_list_a).intersection(next_list_b))
@@ -53,7 +53,7 @@ class Generalizer():
 
     def set_similarity(self, first_pattern, second_pattern):
         if first_pattern == second_pattern:
-            print first_pattern, ' and ', second_pattern, ' are same!'
+            print(first_pattern, ' and ', second_pattern, ' are same!')
             return
         first_pop = self.patterns_collection[first_pattern]
         second_pop = self.patterns_collection[second_pattern]
@@ -65,7 +65,7 @@ class Generalizer():
                 self.set_similarity(first_pop.second_component.unrolled_pattern,
                                     second_pop.second_component.unrolled_pattern)
                 return
-        print 'Perhaps ', first_pattern, ' and ', second_pattern, ' are similar?'
+        print('Perhaps ', first_pattern, ' and ', second_pattern, ' are similar?')
         new_category_string = 'category with ' + first_pattern + ' and ' + second_pattern
         if new_category_string not in self.patterns_collection:
             new_category = Pop.Pop(new_category_string)

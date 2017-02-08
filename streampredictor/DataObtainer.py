@@ -1,5 +1,5 @@
 import nltk
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import time
 import os
 import random
@@ -9,13 +9,13 @@ def gutenberg_random_book():
     for i in range(100):
         book_number = random.randint(9, 2000)
         url = 'http://www.gutenberg.org/cache/epub/' + str(book_number) + '/pg' + str(book_number) + '.txt'
-        response = urllib2.urlopen(url)
+        response = urllib.request.urlopen(url)
         text = response.read()
         if len(text) > 1000 and is_english(text):
-            print('Got book from ', url)
+            print(('Got book from ', url))
             return text
         else:
-            print('Didnt get book, waiting for some time, seconds = ' + str(10 + book_number / 10))
+            print(('Didnt get book, waiting for some time, seconds = ' + str(10 + book_number / 10)))
             time.sleep(10 + book_number / 10)
 
 
@@ -70,7 +70,7 @@ def convert_words_to_id(words):
     """
     unique_words = list(set(words))
     id2word = dict((id,word) for id,word in enumerate(unique_words))
-    word2id = dict((i,j) for j,i in id2word.iteritems())
+    word2id = dict((i,j) for j,i in id2word.items())
     id_sequence = [word2id[word] for word in words]
     return id_sequence, word2id, id2word
 

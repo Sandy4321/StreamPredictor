@@ -2,4 +2,5 @@ nltk
 numpy
 protobuf
 matplotlib
-progressbar
+progressbar2
+nose

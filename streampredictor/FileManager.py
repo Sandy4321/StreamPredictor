@@ -1,5 +1,5 @@
-import ProtobufManager
-from Pop import Pop
+from . import ProtobufManager
+from .Pop import Pop
 
 
 class FileManager():
@@ -12,7 +12,7 @@ class FileManager():
 
     def save_tsv(self, filename):
         save_string = 'pattern, strength, component1, component2, parents\n'
-        for key, pop in sorted(self.pop_manager.patterns_collection.iteritems(), key=lambda ng: ng[1].strength):
+        for key, pop in sorted(iter(self.pop_manager.patterns_collection.items()), key=lambda ng: ng[1].strength):
             save_string += key + '\t' + str(pop.strength) + '\t'
             if pop.first_component:
                 save_string += pop.first_component.unrolled_pattern
@@ -26,7 +26,7 @@ class FileManager():
             save_string += '\n'
         with open(filename, mode='w') as file:
             file.write(save_string)
-        print 'Saved file ' + filename
+        print('Saved file ' + filename)
 
     def save_pb(self, filename):
         buf = ProtobufManager.ProtobufManager.PopManager_to_ProtobufPopManager(self.pop_manager)
@@ -61,14 +61,14 @@ class FileManager():
                     for parent_i in elements[4:]:
                         if parent_i != '' and parent_i in self.pop_manager.patterns_collection:
                             self.pop_manager.patterns_collection[key].first_child_parents.append(self.pop_manager.patterns_collection[parent_i])
-        print 'Loaded file ' + filename + ' with number of patterns = ' + str(len(self.pop_manager.patterns_collection))
+        print('Loaded file ' + filename + ' with number of patterns = ' + str(len(self.pop_manager.patterns_collection)))
 
     def load_pb(self, filename):
         pop_manager = ProtobufManager.ProtobufManager.load_PopManager(filename)
         self.pop_manager.patterns_collection = pop_manager.patterns_collection
 
     def load_pb_plain(self, filename):
-        print 'Loading ', filename
+        print('Loading ', filename)
         buffy = ProtobufManager.ProtobufManager.load_protobuf_plain(filename)
         pm = ProtobufManager.ProtobufManager.protobuf_to_pop_manager(buffy)
         self.pop_manager.patterns_collection = pm.patterns_collection

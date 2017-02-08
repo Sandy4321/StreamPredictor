@@ -1,16 +1,16 @@
 import progressbar
 from google.protobuf import text_format
 
-import pop_pb2
-import PopManager
-import Pop
-import StreamPredictor
+from . import pop_pb2
+from . import PopManager
+from . import Pop
+from . import StreamPredictor
 
 
 class ProtobufManager:
     @staticmethod
     def tsv_to_protbuf(tsv_file):
-        print 'Converting from tsv to protobuf the file ', tsv_file
+        print('Converting from tsv to protobuf the file ', tsv_file)
         sp= StreamPredictor.StreamPredictor()
         sp.file_manager.load_tsv(tsv_file)
         buffy = ProtobufManager.PopManager_to_ProtobufPopManager(sp.pop_manager)
@@ -31,10 +31,10 @@ class ProtobufManager:
 
     @staticmethod
     def PopManager_to_ProtobufPopManager(pop_manager):
-        print 'Converting from PopManager to ProtobufPopManager'
+        print('Converting from PopManager to ProtobufPopManager')
         buffy = pop_pb2.PopManager()
         bar, i = setup_progressbar(len(pop_manager.patterns_collection))
-        for pop in pop_manager.patterns_collection.values():
+        for pop in list(pop_manager.patterns_collection.values()):
             buffy_pop = buffy.pattern_collection.add()
             ProtobufManager.pop_to_protopop(buffy_pop, pop)
             bar.update(i + 1)
@@ -57,7 +57,7 @@ class ProtobufManager:
 
     @staticmethod
     def protobuf_to_tsv(pbfile):
-        print 'Converting from protobuf to tsv the file ', pbfile
+        print('Converting from protobuf to tsv the file ', pbfile)
         pm = ProtobufManager.load_PopManager(pbfile)
         sp = StreamPredictor.StreamPredictor(pm)
         sp.file_manager.save_tsv(pbfile + '.tsv')
@@ -66,7 +66,7 @@ class ProtobufManager:
     def load_PopManager(pbfile):
         buffy = ProtobufManager.load_buf(pbfile)
         pop_manager = ProtobufManager.protobuf_to_pop_manager(buffy)
-        print 'Loaded pop manager with ', len(pop_manager.patterns_collection), ' patterns.'
+        print('Loaded pop manager with ', len(pop_manager.patterns_collection), ' patterns.')
         return pop_manager
 
     @staticmethod
@@ -126,6 +126,6 @@ def setup_progressbar(length):
 
 
 if __name__ == '__main__':
-    print 'File manager'
+    print('File manager')
     ProtobufManager.tsv_to_protbuf('../PatternStore/test.tsv')
     ProtobufManager.protobuf_to_tsv('../PatternStore/test.pb')

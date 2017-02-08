@@ -66,7 +66,7 @@ class BankNgram:
         return ngram.value in self.bank
 
     def decay(self):
-        for key, ngram in self.bank.iteritems():
+        for key, ngram in self.bank.items():
             ngram.decay()
 
     def create_ngrams_strings(self, char):
@@ -93,27 +93,27 @@ class BankNgram:
 
     def cull(self):
         cull_list = []
-        for key, ngram in self.bank.iteritems():
+        for key, ngram in self.bank.items():
             if ngram.strength < 0:
                 cull_list.append(key)
         for cull_key in cull_list:
             # print 'Culling ' + cull_key
             if self.bank[cull_key].matured:
-                print 'Mature ngram being killed. Name = ' + self.bank[cull_key].__repr__()
+                print('Mature ngram being killed. Name = ' + self.bank[cull_key].__repr__())
                 self.vacancy_indicator[self.bank[cull_key].maturation_number] = 0
             self.bank.pop(cull_key)
 
     def cull_immature(self):
         cull_list = []
-        for key, ngram in self.bank.iteritems():
+        for key, ngram in self.bank.items():
             if not ngram.matured:
                 cull_list.append(key)
-        print 'Culling immature. Count = ' + str(len(cull_list))
+        print('Culling immature. Count = ' + str(len(cull_list)))
         for cull_key in cull_list:
             self.bank.pop(cull_key)
 
     def check_maturation(self):
-        for key, ngram in self.bank.iteritems():
+        for key, ngram in self.bank.items():
             if ngram.matured:
                 continue
             if ngram.age > maturity_age:
@@ -122,19 +122,19 @@ class BankNgram:
                     ngram.matured = True
                     ngram.strength += maturation_strength_gain * ngram.length
                     self.vacancy_indicator[ngram.maturation_number] = 1
-                    print ngram.value[::-1] + " matured with maturation number " + str(ngram.maturation_number)
+                    print(ngram.value[::-1] + " matured with maturation number " + str(ngram.maturation_number))
                 except ValueError:
-                    print 'No more space in vacancy indicator.'
+                    print('No more space in vacancy indicator.')
                 # if anything matured then mature and if limit exceeds, delete weakest mature.
                 prefix = ngram.value[:-1]
                 if prefix in self.bank:
                     self.bank[prefix].strength -= self.bank[prefix].length * maturation_strength_gain
 
     def status(self):
-        print 'Status of ngram bank with ' + str(len(self.bank)) + ' ngrams \n'
-        for key, ngram in sorted(self.bank.iteritems(), key=lambda ng: ng[1].strength):
-            print ngram.__repr__()
-        print 'Status of ngram bank with ' + str(len(self.bank)) + ' ngrams \n'
+        print('Status of ngram bank with ' + str(len(self.bank)) + ' ngrams \n')
+        for key, ngram in sorted(iter(self.bank.items()), key=lambda ng: ng[1].strength):
+            print(ngram.__repr__())
+        print('Status of ngram bank with ' + str(len(self.bank)) + ' ngrams \n')
 
     def emit_features(self, string):
         vectors_list = []
@@ -149,11 +149,11 @@ class BankNgram:
 
     def save(self):
         savestr = 'token, strength, age\n'
-        for key, ngram in self.bank.iteritems():
+        for key, ngram in self.bank.items():
             savestr += key + ',' + str(ngram.strength) + ',' + str(ngram.age) + '\n'
         with open(self.savefilename, mode='w') as file:
             file.write(savestr)
-        print 'Saved file ' + self.savefilename
+        print('Saved file ' + self.savefilename)
 
     def load(self):
         with open(self.savefilename, mode='r') as file:
@@ -165,7 +165,7 @@ class BankNgram:
                 self.bank[key].length = len(key)
                 self.bank[key].strength = int(elements[1])
                 self.bank[key].age = int(elements[2])
-        print 'Loaded file'
+        print('Loaded file')
 
 
 class StreamPredictor:
@@ -173,13 +173,13 @@ class StreamPredictor:
         self.n_gram_bank = BankNgram('FirstBank.csv')
 
     def train(self, input_stream):
-        print 'Started training with stream length ' + str(len(input_stream))
+        print('Started training with stream length ' + str(len(input_stream)))
         for char in list(input_stream):
             self.n_gram_bank.timestep(char)
         self.n_gram_bank.cull_immature()
         self.n_gram_bank.save()
         features = self.n_gram_bank.emit_features(input_stream)
-        print 'Obtained features of shape ' + str(features.shape)
+        print('Obtained features of shape ' + str(features.shape))
 
     def predict(self, input_stream):
         pass

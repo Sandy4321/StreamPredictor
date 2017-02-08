@@ -3,8 +3,8 @@ import time
 import matplotlib.pyplot as plt
 import nltk
 
-import DataObtainer
-import StreamPredictor
+from . import DataObtainer
+from . import StreamPredictor
 
 max_input_stream_length = 10000000
 storage_file = '../PatternStore/OnlineTokens.pb'
@@ -14,26 +14,26 @@ def load_sp(storage_file):
     sp = StreamPredictor.StreamPredictor()
     if os.path.isfile(storage_file):
         sp.file_manager.load_tsv(storage_file)
-        print 'Loaded PopManager.PopManager from ', storage_file
+        print('Loaded PopManager.PopManager from ', storage_file)
     else:
-        print ' Created new PopManager.PopManager. Didnt find anything at ', storage_file
+        print(' Created new PopManager.PopManager. Didnt find anything at ', storage_file)
     return sp
 
 
 def default_trainer(storage_file):
     for iteration in range(100):
         start_time = time.time()
-        print 'Iteration number ' + str(iteration)
+        print('Iteration number ' + str(iteration))
         text = DataObtainer.get_random_book_local('data/')
         text = DataObtainer.clean_text(text, max_input_stream_length)
         sp = load_sp(storage_file)
         sp.train_characters(text)
         sp.file_manager.save_tsv(storage_file)
-        print sp.generate_stream(200)
+        print(sp.generate_stream(200))
         total_time_mins = (time.time() - start_time) / 60
         rate_chars_min = round(len(text) / total_time_mins / 1000)
-        print 'Total time taken to run this is ', round(total_time_mins, ndigits=2), \
-            ' mins. Rate = ', rate_chars_min, ' K chars/min'
+        print('Total time taken to run this is ', round(total_time_mins, ndigits=2), \
+            ' mins. Rate = ', rate_chars_min, ' K chars/min')
 
 
 def default_small_trainer(storage_file):
@@ -44,28 +44,28 @@ def default_small_trainer(storage_file):
     sp.train_characters(text)
     sp.generalizer.generalize()
     sp.file_manager.save_tsv(storage_file)
-    print sp.generate_stream(200)
+    print(sp.generate_stream(200))
     total_time_mins = (time.time() - start_time) / 60
     rate_chars_min = round(len(text) / total_time_mins / 1000)
-    print 'Total time taken to run this is ', round(total_time_mins, ndigits=2), \
-        ' mins. Rate = ', rate_chars_min, ' K chars/min'
+    print('Total time taken to run this is ', round(total_time_mins, ndigits=2), \
+        ' mins. Rate = ', rate_chars_min, ' K chars/min')
 
 
 def online_trainer(storage_file):
-    print 'Starting online training'
+    print('Starting online training')
     for iteration in range(100):
         start_time = time.time()
-        print 'Iteration number ' + str(iteration)
+        print('Iteration number ' + str(iteration))
         text = DataObtainer.gutenberg_random_book()
         text = DataObtainer.clean_text(text, max_input_stream_length)
         sp = load_sp(storage_file)
         sp.train_characters(text)
         sp.file_manager.save_tsv(storage_file)
-        print sp.generate_stream(200)
+        print(sp.generate_stream(200))
         total_time_mins = (time.time() - start_time) / 60
         rate_chars_min = round(len(text) / total_time_mins / 1000)
-        print 'Total time taken to run this is ', round(total_time_mins, ndigits=2), \
-            ' mins. Rate = ', rate_chars_min, ' K chars/min'
+        print('Total time taken to run this is ', round(total_time_mins, ndigits=2), \
+            ' mins. Rate = ', rate_chars_min, ' K chars/min')
 
 
 def sanity_check_run():
@@ -75,8 +75,8 @@ def sanity_check_run():
     sp.train_characters(text)
     sp.train_characters(text)
     sp.train_characters(text)
-    print sp.generate_stream(5)
-    print 'Everything OK'
+    print(sp.generate_stream(5))
+    print('Everything OK')
 
 
 def perplexity_experiment(string):
@@ -125,16 +125,16 @@ def generalize_token():
 
 
 def online_token_perplexity_trainer():
-    print 'Starting online training with tokens and perplexity calculation'
+    print('Starting online training with tokens and perplexity calculation')
     sp = StreamPredictor.StreamPredictor()
     if os.path.isfile(storage_file):
         sp.file_manager.load_pb(storage_file)
-        print 'Loaded PopManager.PopManager from ', storage_file
+        print('Loaded PopManager.PopManager from ', storage_file)
     else:
-        print ' Created new PopManager.PopManager. Didnt find anything at ', storage_file
+        print(' Created new PopManager.PopManager. Didnt find anything at ', storage_file)
     for iteration in range(10):
         start_time = time.time()
-        print 'Iteration number ' + str(iteration)
+        print('Iteration number ' + str(iteration))
         words = DataObtainer.get_online_words(10 ** 10)
         perplexity_over_training, training_time = sp.pop_manager.train_token_and_perplexity(words)
         plt.plot(training_time, perplexity_over_training, 'd-')
@@ -142,8 +142,8 @@ def online_token_perplexity_trainer():
         sp.file_manager.save_pb(storage_file)
         total_time_mins = (time.time() - start_time) / 60
         rate_words_min = round(len(words) / total_time_mins / 1000)
-        print 'Total time taken to run this is ', round(total_time_mins, ndigits=2), \
-            ' mins. Rate = ', rate_words_min, ' K words/min'
+        print('Total time taken to run this is ', round(total_time_mins, ndigits=2), \
+            ' mins. Rate = ', rate_words_min, ' K words/min')
 
 
 if __name__ == '__main__':
