@@ -68,7 +68,7 @@ def convert_words_to_id(words):
     """
     Converts words list to id list and returns id sequence, word2id and id2word dictionary.
     """
-    unique_words = list(set(words))
+    unique_words = sorted(list(set(words)))
     id2word = dict((id,word) for id,word in enumerate(unique_words))
     word2id = dict((i,j) for j,i in id2word.items())
     id_sequence = [word2id[word] for word in words]
