@@ -44,15 +44,17 @@ def get_clean_words_from_file(file, max_input_length):
         text = opened_file.read()
         return nltk.word_tokenize(clean_text(text))[:max_input_length]
 
+
 def get_words_from_ptb(file, max_input_length):
     with open(file) as opened_file:
         text = opened_file.read().replace('\n', '')
         return text.split(' ')[:max_input_length]
 
-def clean_text(text, max_input_length=10**10000):
+
+def clean_text(text, max_input_length=10 ** 10000):
     text = text.replace('\n', ' ')
     max_length = min(max_input_length, len(text))
-    rotation = random.randint(0,max_length)
+    rotation = random.randint(0, max_length)
     text = text[rotation:max_length] + text[:rotation]
     # make sure to remove # for category separation
     text = ''.join(e for e in text if e.isalnum() or e in '.?", <>')
@@ -64,15 +66,34 @@ def get_online_words(max_input_length):
     words = nltk.word_tokenize(clean_text(text, max_input_length))
     return words
 
+
 def convert_words_to_id(words):
     """
     Converts words list to id list and returns id sequence, word2id and id2word dictionary.
     """
     unique_words = sorted(list(set(words)))
-    id2word = dict((id,word) for id,word in enumerate(unique_words))
-    word2id = dict((i,j) for j,i in id2word.items())
+    id2word = dict((id, word) for id, word in enumerate(unique_words))
+    word2id = dict((i, j) for j, i in id2word.items())
     id_sequence = [word2id[word] for word in words]
     return id_sequence, word2id, id2word
+
+
+def split_train_test(sequence):
+    train_test_ratio = 0.7
+    N = len(sequence)
+    print('Total length of input sequence', N)
+    train_length = int(train_test_ratio * N)
+    return sequence[:train_length], sequence[train_length:]
+
+def get_train_test_id_sequence_from_ptb_file(filename, max_words_limit):
+    words = get_words_from_ptb(filename, max_input_length=max_words_limit)
+    N = len(words)
+    print('There are {0} words first few are {1}'.format(N, words[:10]))
+    id_sequence, word2id, id2word = convert_words_to_id(words)
+    train, test = split_train_test(id_sequence)
+    print('There are {0} ids in train, first few are '.format(len(train)), train[:10])
+    return train, test
+
 
 if __name__ == '__main__':
     words = get_words_from_ptb('../data/ptb.test.txt', max_input_length=100)
