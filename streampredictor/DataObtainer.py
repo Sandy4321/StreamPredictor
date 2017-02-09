@@ -3,7 +3,6 @@ import urllib.request, urllib.error, urllib.parse
 import time
 import os
 import random
-import tensorflow as tf
 
 
 def gutenberg_random_book():
@@ -99,6 +98,7 @@ def get_train_test_id_sequence_from_ptb_file(filename, max_words_limit):
 
 
 def get_embedding_matrix(vocabulary_size, embedding_size):
+    import tensorflow as tf
     with tf.device("/cpu:0"):
         embedding = tf.get_variable(
             "embedding", [vocabulary_size, embedding_size], dtype=tf.float32)
@@ -106,6 +106,7 @@ def get_embedding_matrix(vocabulary_size, embedding_size):
 
 
 def convert_sequence_to_embedd_vectors(sequence, embedding):
+    import tensorflow as tf
     embed_vectors = tf.nn.embedding_lookup(embedding, sequence)
     print('The embed vectors shape is ', embed_vectors.get_shape())
     return embed_vectors
