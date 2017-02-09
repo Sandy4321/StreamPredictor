@@ -1,9 +1,9 @@
-import DataObtainer
-from StreamPredictor import StreamPredictor
+from . import DataObtainer
+from .StreamPredictor import StreamPredictor
 
 
 def fruit_generalization():
-    print 'hello'
+    print('hello')
     sp = StreamPredictor()
     sp.pop_manager.add_pop_string('apple')
     sp.pop_manager.add_pop_string('banana')
@@ -15,8 +15,8 @@ def fruit_generalization():
     # sp.generalize()
     # sp.train(text)
     # sp.generalize()
-    print [i.belongs_to_category.__repr__() for i in sp.pop_manager.patterns_collection.values() if
-           i.belongs_to_category is not None]
+    print([i.belongs_to_category.__repr__() for i in list(sp.pop_manager.patterns_collection.values()) if
+           i.belongs_to_category is not None])
     sp.pop_manager.save_pb_plain('PatternStore/fruit_experiment.txt')
     sp.pop_manager.load_pb_plain('PatternStore/fruit_experiment.txt')
 
@@ -46,7 +46,7 @@ def cat_dog_generation():
         sp.train_characters(cat_dog_text)
         sp.pop_manager.save_pb_plain('PatternStore/cat_dog_' + str(i) + '.txt')
         generated = sp.generate_stream(100)
-        print generated
+        print(generated)
 
 
 def cat_dog_train_category():

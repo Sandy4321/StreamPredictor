@@ -2,8 +2,8 @@ import os
 from unittest import TestCase
 
 from . import DataObtainer
-from Pop import Pop
-from StreamPredictor import StreamPredictor
+from .Pop import Pop
+from .StreamPredictor import StreamPredictor
 
 test_pb = '../PatternStore/test.pb'
 test_pb_plain = '../PatternStore/test.txt'

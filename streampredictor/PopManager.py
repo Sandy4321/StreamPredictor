@@ -10,7 +10,7 @@ half of them. Kind of adaptive coding.
 """
 import numpy as np
 
-from Pop import Pop
+from .Pop import Pop
 
 
 # constants
@@ -41,7 +41,7 @@ class PopManager:
 
     def __repr__(self):
         return 'Has ' + str(len(self.patterns_collection)) + ' few are ' + \
-               '-'.join([i.__repr__() for i in self.patterns_collection.values()[:5]])
+               '-'.join([i.__repr__() for i in list(self.patterns_collection.values())[:5]])
 
     def add_pop_string(self, string):
         if string in self.patterns_collection:
@@ -65,7 +65,7 @@ class PopManager:
     def setup_train(self, string):
         input_length = len(string)
         self.feed_strength_gain = 2 * input_length / self.required_repeats
-        print 'Started training with string length ' + str(input_length)
+        print('Started training with string length ' + str(input_length))
         char_set = set(string)
         for char in char_set:
             self.patterns_collection[char] = Pop(char)
@@ -74,8 +74,8 @@ class PopManager:
 
     def train_token(self, words):
         word_count = self.add_words_to_patterns_collection(words)
-        print 'Started training with word count = ' + str(word_count)
-        previous_pop = self.patterns_collection.values()[0]
+        print('Started training with word count = ' + str(word_count))
+        previous_pop = list(self.patterns_collection.values())[0]
         i = 1
         while i < word_count:
             i, current_pop = self.train_token_step(i, previous_pop, words[i:i + self.maximum_word_count])
@@ -103,7 +103,7 @@ class PopManager:
     def calculate_perplexity(self, words, verbose=True):
         word_count = self.add_words_to_patterns_collection(words, verbose)
         if verbose:
-            print 'Started calculating perplexity with word count = ' + str(word_count)
+            print('Started calculating perplexity with word count = ' + str(word_count))
         log_running_perplexity = 0
         perplexity_list = []
         N = 1
@@ -113,13 +113,13 @@ class PopManager:
         final_log_perplexity = log_running_perplexity * (1 / float(N))
         final_perplexity = 2 ** final_log_perplexity
         if verbose:
-            print 'Final perplexity is ', final_perplexity
+            print('Final perplexity is ', final_perplexity)
         return perplexity_list
 
     def train_token_and_perplexity(self, words):
         word_count = self.add_words_to_patterns_collection(words)
-        print 'Started training and calculating perplexity with ', str(word_count), ' words.'
-        previous_pop = self.patterns_collection.values()[0]
+        print('Started training and calculating perplexity with ', str(word_count), ' words.')
+        previous_pop = list(self.patterns_collection.values())[0]
         perplexity_over_training = []
         training_time = []
         i = 1
@@ -131,11 +131,11 @@ class PopManager:
         self.occasional_step(i, perplexity_over_training, training_time, words)
         self.fix_first_child_parents()
         final_perplexity = perplexity_over_training[-1]
-        print 'Final perplexity is ', final_perplexity, ' number of patterns is ', len(self.patterns_collection)
+        print('Final perplexity is ', final_perplexity, ' number of patterns is ', len(self.patterns_collection))
         return perplexity_over_training, training_time
 
     def decay(self, i):
-        for key, pop in self.patterns_collection.iteritems():
+        for key, pop in self.patterns_collection.items():
             pop.decay(i)
 
     def occasional_step(self, i, perplexity_over_training, training_time, words):
@@ -153,7 +153,7 @@ class PopManager:
         chosen_prob = self.get_prediction_probability(actual_next_word, next_words, probabilities)
         log_running_perplexity -= np.log2(chosen_prob)
         perplexity_list.append(2 ** (log_running_perplexity * (1 / float(N))))
-        print 'Current Perplexity = {0}\r'.format(perplexity_list[-1]),
+        print('Current Perplexity = {0}\r'.format(perplexity_list[-1]), end=' ')
         N += 1
         return N, log_running_perplexity
 
@@ -176,8 +176,8 @@ class PopManager:
         return index, current_pop
 
     def generate_words(self, word_length, seed=None):
-        print 'Generating words with word count = ', word_length
-        current_pop = np.random.choice(self.patterns_collection.values()) \
+        print('Generating words with word count = ', word_length)
+        current_pop = np.random.choice(list(self.patterns_collection.values())) \
             if seed is None or '' else self.find_next_pattern(seed)
         current_word = current_pop.unrolled_pattern
         generated_output = [current_word]
@@ -186,14 +186,14 @@ class PopManager:
             next_word = self.choose_next_word_word_list(generated_output)
             if next_word == '':
                 next_word = np.random.choice([pop.unrolled_pattern
-                                              for key, pop in self.patterns_collection.iteritems()])
+                                              for key, pop in self.patterns_collection.items()])
             generated_output.append(next_word)
             printable_output += self.patterns_collection[next_word].print_components()
         return printable_output
 
     def generate_strings(self, word_length, seed=None):
-        print 'Generating words with word count = ', word_length
-        current_pop = np.random.choice(self.patterns_collection.values()) \
+        print('Generating words with word count = ', word_length)
+        current_pop = np.random.choice(list(self.patterns_collection.values())) \
             if seed is None or '' else self.find_next_pattern(seed)
         current_word = current_pop.unrolled_pattern
         generated_output = [current_word]
@@ -201,7 +201,7 @@ class PopManager:
             next_word = self.choose_next_word_string(generated_output)
             if next_word == '':
                 next_word = np.random.choice([pop.unrolled_pattern
-                                              for key, pop in self.patterns_collection.iteritems()])
+                                              for key, pop in self.patterns_collection.items()])
             generated_output += next_word
         return generated_output
 
@@ -214,8 +214,8 @@ class PopManager:
                 self.patterns_collection[word].feed(self.feed_strength_gain)
                 self.vocabulary_count += 1
         if verbose:
-            print 'There are ', self.vocabulary_count, ' words in vocabulary.'
-            print 'The first few words are ', ','.join(words[:10])
+            print('There are ', self.vocabulary_count, ' words in vocabulary.')
+            print('The first few words are ', ','.join(words[:10]))
         return word_count
 
     def next_word_distribution(self, previous_words_list):
@@ -226,7 +226,7 @@ class PopManager:
                 current_pop = self.patterns_collection[current_word]
                 words, probabilities = current_pop.get_next_smallest_distribution()
                 return words, probabilities
-        print 'Warning. Nothing after ', ''.join(previous_words_list)
+        print('Warning. Nothing after ', ''.join(previous_words_list))
         return previous_words_list[0], np.array([1])
 
     def join_pattern(self, first_pattern, second_pattern, found_pattern_feed_ratio):
@@ -263,7 +263,7 @@ class PopManager:
 
     def cull_child_and_mark_self(self, limit):
         cull_list = []
-        for key, pop in self.patterns_collection.iteritems():
+        for key, pop in self.patterns_collection.items():
             if pop.first_component:
                 if pop.first_component.strength < limit:
                     pop.first_component.first_child_parents.remove(pop)
@@ -277,7 +277,7 @@ class PopManager:
 
     def status(self):
         out_string = ''
-        for key, pop in sorted(self.patterns_collection.iteritems(), key=lambda ng: ng[0]):
+        for key, pop in sorted(iter(self.patterns_collection.items()), key=lambda ng: ng[0]):
             out_string += pop.__repr__()
         out_string += 'Status of Pattern of patterns with ' + str(len(self.patterns_collection)) + ' pops \n'
         return out_string
@@ -297,7 +297,7 @@ class PopManager:
                     continue
                 probabilities /= sum(probabilities)
                 return np.random.choice(words, p=probabilities)
-        print ' nothing after ', input_word
+        print(' nothing after ', input_word)
         return ''
 
     def choose_next_word_word_list(self, input_word, Verbose=False):
@@ -316,11 +316,11 @@ class PopManager:
                 probabilities /= sum(probabilities)
                 return np.random.choice(words, p=probabilities)
         if Verbose:
-            print ' nothing after ', input_word
+            print(' nothing after ', input_word)
         return ''
 
     def refactor(self):
-        for key, pop in self.patterns_collection.iteritems():
+        for key, pop in self.patterns_collection.items():
             if pop.first_component and pop.second_component:
                 current_components_strength = pop.first_component.strength + pop.second_component.strength
             else:
@@ -350,12 +350,12 @@ class PopManager:
         Fixes mismatch between first_child_parents by going through each pattern and checking if pop is
         pop.first_child_parents.first component
         """
-        print 'Fixing incorrect first_child_parents'
-        for pop in self.patterns_collection.values():
+        print('Fixing incorrect first_child_parents')
+        for pop in list(self.patterns_collection.values()):
             for parent_pop in pop.first_child_parents:
                 if parent_pop.first_component:
                     if parent_pop.first_component is pop:
                         continue
                 if verbose:
-                    print 'Mismatch ', pop.__repr__(), ' and ', parent_pop.__repr__()
+                    print('Mismatch ', pop.__repr__(), ' and ', parent_pop.__repr__())
                 pop.first_child_parents.remove(parent_pop)

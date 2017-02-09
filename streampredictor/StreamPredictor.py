@@ -1,6 +1,6 @@
-import FileManager
-import Generalizer
-import PopManager
+from . import FileManager
+from . import Generalizer
+from . import PopManager
 import random
 
 
@@ -13,7 +13,7 @@ class StreamPredictor:
         self.file_manager = FileManager.FileManager(self.pop_manager)
         self.generalizer = Generalizer.Generalizer(self.pop_manager.patterns_collection,
                                                    self.pop_manager.feed_strength_gain)
-        print self.pop_manager.stats()
+        print(self.pop_manager.stats())
 
     def train_characters(self, string, generalize=False):
         maximum_pattern_length = self.pop_manager.maximum_pattern_length
@@ -36,8 +36,8 @@ class StreamPredictor:
         return self.pop_manager.patterns_collection
 
     def generate_stream(self, word_length, seed=None):
-        print 'Generating stream with word count = ', word_length
-        current_pop = random.choice(self.pop_manager.patterns_collection.values()) \
+        print('Generating stream with word count = ', word_length)
+        current_pop = random.choice(list(self.pop_manager.patterns_collection.values())) \
             if seed is None or '' else self.pop_manager.find_next_pattern(seed)
         current_word = current_pop.unrolled_pattern
         generated_output = current_word
@@ -45,6 +45,6 @@ class StreamPredictor:
             next_word = self.pop_manager.choose_next_word_string(generated_output)
             if next_word == '':
                 next_word = random.choice([pop.unrolled_pattern
-                                              for key, pop in self.pop_manager.patterns_collection.iteritems()])
+                                              for key, pop in self.pop_manager.patterns_collection.items()])
             generated_output += next_word
         return generated_output

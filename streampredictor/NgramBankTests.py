@@ -1,5 +1,5 @@
 from unittest import TestCase
-import NgramBank
+from . import NgramBank
 
 
 class TestNgram(TestCase):
