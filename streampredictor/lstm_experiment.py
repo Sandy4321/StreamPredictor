@@ -13,6 +13,7 @@ init_scale = 0.1
 max_epochs = 2
 learning_rate = 1.0
 total_words = 10 ** 3
+save_location = '../checkpoint/'
 
 
 def lstm_experiment():
@@ -70,9 +71,10 @@ class LSTMSingleLayer():
             for epoch in range(max_epochs):
                 print('Epoch number ', epoch)
                 epoch_perplexities.append(self.run_epoch(session=sess, X=X, Y=Y, id2word=id2word))
+                self.save(sess=sess, save_location=save_location)
         return epoch_perplexities
 
-    def run_epoch(self, session, X, Y,  id2word):
+    def run_epoch(self, session, X, Y, id2word):
         start_time = time.time()
         current_state = session.run(self.model.zero_state(self.batch_size, dtype=np.float32))
         costs = 0.0
@@ -115,20 +117,25 @@ class LSTMSingleLayer():
             fetches = {
                 "state": self.state,
                 "logits": self.logits,
-                "output":self.output
+                "output": self.output
             }
             for i in range(count):
                 feed_dict = {self.ph_x: current_x,
                              self.state: current_state}
                 vals = session.run(fetches, feed_dict=feed_dict)
                 logits = vals["logits"].flatten()
-                distribution_y = np.exp(logits)/(1+np.exp(logits))
-                distribution_y = distribution_y/sum(distribution_y)
+                distribution_y = np.exp(logits) / (1 + np.exp(logits))
+                distribution_y = distribution_y / sum(distribution_y)
                 chosen_y = np.random.choice(range(self.vocab_size), p=distribution_y)
                 generated_word = id2word[chosen_y]
                 generated_words.append(generated_word)
                 current_x = vals["output"]
         return generated_words
+
+    def save(self, sess, save_location):
+        saver = tf.train.Saver()
+        save_path = saver.save(sess, save_location)
+        print("Model saved in file: %s" % save_path)
 
 
 if __name__ == '__main__':

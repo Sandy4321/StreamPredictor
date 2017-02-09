@@ -19,3 +19,4 @@ scratch/*
 *.pdf
 *.log
 notebook/.ipynb_checkpoints/*
+checkpoint/*
