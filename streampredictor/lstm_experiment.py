@@ -10,6 +10,8 @@ except:
 max_grad_norm = 5
 init_scale = 0.1
 max_epochs = 2
+learning_rate = 1.0
+total_words = 10 ** 4
 
 
 def lstm_experiment():
@@ -18,7 +20,7 @@ def lstm_experiment():
     hidden_size = 100
     batch_size = 1
     train_x, train_y, test_x, test_y, vocabulary_size, train_x_seq, train_y_seq, test_x_seq, test_y_seq \
-        = get_train_test_data(filename, 10 ** 3, embedding_size=hidden_size)
+        = get_train_test_data(filename, total_words, embedding_size=hidden_size)
 
     # set up lstm model
     lstm = LSTMSingleLayer(hidden_size=hidden_size, vocab_size=vocabulary_size, batch_size=batch_size)
@@ -48,19 +50,14 @@ class LSTMSingleLayer():
             [self.ph_y],
             [tf.ones(self.ph_y.get_shape(), dtype=tf.float32)])
         self.cost = cost = tf.reduce_sum(loss)
-
-        self._lr = tf.Variable(0.0, trainable=False)
         tvars = tf.trainable_variables()
         grads, _ = tf.clip_by_global_norm(tf.gradients(cost, tvars),
                                           max_grad_norm)
-        optimizer = tf.train.GradientDescentOptimizer(self._lr)
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
         self._train_op = optimizer.apply_gradients(
             zip(grads, tvars),
             global_step=tf.contrib.framework.get_or_create_global_step())
 
-        self._new_lr = tf.placeholder(
-            tf.float32, shape=[], name="new_learning_rate")
-        self._lr_update = tf.assign(self._lr, self._new_lr)
 
     def train(self, X, Y):
         initializer = tf.random_uniform_initializer(-init_scale, init_scale)
