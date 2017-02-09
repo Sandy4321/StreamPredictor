@@ -3,6 +3,7 @@ import urllib.request, urllib.error, urllib.parse
 import time
 import os
 import random
+import tensorflow as tf
 
 
 def gutenberg_random_book():
@@ -72,6 +73,7 @@ def convert_words_to_id(words):
     Converts words list to id list and returns id sequence, word2id and id2word dictionary.
     """
     unique_words = sorted(list(set(words)))
+    print('Vocabulary size is ', len(unique_words))
     id2word = dict((id, word) for id, word in enumerate(unique_words))
     word2id = dict((i, j) for j, i in id2word.items())
     id_sequence = [word2id[word] for word in words]
@@ -85,6 +87,7 @@ def split_train_test(sequence):
     train_length = int(train_test_ratio * N)
     return sequence[:train_length], sequence[train_length:]
 
+
 def get_train_test_id_sequence_from_ptb_file(filename, max_words_limit):
     words = get_words_from_ptb(filename, max_input_length=max_words_limit)
     N = len(words)
@@ -92,7 +95,41 @@ def get_train_test_id_sequence_from_ptb_file(filename, max_words_limit):
     id_sequence, word2id, id2word = convert_words_to_id(words)
     train, test = split_train_test(id_sequence)
     print('There are {0} ids in train, first few are '.format(len(train)), train[:10])
-    return train, test
+    return train, test, len(word2id)
+
+
+def get_embedding_matrix(vocabulary_size, embedding_size):
+    with tf.device("/cpu:0"):
+        embedding = tf.get_variable(
+            "embedding", [vocabulary_size, embedding_size], dtype=tf.float32)
+        return embedding
+
+
+def convert_sequence_to_embedd_vectors(sequence, embedding):
+    embed_vectors = tf.nn.embedding_lookup(embedding, sequence)
+    print('The embed vectors shape is ', embed_vectors.get_shape())
+    return embed_vectors
+
+
+def get_train_test_vectors_from_ptb_file(filename, max_words_limit, embedding_size):
+    train_seq, test_seq, vocabulary_size = get_train_test_id_sequence_from_ptb_file(filename, max_words_limit)
+    embedding = get_embedding_matrix(vocabulary_size=vocabulary_size, embedding_size=embedding_size)
+    train_vectors = convert_sequence_to_embedd_vectors(sequence=train_seq, embedding=embedding)
+    test_vectors = convert_sequence_to_embedd_vectors(sequence=test_seq, embedding=embedding)
+    return train_vectors, test_vectors, vocabulary_size
+
+
+def get_train_test_data(filename, max_words_limit, embedding_size):
+    train_vectors, test_vectors, vocabulary_size = get_train_test_vectors_from_ptb_file(filename, max_words_limit,
+                                                                                        embedding_size)
+    train_x, train_y = create_targets(train_vectors)
+    test_x, test_y = create_targets(test_vectors)
+    return train_x, train_y, test_x, test_y, vocabulary_size
+
+
+def create_targets(X):
+    """ Create shifted to right version for predicting next word"""
+    return X[:-1], X[1:]
 
 
 if __name__ == '__main__':
