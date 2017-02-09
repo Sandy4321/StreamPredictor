@@ -83,6 +83,7 @@ class LSTMSingleLayer():
         fetches = {
             "cost": self.cost,
             "state": self.state,
+            "eval_op": self._train_op
         }
         epoch_size = int(X.get_shape()[0])
         print('Epoch size is ', epoch_size)
@@ -91,13 +92,13 @@ class LSTMSingleLayer():
             step_x = session.run(X[step])
             step_y = Y[step]
             feed_dict = {self.ph_x: step_x.reshape([self.batch_size, -1]),
-                         self.ph_y: np.array(step_y).reshape([self.batch_size],),
+                         self.ph_y: np.array(step_y).reshape([self.batch_size], ),
                          self.state: current_state}
             vals = session.run(fetches, feed_dict)
             cost = vals["cost"]
             current_state = vals["state"]
             costs += cost
-            iters += 1
+            iters += self.batch_size
             if step % (epoch_size // 10) == 10:
                 print("Completion %.3f perplexity: %.3f speed: %.0f wps" %
                       (step * 1.0 / epoch_size, np.exp(costs / iters),
