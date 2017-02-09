@@ -1,6 +1,7 @@
 import tensorflow as tf
 import time
 import numpy as np
+import random
 
 try:
     from  DataObtainer import get_train_test_data
@@ -11,7 +12,7 @@ max_grad_norm = 5
 init_scale = 0.1
 max_epochs = 2
 learning_rate = 1.0
-total_words = 10 ** 4
+total_words = 10 ** 3
 
 
 def lstm_experiment():
@@ -19,13 +20,13 @@ def lstm_experiment():
     # get id sequence for train, test
     hidden_size = 100
     batch_size = 1
-    train_x, train_y, test_x, test_y, vocabulary_size, train_x_seq, train_y_seq, test_x_seq, test_y_seq \
+    train_x, train_y, test_x, test_y, vocabulary_size, train_x_seq, train_y_seq, test_x_seq, test_y_seq, word2id, id2word \
         = get_train_test_data(filename, total_words, embedding_size=hidden_size)
 
     # set up lstm model
     lstm = LSTMSingleLayer(hidden_size=hidden_size, vocab_size=vocabulary_size, batch_size=batch_size)
     # train model
-    train_loss = lstm.train(train_x, train_y_seq)
+    train_loss = lstm.train(train_x, train_y_seq, id2word)
     print(train_loss)
     # test perplexity on test
 
@@ -44,9 +45,9 @@ class LSTMSingleLayer():
         self.softmax_w = tf.get_variable(
             "softmax_w", [self.hidden_size, self.vocab_size], dtype=tf.float32)
         self.softmax_b = tf.get_variable("softmax_b", [self.vocab_size], dtype=tf.float32)
-        logits = tf.matmul(self.output, self.softmax_w) + self.softmax_b
+        self.logits = tf.matmul(self.output, self.softmax_w) + self.softmax_b
         loss = tf.nn.seq2seq.sequence_loss_by_example(
-            [logits],
+            [self.logits],
             [self.ph_y],
             [tf.ones(self.ph_y.get_shape(), dtype=tf.float32)])
         self.cost = cost = tf.reduce_sum(loss)
@@ -58,8 +59,7 @@ class LSTMSingleLayer():
             zip(grads, tvars),
             global_step=tf.contrib.framework.get_or_create_global_step())
 
-
-    def train(self, X, Y):
+    def train(self, X, Y, id2word):
         initializer = tf.random_uniform_initializer(-init_scale, init_scale)
         with tf.name_scope("Train"):
             with tf.variable_scope("Model", reuse=None, initializer=initializer):
@@ -69,10 +69,10 @@ class LSTMSingleLayer():
             epoch_perplexities = []
             for epoch in range(max_epochs):
                 print('Epoch number ', epoch)
-                epoch_perplexities.append(self.run_epoch(session=sess, X=X, Y=Y))
+                epoch_perplexities.append(self.run_epoch(session=sess, X=X, Y=Y, id2word=id2word))
         return epoch_perplexities
 
-    def run_epoch(self, session, X, Y):
+    def run_epoch(self, session, X, Y,  id2word):
         start_time = time.time()
         current_state = session.run(self.model.zero_state(self.batch_size, dtype=np.float32))
         costs = 0.0
@@ -100,10 +100,35 @@ class LSTMSingleLayer():
                 print("Completion %.3f perplexity: %.3f speed: %.0f wps" %
                       (step * 1.0 / epoch_size, np.exp(costs / iters),
                        iters * self.batch_size / (time.time() - start_time)))
+                print(' '.join(self.generate(10, id2word)))
         return np.exp(costs / iters)
 
     def test(self, X, Y):
         pass
+
+    def generate(self, count, id2word):
+        generated_words = []
+        with tf.Session() as session:
+            session.run(tf.global_variables_initializer())
+            current_state = session.run(self.model.zero_state(self.batch_size, dtype=np.float32))
+            current_x = np.random.randn(self.batch_size, self.hidden_size)
+            fetches = {
+                "state": self.state,
+                "logits": self.logits,
+                "output":self.output
+            }
+            for i in range(count):
+                feed_dict = {self.ph_x: current_x,
+                             self.state: current_state}
+                vals = session.run(fetches, feed_dict=feed_dict)
+                logits = vals["logits"].flatten()
+                distribution_y = np.exp(logits)/(1+np.exp(logits))
+                distribution_y = distribution_y/sum(distribution_y)
+                chosen_y = np.random.choice(range(self.vocab_size), p=distribution_y)
+                generated_word = id2word[chosen_y]
+                generated_words.append(generated_word)
+                current_x = vals["output"]
+        return generated_words
 
 
 if __name__ == '__main__':
