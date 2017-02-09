@@ -117,15 +117,17 @@ def get_train_test_vectors_from_ptb_file(filename, max_words_limit, embedding_si
     embedding = get_embedding_matrix(vocabulary_size=vocabulary_size, embedding_size=embedding_size)
     train_vectors = convert_sequence_to_embedd_vectors(sequence=train_seq, embedding=embedding)
     test_vectors = convert_sequence_to_embedd_vectors(sequence=test_seq, embedding=embedding)
-    return train_vectors, test_vectors, vocabulary_size
+    return train_vectors, test_vectors, vocabulary_size, train_seq, test_seq
 
 
 def get_train_test_data(filename, max_words_limit, embedding_size):
-    train_vectors, test_vectors, vocabulary_size = get_train_test_vectors_from_ptb_file(filename, max_words_limit,
+    train_vectors, test_vectors, vocabulary_size, train_seq, test_seq = get_train_test_vectors_from_ptb_file(filename, max_words_limit,
                                                                                         embedding_size)
     train_x, train_y = create_targets(train_vectors)
+    train_x_seq, train_y_seq = create_targets(train_seq)
     test_x, test_y = create_targets(test_vectors)
-    return train_x, train_y, test_x, test_y, vocabulary_size
+    test_x_seq, test_y_seq = create_targets(test_seq)
+    return train_x, train_y, test_x, test_y, vocabulary_size, train_x_seq, train_y_seq, test_x_seq, test_y_seq
 
 
 def create_targets(X):
