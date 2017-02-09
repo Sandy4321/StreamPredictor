@@ -94,7 +94,7 @@ def get_train_test_id_sequence_from_ptb_file(filename, max_words_limit):
     id_sequence, word2id, id2word = convert_words_to_id(words)
     train, test = split_train_test(id_sequence)
     print('There are {0} ids in train, first few are '.format(len(train)), train[:10])
-    return train, test, len(word2id)
+    return train, test, len(word2id), word2id, id2word
 
 
 def get_embedding_matrix(vocabulary_size, embedding_size):
@@ -113,19 +113,21 @@ def convert_sequence_to_embedd_vectors(sequence, embedding):
 
 
 def get_train_test_vectors_from_ptb_file(filename, max_words_limit, embedding_size):
-    train_seq, test_seq, vocabulary_size = get_train_test_id_sequence_from_ptb_file(filename, max_words_limit)
+    train_seq, test_seq, vocabulary_size, word2id, id2word = get_train_test_id_sequence_from_ptb_file(filename, max_words_limit)
     embedding = get_embedding_matrix(vocabulary_size=vocabulary_size, embedding_size=embedding_size)
     train_vectors = convert_sequence_to_embedd_vectors(sequence=train_seq, embedding=embedding)
     test_vectors = convert_sequence_to_embedd_vectors(sequence=test_seq, embedding=embedding)
-    return train_vectors, test_vectors, vocabulary_size
+    return train_vectors, test_vectors, vocabulary_size, train_seq, test_seq, word2id, id2word
 
 
 def get_train_test_data(filename, max_words_limit, embedding_size):
-    train_vectors, test_vectors, vocabulary_size = get_train_test_vectors_from_ptb_file(filename, max_words_limit,
-                                                                                        embedding_size)
+    train_vectors, test_vectors, vocabulary_size, train_seq, test_seq, word2id, id2word = \
+        get_train_test_vectors_from_ptb_file(filename, max_words_limit, embedding_size)
     train_x, train_y = create_targets(train_vectors)
+    train_x_seq, train_y_seq = create_targets(train_seq)
     test_x, test_y = create_targets(test_vectors)
-    return train_x, train_y, test_x, test_y, vocabulary_size
+    test_x_seq, test_y_seq = create_targets(test_seq)
+    return train_x, train_y, test_x, test_y, vocabulary_size, train_x_seq, train_y_seq, test_x_seq, test_y_seq, word2id, id2word
 
 
 def create_targets(X):
