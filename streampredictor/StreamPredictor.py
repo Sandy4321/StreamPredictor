@@ -1,4 +1,3 @@
-from other import Generalizer
 from streampredictor import FileManager
 from streampredictor import Pop
 from streampredictor import PopManager
@@ -12,8 +11,6 @@ class StreamPredictor:
         else:
             self.pop_manager = PopManager.PopManager()
         self.file_manager = FileManager.FileManager(self.pop_manager)
-        self.generalizer = Generalizer.Generalizer(self.pop_manager.patterns_collection,
-                                                   self.pop_manager.feed_strength_gain)
         print(self.pop_manager.stats())
 
     def train(self, list_of_words):
