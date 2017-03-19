@@ -297,9 +297,9 @@ class PopManager:
             current_word = input_word[j:]
             if current_word in self.patterns_collection:
                 current_pop = self.patterns_collection[current_word]
-                words, probabilities = current_pop.get_next_distribution()
+                words, probabilities = current_pop.get_next_words_distribution()
                 if current_pop.belongs_to_category:
-                    category_words, category_probabilities = current_pop.belongs_to_category.get_next_distribution()
+                    category_words, category_probabilities = current_pop.belongs_to_category.get_next_words_distribution()
                     words = words + category_words
                     probabilities = np.hstack([0.5 * probabilities, 0.5 * category_probabilities])
                 if len(words) < 1:
@@ -315,9 +315,9 @@ class PopManager:
             current_word = ''.join(input_word[j:])
             if current_word in self.patterns_collection:
                 current_pop = self.patterns_collection[current_word]
-                words, probabilities = current_pop.get_next_distribution()
+                words, probabilities = current_pop.get_next_words_distribution()
                 if current_pop.belongs_to_category:
-                    category_words, category_probabilities = current_pop.belongs_to_category.get_next_distribution()
+                    category_words, category_probabilities = current_pop.belongs_to_category.get_next_words_distribution()
                     words = words + category_words
                     probabilities = np.hstack([0.5 * probabilities, 0.5 * category_probabilities])
                 if len(words) < 1:

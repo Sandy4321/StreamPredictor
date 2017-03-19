@@ -192,7 +192,7 @@ class TestPatternOfPatterns(TestCase):
 
     def test_pop_get_next_prediction(self):
         sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
-        words, probabilites = ab.get_next_distribution()
+        words, probabilites = ab.get_next_words_distribution()
         self.assertTrue(len(words) > 1)
         self.assertEqual(probabilites[0], 0.6)
         self.assertEqual(probabilites[1], 0.4)
