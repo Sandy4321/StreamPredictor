@@ -20,7 +20,7 @@ class PopManager:
     def __init__(self):
         #  Constants
         self.occasional_step_period = 2000
-        self.perplexity_count = 6000
+        self.perplexity_count = 6000  # the length of words used to calculate perplexity
         self.maximum_word_count = 40
         self.max_input_stream_length = 10 ** 7
         self.maximum_pattern_length = 40  # maximum pattern length
