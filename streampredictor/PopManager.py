@@ -75,7 +75,8 @@ class PopManager:
         return input_length
 
     def train_token(self, words):
-        word_count = self.add_words_to_patterns_collection(words)
+        self.add_words_to_patterns_collection(words)
+        word_count = len(words)
         print('Started training with word count = ' + str(word_count))
         previous_pop = list(self.patterns_collection.values())[0]
         i = 1
@@ -103,7 +104,8 @@ class PopManager:
         return new_pop, 1
 
     def calculate_perplexity(self, words, verbose=True):
-        word_count = self.add_words_to_patterns_collection(words, verbose)
+        self.add_words_to_patterns_collection(words, verbose)
+        word_count = len(words)
         if verbose:
             print('Started calculating perplexity with word count = ' + str(word_count))
         log_running_perplexity = 0
@@ -119,7 +121,8 @@ class PopManager:
         return perplexity_list
 
     def train_token_and_perplexity(self, words):
-        word_count = self.add_words_to_patterns_collection(words)
+        self.add_words_to_patterns_collection(words)
+        word_count = len(words)
         print('Started training and calculating perplexity with ', str(word_count), ' words.')
         previous_pop = list(self.patterns_collection.values())[0]
         perplexity_over_training = []
@@ -208,7 +211,12 @@ class PopManager:
         return generated_output
 
     def add_words_to_patterns_collection(self, words, verbose=True):
-        word_count = len(words)
+        """
+        Find the vocabulary and add that vocabulary to pattern collection.
+
+        :type words: list of str
+        :rtype: None
+        """
         unique_words = set(words)
         for word in unique_words:
             if word not in self.patterns_collection:
@@ -218,7 +226,6 @@ class PopManager:
         if verbose:
             print('There are ', self.vocabulary_count, ' words in vocabulary.')
             print('The first few words are ', ','.join(words[:10]))
-        return word_count
 
     def next_word_distribution(self, previous_words_list):
         start = max(0, len(previous_words_list) - self.maximum_word_count)

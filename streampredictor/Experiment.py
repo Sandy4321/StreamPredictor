@@ -5,6 +5,7 @@ import nltk
 
 from streampredictor import DataObtainer
 from streampredictor import StreamPredictor
+from streampredictor import Trainer
 
 max_input_stream_length = 10000000
 storage_file = '../PatternStore/OnlineTokens.pb'
@@ -109,6 +110,7 @@ def train_and_perplexity(input_text_file):
     max_input_length = 10 ** 9
     words = DataObtainer.get_clean_words_from_file(input_text_file, max_input_length)
     sp = StreamPredictor.StreamPredictor()
+    Trainer.train(words=words, streampredictor=sp)
     perplexity_list, iteration = sp.pop_manager.train_token_and_perplexity(words)
     plt.plot(iteration, perplexity_list)
     plt.xlabel('Time')
