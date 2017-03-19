@@ -12,15 +12,21 @@ class Pop:
         self.strength = 0
         self.first_component = None  # Children
         self.second_component = None
-        self.first_child_parents = []
-        self.belongs_to_category = None  # type Pop(), which category does this belong to?
-        self.members_of_category = []  # Pop() List, who are the members of this category?
+
+        # Which parent has this Pop as it's first child
+        self.first_child_parents = []  # type: list[Pop]
+
+        # which category does this belong to?
+        self.belongs_to_category = None  # type: list[Pop]
+
+        # who are the members of this category?
+        self.members_of_category = []  # type: list[Pop]
 
     def set_components(self, first_component, second_component):
         """
         Sets the children.
         """
-        if not first_component or not second_component:
+        if (not first_component) or (not second_component):
             raise Exception("component cannot be None")
         self.first_component = first_component
         first_component.first_child_parents.append(self)
@@ -40,6 +46,7 @@ class Pop:
     def get_sample(self):
         if len(self.members_of_category) < 1:
             return self.unrolled_pattern
+        # todo : instead of unrolled_pattern, shouldn't it be get_sample ?
         return np.random.choice(self.members_of_category).unrolled_pattern
 
     def feed(self, gain):
@@ -52,7 +59,7 @@ class Pop:
 
     def decay(self, decay_amount=None):
         if decay_amount:
-            self.strength -=  decay_amount
+            self.strength -= decay_amount
         else:
             self.strength -= decay_strength_loss
 
@@ -67,15 +74,15 @@ class Pop:
         return out
 
     def similarity(self, other_pop):
-        if not (
-                            self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
+        if not (self.first_component and self.second_component
+                and other_pop.first_component and other_pop.second_component):
             return SequenceMatcher(None, self.unrolled_pattern, other_pop.unrolled_pattern).ratio()
         similarity1 = self.first_component.similarity(other_pop.first_component)
         similarity2 = self.second_component.similarity(other_pop.second_component)
         return (len(self.first_component.unrolled_pattern) * similarity1 + len(self.second_component.unrolled_pattern)
                 * similarity2) / len(self.unrolled_pattern)
 
-    def get_next_distribution(self):
+    def get_next_words_distribution(self):
         """ Gives the list of next predicted words and their associated probabilities.
         :return: List A, B. Where A is a list of strings, B is list of floats.
         """
@@ -112,7 +119,7 @@ class Pop:
 
     def has_common_child(self, other_pop):
         if not (
-                    self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
+                            self.first_component and self.second_component and other_pop.first_component and other_pop.second_component):
             return self.unrolled_pattern == other_pop.unrolled_pattern
         return self.first_component.has_common_child(other_pop.first_component) or \
                self.second_component.has_common_child(other_pop.second_component)
@@ -138,4 +145,3 @@ class Pop:
         if self.first_component and self.second_component:
             return self.first_component.print_components() + ' ' + self.second_component.print_components()
         return ' ' + self.unrolled_pattern
-

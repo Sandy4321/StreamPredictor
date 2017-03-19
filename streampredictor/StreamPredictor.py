@@ -1,6 +1,6 @@
-from . import FileManager
-from . import Generalizer
-from . import PopManager
+from streampredictor import FileManager
+from streampredictor import Generalizer
+from streampredictor import PopManager
 import random
 
 

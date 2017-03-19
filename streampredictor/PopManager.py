@@ -20,7 +20,7 @@ class PopManager:
     def __init__(self):
         #  Constants
         self.occasional_step_period = 2000
-        self.perplexity_count = 6000
+        self.perplexity_count = 6000  # the length of words used to calculate perplexity
         self.maximum_word_count = 40
         self.max_input_stream_length = 10 ** 7
         self.maximum_pattern_length = 40  # maximum pattern length
@@ -34,10 +34,12 @@ class PopManager:
         self.vocabulary_count = 0
 
     def stats(self):
-        return 'The perplexity count constant is ' + str(self.perplexity_count) + \
+        return '\n============= Stream Predictor Hyper parameters ===================' + \
+               '\nThe perplexity count constant is ' + str(self.perplexity_count) + \
                '\nThe occasional step periods is ' + str(self.occasional_step_period) + \
                '\nThe not found raitio is' + str(self.not_found_ratio) + \
-               '\nFeed strength gain is ' + str(self.feed_strength_gain)
+               '\nFeed strength gain is ' + str(self.feed_strength_gain) + \
+               '\n============= End Stream Predictor Hyper parameters ==================='
 
     def __repr__(self):
         return 'Has ' + str(len(self.patterns_collection)) + ' few are ' + \
@@ -73,7 +75,8 @@ class PopManager:
         return input_length
 
     def train_token(self, words):
-        word_count = self.add_words_to_patterns_collection(words)
+        self.add_words_to_patterns_collection(words)
+        word_count = len(words)
         print('Started training with word count = ' + str(word_count))
         previous_pop = list(self.patterns_collection.values())[0]
         i = 1
@@ -101,7 +104,8 @@ class PopManager:
         return new_pop, 1
 
     def calculate_perplexity(self, words, verbose=True):
-        word_count = self.add_words_to_patterns_collection(words, verbose)
+        self.add_words_to_patterns_collection(words, verbose)
+        word_count = len(words)
         if verbose:
             print('Started calculating perplexity with word count = ' + str(word_count))
         log_running_perplexity = 0
@@ -117,7 +121,8 @@ class PopManager:
         return perplexity_list
 
     def train_token_and_perplexity(self, words):
-        word_count = self.add_words_to_patterns_collection(words)
+        self.add_words_to_patterns_collection(words)
+        word_count = len(words)
         print('Started training and calculating perplexity with ', str(word_count), ' words.')
         previous_pop = list(self.patterns_collection.values())[0]
         perplexity_over_training = []
@@ -206,7 +211,12 @@ class PopManager:
         return generated_output
 
     def add_words_to_patterns_collection(self, words, verbose=True):
-        word_count = len(words)
+        """
+        Find the vocabulary and add that vocabulary to pattern collection.
+
+        :type words: list of str
+        :rtype: None
+        """
         unique_words = set(words)
         for word in unique_words:
             if word not in self.patterns_collection:
@@ -216,7 +226,6 @@ class PopManager:
         if verbose:
             print('There are ', self.vocabulary_count, ' words in vocabulary.')
             print('The first few words are ', ','.join(words[:10]))
-        return word_count
 
     def next_word_distribution(self, previous_words_list):
         start = max(0, len(previous_words_list) - self.maximum_word_count)
@@ -288,9 +297,9 @@ class PopManager:
             current_word = input_word[j:]
             if current_word in self.patterns_collection:
                 current_pop = self.patterns_collection[current_word]
-                words, probabilities = current_pop.get_next_distribution()
+                words, probabilities = current_pop.get_next_words_distribution()
                 if current_pop.belongs_to_category:
-                    category_words, category_probabilities = current_pop.belongs_to_category.get_next_distribution()
+                    category_words, category_probabilities = current_pop.belongs_to_category.get_next_words_distribution()
                     words = words + category_words
                     probabilities = np.hstack([0.5 * probabilities, 0.5 * category_probabilities])
                 if len(words) < 1:
@@ -306,9 +315,9 @@ class PopManager:
             current_word = ''.join(input_word[j:])
             if current_word in self.patterns_collection:
                 current_pop = self.patterns_collection[current_word]
-                words, probabilities = current_pop.get_next_distribution()
+                words, probabilities = current_pop.get_next_words_distribution()
                 if current_pop.belongs_to_category:
-                    category_words, category_probabilities = current_pop.belongs_to_category.get_next_distribution()
+                    category_words, category_probabilities = current_pop.belongs_to_category.get_next_words_distribution()
                     words = words + category_words
                     probabilities = np.hstack([0.5 * probabilities, 0.5 * category_probabilities])
                 if len(words) < 1:

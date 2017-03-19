@@ -3,8 +3,9 @@ import time
 import matplotlib.pyplot as plt
 import nltk
 
-from . import DataObtainer
-from . import StreamPredictor
+from streampredictor import DataObtainer
+from streampredictor import StreamPredictor
+from streampredictor import Trainer
 
 max_input_stream_length = 10000000
 storage_file = '../PatternStore/OnlineTokens.pb'
@@ -105,11 +106,13 @@ def perplexity_experiment_load(string):
     plt.show()
 
 
-def train_and_perplexity():
-    words = DataObtainer.get_clean_words_from_file('../Data/pride.txt', 10 ** 9)
+def train_and_perplexity(input_text_file):
+    max_input_length = 10 ** 9
+    words = DataObtainer.get_clean_words_from_file(input_text_file, max_input_length)
     sp = StreamPredictor.StreamPredictor()
-    perplexity_list, x_list = sp.pop_manager.train_token_and_perplexity(words)
-    plt.plot(x_list, perplexity_list)
+    Trainer.train(words=words, streampredictor=sp)
+    perplexity_list, iteration = sp.pop_manager.train_token_and_perplexity(words)
+    plt.plot(iteration, perplexity_list)
     plt.xlabel('Time')
     plt.ylabel('Perplexity')
     plt.title('Perplexity during training')
@@ -147,9 +150,6 @@ def online_token_perplexity_trainer():
 
 
 if __name__ == '__main__':
-    # experiment.perplexity_experiment(text)
-    # experiment.perplexity_experiment(text)
     # sanity_check_run()
-    # Experiment.train_and_perplexity()
-    train_and_perplexity()
-    # Experiment.generalize_token()
+    input_text_file = '../Data/ptb.test.txt'
+    train_and_perplexity(input_text_file)
