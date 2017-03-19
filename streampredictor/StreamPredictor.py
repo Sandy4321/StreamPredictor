@@ -24,41 +24,12 @@ class StreamPredictor:
         i = 0
         while len(remaining_sequence) > 0:
             next_pop, remaining_sequence = self.pop_manager.get_next_pop(remaining_sequence)
-            new_pop = Pop.combine(new_pop, previous_pop)
+            new_pop = Pop.combine(next_pop, previous_pop)
             self.pop_manager.ingest(new_pop)
-            if i % constants.occasional_step_count  == 0:
-                occasional_step()
+            if i % constants.occasional_step_count == 0:
+                self.occasional_step(i)
 
-    # def train_characters(self, string, generalize=False):
-    #     maximum_pattern_length = self.pop_manager.maximum_pattern_length
-    #     input_length = self.pop_manager.setup_train(string)
-    #     previous_pop = self.pop_manager.patterns_collection[string[0]]
-    #     i = 1
-    #     while i < input_length:
-    #         current_pop = self.pop_manager.find_next_pattern(string[i:i + maximum_pattern_length])
-    #         self.pop_manager.join_pattern(previous_pop, current_pop, found_pattern_feed_ratio=1)
-    #         previous_pop = current_pop
-    #         self.pop_manager.cull(0)
-    #         i += len(current_pop.unrolled_pattern)
-    #         if i % 1000 == 0 and i > self.pop_manager.feed_strength_gain:
-    #             # Refactor, adopt stronger children, as long as one's unrolled pattern is same.
-    #             self.pop_manager.refactor()
-    #     self.pop_manager.refactor()
-    #     if generalize:
-    #         self.generalizer.generalize()
-    #     self.pop_manager.cull(0)
-    #     return self.pop_manager.patterns_collection
-
-    # def generate_stream(self, word_length, seed=None):
-    #     print('Generating stream with word count = ', word_length)
-    #     current_pop = random.choice(list(self.pop_manager.patterns_collection.values())) \
-    #         if seed is None or '' else self.pop_manager.find_next_pattern(seed)
-    #     current_word = current_pop.unrolled_pattern
-    #     generated_output = current_word
-    #     for i in range(word_length):
-    #         next_word = self.pop_manager.choose_next_word_string(generated_output)
-    #         if next_word == '':
-    #             next_word = random.choice([pop.unrolled_pattern
-    #                                        for key, pop in self.pop_manager.patterns_collection.items()])
-    #         generated_output += next_word
-    #     return generated_output
+    def occasional_step(self, step_count):
+        self.pop_manager.decay(constants.occasional_decay)
+        self.pop_manager.cull(step_count)
+        self.pop_manager.refactor()

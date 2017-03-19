@@ -1,5 +1,5 @@
-from . import ProtobufManager
-from .Pop import Pop
+from streampredictor import ProtobufManager
+from streampredictor.Pop import Pop
 
 
 class FileManager():
@@ -11,7 +11,8 @@ class FileManager():
         self.pop_manager = pm
 
     def save_tsv(self, filename):
-        save_string = 'pattern, strength, component1, component2, parents\n'
+        header = '\t'.join(['pattern', 'strength', 'component1', 'component2', 'parents']) + '\n'
+        save_string = header
         for key, pop in sorted(iter(self.pop_manager.patterns_collection.items()), key=lambda ng: ng[1].strength):
             save_string += key + '\t' + str(pop.strength) + '\t'
             if pop.first_component:
@@ -28,17 +29,9 @@ class FileManager():
             file.write(save_string)
         print('Saved file ' + filename)
 
-    def save_pb(self, filename):
-        buf = ProtobufManager.ProtobufManager.PopManager_to_ProtobufPopManager(self.pop_manager)
-        ProtobufManager.ProtobufManager.save_protobuf(buf, filename)
-
-    def save_pb_plain(self, filename):
-        buf = ProtobufManager.ProtobufManager.PopManager_to_ProtobufPopManager(self.pop_manager)
-        ProtobufManager.ProtobufManager.save_protobuf_plain(buf, filename)
-
     def load_tsv(self, filename):
-        partial_loading = False# doesn't work for now, some patterns will have first
-        limit = 0              #parent child which is not loaded
+        partial_loading = False  # doesn't work for now, some patterns will have first
+        limit = 0  # parent child which is not loaded
         with open(filename, mode='r') as file:
             all_lines = file.readlines()
             total_lines = len(all_lines)
@@ -56,19 +49,12 @@ class FileManager():
                 elements = lines.strip('\n').split('\t')
                 key = elements[0]
                 if elements[2] is not '' and elements[3] is not '':
-                    self.pop_manager.set_components_from_string(self.pop_manager.patterns_collection[key], elements[2], elements[3])
+                    self.pop_manager.set_components_from_string(self.pop_manager.patterns_collection[key], elements[2],
+                                                                elements[3])
                 if elements[4] != '':
                     for parent_i in elements[4:]:
                         if parent_i != '' and parent_i in self.pop_manager.patterns_collection:
-                            self.pop_manager.patterns_collection[key].first_child_parents.append(self.pop_manager.patterns_collection[parent_i])
-        print('Loaded file ' + filename + ' with number of patterns = ' + str(len(self.pop_manager.patterns_collection)))
-
-    def load_pb(self, filename):
-        pop_manager = ProtobufManager.ProtobufManager.load_PopManager(filename)
-        self.pop_manager.patterns_collection = pop_manager.patterns_collection
-
-    def load_pb_plain(self, filename):
-        print('Loading ', filename)
-        buffy = ProtobufManager.ProtobufManager.load_protobuf_plain(filename)
-        pm = ProtobufManager.ProtobufManager.protobuf_to_pop_manager(buffy)
-        self.pop_manager.patterns_collection = pm.patterns_collection
+                            self.pop_manager.patterns_collection[key].first_child_parents.append(
+                                self.pop_manager.patterns_collection[parent_i])
+        print('Loaded file ' + filename
+              + ' with number of patterns = ' + str(len(self.pop_manager.patterns_collection)))
