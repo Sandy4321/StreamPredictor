@@ -34,10 +34,12 @@ class PopManager:
         self.vocabulary_count = 0
 
     def stats(self):
-        return 'The perplexity count constant is ' + str(self.perplexity_count) + \
+        return '\n============= Stream Predictor Hyper parameters ===================' + \
+               '\nThe perplexity count constant is ' + str(self.perplexity_count) + \
                '\nThe occasional step periods is ' + str(self.occasional_step_period) + \
                '\nThe not found raitio is' + str(self.not_found_ratio) + \
-               '\nFeed strength gain is ' + str(self.feed_strength_gain)
+               '\nFeed strength gain is ' + str(self.feed_strength_gain) + \
+               '\n============= End Stream Predictor Hyper parameters ==================='
 
     def __repr__(self):
         return 'Has ' + str(len(self.patterns_collection)) + ' few are ' + \

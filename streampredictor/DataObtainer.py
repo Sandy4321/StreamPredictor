@@ -42,7 +42,9 @@ def get_clean_text_from_file(file, max_input_stream_length):
 def get_clean_words_from_file(file, max_input_length):
     with open(file) as opened_file:
         text = opened_file.read()
-        return nltk.word_tokenize(clean_text(text))[:max_input_length]
+        clean_words = nltk.word_tokenize(clean_text(text))[:max_input_length]
+        print('Cleaned words, some of the first few are ',clean_words[:5])
+        return clean_words
 
 
 def get_words_from_ptb(file, max_input_length):
