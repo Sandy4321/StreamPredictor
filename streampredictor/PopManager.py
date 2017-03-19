@@ -28,7 +28,6 @@ class PopManager:
         self.feed_strength_gain = 10 ** 6
         #  Fields
         self.patterns_collection = dict()
-        self.vocabulary_count = 0
 
     def stats(self):
         return '\n============= Stream Predictor Hyper parameters ===================' + \
@@ -37,6 +36,10 @@ class PopManager:
                '\nThe not found raitio is' + str(self.not_found_ratio) + \
                '\nFeed strength gain is ' + str(self.feed_strength_gain) + \
                '\n============= End Stream Predictor Hyper parameters ==================='
+
+    @property
+    def vocabulary_count(self):
+        return len(self.patterns_collection)
 
     def __repr__(self):
         return 'Has ' + str(len(self.patterns_collection)) + ' few are ' + \
@@ -48,26 +51,16 @@ class PopManager:
             raise Exception(string + 'is already present')
         self.patterns_collection[string] = pop
 
-    def setup(self, words):
-        """
-        Steps to be taken before start of training.
-
-        :param words: list[str]
-        :rtype: None
-        """
-        self.add_words_to_patterns_collection(words)
-        word_count = len(words)
-
     def get_next_pop(self, remaining_sequence):
         """
         Returns the longest pattern in the given word.
 
-        :type remaining_sequence: list[Pop]
+        :type remaining_sequence: list[str]
         :rtype: Pop, list[Pop]
         """
         end = min(len(remaining_sequence), self.maximum_word_count)
         for j in range(end, 0, -1):  # how many chars to look ahead
-            current_word = ''.join([i.unrolled_pattern for i in remaining_sequence[:j]])
+            current_word = ''.join(remaining_sequence[:j])
             if current_word in self.patterns_collection:
                 return self.patterns_collection[current_word], remaining_sequence[j:]
 
@@ -82,6 +75,15 @@ class PopManager:
             self.patterns_collection[new_pop.unrolled_pattern] = new_pop
         self.patterns_collection[new_pop.unrolled_pattern].feed(
             self.feed_strength_gain * constants.found_pattern_feed_ratio)
+
+    def occasional_step(self, step_count):
+        self.decay(constants.occasional_decay)
+        self.cull(step_count)
+        self.refactor()
+
+    def decay(self, i):
+        for key, pop in self.patterns_collection.items():
+            pop.decay(i)
 
     def cull(self, limit):
         cull_list = self.cull_child_and_mark_self(limit)
@@ -105,10 +107,6 @@ class PopManager:
                 cull_list.append(key)
         return cull_list
 
-    def decay(self, i):
-        for key, pop in self.patterns_collection.items():
-            pop.decay(i)
-
     def refactor(self):
         for key, pop in self.patterns_collection.items():
             if pop.first_component and pop.second_component:
@@ -124,6 +122,39 @@ class PopManager:
                                                          self.patterns_collection[new_second_component].strength
                         if refactored_components_strength > current_components_strength:
                             self.change_components_string(new_first_component, new_second_component, pop)
+
+    def change_components_string(self, first_string, second_string, pop):
+        if first_string not in self.patterns_collection or second_string not in self.patterns_collection:
+            raise ValueError('One of these is not in pattern collection {', first_string, ' : ', second_string, '}')
+        if pop.first_component:
+            old_pop = pop.first_component
+            if pop in old_pop.first_child_parents:
+                old_pop.first_child_parents.remove(pop)
+        pop.set_components(self.patterns_collection[first_string],
+                           self.patterns_collection[second_string])
+
+    def setup(self, words, verbose=True):
+        """
+        Find the vocabulary and add that vocabulary to pattern collection.
+
+        :type words: list of str
+        :rtype: None
+        """
+        unique_words = set(words)
+        for word in unique_words:
+            if word not in self.patterns_collection:
+                self.patterns_collection[word] = Pop(word)
+                self.patterns_collection[word].feed(self.feed_strength_gain)
+        if verbose:
+            print('There are ', self.vocabulary_count, ' words in vocabulary.')
+            print('The first few words are ', ','.join(words[:10]))
+
+    def status(self):
+        out_string = ''
+        for key, pop in sorted(iter(self.patterns_collection.items()), key=lambda ng: ng[0]):
+            out_string += pop.__repr__()
+        out_string += 'Status of Pattern of patterns with ' + str(len(self.patterns_collection)) + ' pops \n'
+        return out_string
 
     ############## end of clean code ########################
 
@@ -232,23 +263,6 @@ class PopManager:
             generated_output += next_word
         return generated_output
 
-    def add_words_to_patterns_collection(self, words, verbose=True):
-        """
-        Find the vocabulary and add that vocabulary to pattern collection.
-
-        :type words: list of str
-        :rtype: None
-        """
-        unique_words = set(words)
-        for word in unique_words:
-            if word not in self.patterns_collection:
-                self.patterns_collection[word] = Pop(word)
-                self.patterns_collection[word].feed(self.feed_strength_gain)
-                self.vocabulary_count += 1
-        if verbose:
-            print('There are ', self.vocabulary_count, ' words in vocabulary.')
-            print('The first few words are ', ','.join(words[:10]))
-
     def next_word_distribution(self, previous_words_list):
         start = max(0, len(previous_words_list) - self.maximum_word_count)
         for j in range(start, len(previous_words_list)):
@@ -283,13 +297,6 @@ class PopManager:
             current_word = long_word[:j]
             if current_word in self.patterns_collection:
                 return self.patterns_collection[current_word]
-
-    def status(self):
-        out_string = ''
-        for key, pop in sorted(iter(self.patterns_collection.items()), key=lambda ng: ng[0]):
-            out_string += pop.__repr__()
-        out_string += 'Status of Pattern of patterns with ' + str(len(self.patterns_collection)) + ' pops \n'
-        return out_string
 
     def choose_next_word_string(self, input_word):
         start = max(0, len(input_word) - self.maximum_pattern_length)
@@ -327,16 +334,6 @@ class PopManager:
         if Verbose:
             print(' nothing after ', input_word)
         return ''
-
-    def change_components_string(self, first_string, second_string, pop):
-        if first_string not in self.patterns_collection or second_string not in self.patterns_collection:
-            raise ValueError('One of these is not in pattern collection {', first_string, ' : ', second_string, '}')
-        if pop.first_component:
-            old_pop = pop.first_component
-            if pop in old_pop.first_child_parents:
-                old_pop.first_child_parents.remove(pop)
-        pop.set_components(self.patterns_collection[first_string],
-                           self.patterns_collection[second_string])
 
     def fix_first_child_parents(self, verbose=False):
         """

@@ -1,5 +1,5 @@
-from . import DataObtainer
-from .StreamPredictor import StreamPredictor
+from streampredictor import DataObtainer
+from streampredictor.StreamPredictor import StreamPredictor
 
 
 def fruit_generalization():

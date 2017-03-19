@@ -1,9 +1,8 @@
+from other import Generalizer
 from streampredictor import FileManager
-from streampredictor import Generalizer
-from streampredictor import PopManager
 from streampredictor import Pop
+from streampredictor import PopManager
 from streampredictor import constants
-import random
 
 
 class StreamPredictor:
@@ -17,10 +16,10 @@ class StreamPredictor:
                                                    self.pop_manager.feed_strength_gain)
         print(self.pop_manager.stats())
 
-    def train(self, sequence):
-        self.pop_manager.setup(sequence)
-        previous_pop = sequence[0]
-        remaining_sequence = sequence[1:]
+    def train(self, list_of_words):
+        self.pop_manager.setup(list_of_words)
+        previous_pop = self.pop_manager.patterns_collection[list_of_words[0]]
+        remaining_sequence = list_of_words[1:]
         i = 0
         while len(remaining_sequence) > 0:
             next_pop, remaining_sequence = self.pop_manager.get_next_pop(remaining_sequence)
@@ -30,6 +29,10 @@ class StreamPredictor:
                 self.occasional_step(i)
 
     def occasional_step(self, step_count):
-        self.pop_manager.decay(constants.occasional_decay)
-        self.pop_manager.cull(step_count)
-        self.pop_manager.refactor()
+        self.pop_manager.occasional_step(step_count)
+
+    def generate(self, word_length, seed=None):
+        return self.pop_manager.generate_words(word_length, seed=None)
+
+    def calculate_perplexity(self, words):
+        return self.pop_manager.calculate_perplexity(words=words, verbose=False)

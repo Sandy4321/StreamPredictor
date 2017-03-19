@@ -1,70 +1,46 @@
 import os
 from unittest import TestCase
 
-from . import DataObtainer
-from .Pop import Pop
-from .StreamPredictor import StreamPredictor
+from streampredictor import DataObtainer
+from streampredictor.Pop import Pop
+from streampredictor.StreamPredictor import StreamPredictor
 
-test_pb = '../PatternStore/test.pb'
+save_filename = '../PatternStore/test.tsv'
 test_pb_plain = '../PatternStore/test.txt'
-training_text = 'cat hat mat bat sat in the barn'
+training_words = 'cat hat mat bat sat in the barn'.split(' ')
 
 
 class TestPatternOfPatterns(TestCase):
     def get_sample(self):
         sample = StreamPredictor()
-        sample.train_characters(training_text)
+        sample.train(training_words)
         return sample
 
     def test_save(self):
         sample = self.get_sample()
-        sample.file_manager.save_tsv(test_pb)
-        self.assertTrue(os.path.isfile(test_pb))
+        sample.file_manager.save_tsv(save_filename)
+        self.assertTrue(os.path.isfile(save_filename))
 
     def test_load(self):
         self.test_save()
         empty_sample = StreamPredictor()
         self.assertFalse(len(empty_sample.pop_manager.patterns_collection) > 10)
-        empty_sample.file_manager.load_tsv(test_pb)
-        self.assertTrue(len(empty_sample.pop_manager.patterns_collection) > 10)
-
-    def test_save_pb(self):
-        sample = self.get_sample()
-        sample.file_manager.save_pb(test_pb)
-        self.assertTrue(os.path.isfile(test_pb))
-
-    def test_save_pb_plain(self):
-        sample = self.get_sample()
-        sample.file_manager.save_pb_plain(test_pb_plain)
-        self.assertTrue(os.path.isfile(test_pb_plain))
-
-    def test_load_pb(self):
-        self.test_save_pb()
-        empty_sample = StreamPredictor()
-        self.assertFalse(len(empty_sample.pop_manager.patterns_collection) > 10)
-        empty_sample.file_manager.load_pb(test_pb)
-        self.assertTrue(len(empty_sample.pop_manager.patterns_collection) > 10)
-
-    def test_load_pb_plain(self):
-        self.test_save_pb_plain()
-        empty_sample = StreamPredictor()
-        self.assertFalse(len(empty_sample.pop_manager.patterns_collection) > 10)
-        empty_sample.file_manager.load_pb_plain(test_pb_plain)
+        empty_sample.file_manager.load_tsv(save_filename)
         self.assertTrue(len(empty_sample.pop_manager.patterns_collection) > 10)
 
     def test_train_increases_patterns(self):
         sample = self.get_sample()
         pattern_count = len(sample.pop_manager.patterns_collection)
-        sample.train_characters(training_text)
+        sample.train(training_words)
         self.assertGreater(len(sample.pop_manager.patterns_collection), pattern_count)
 
     def test_save_load_equal(self):
         sample = self.get_sample()
         sample.pop_manager.patterns_collection['karma'] = Pop('karma')
         first_string = sample.pop_manager.status()
-        sample.file_manager.save_pb(test_pb)
+        sample.file_manager.save_pb(save_filename)
         second = StreamPredictor()
-        second.file_manager.load_pb(test_pb)
+        second.file_manager.load_pb(save_filename)
         second_string = second.pop_manager.status()
         self.assertEqual(first_string, second_string)
 
@@ -103,7 +79,7 @@ class TestPatternOfPatterns(TestCase):
 
     def test_generate_stream(self):
         sample = self.get_sample()
-        generated = sample.generate_stream(10)
+        generated = sample.generate(10)
         self.assertGreater(len(generated), 9)
 
     # def test_generailze(self):
@@ -228,7 +204,7 @@ class TestPatternOfPatterns(TestCase):
         sp = StreamPredictor()
         sp.pop_manager.train_token(words[:15000])
         perplexity_list = sp.pop_manager.calculate_perplexity(words[15000:])
-        self.assertLess(perplexity_list[-1],2500)
+        self.assertLess(perplexity_list[-1], 2500)
 
     def test_train_token_step(self):
         sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()

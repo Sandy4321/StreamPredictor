@@ -1,7 +1,7 @@
 """
 Author: Abhishek Rao
 """
-from . import Pop
+from streampredictor import Pop
 
 
 class Generalizer():

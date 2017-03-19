@@ -1,4 +1,3 @@
-from streampredictor import ProtobufManager
 from streampredictor.Pop import Pop
 
 
