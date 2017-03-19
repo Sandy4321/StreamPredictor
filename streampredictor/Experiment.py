@@ -3,8 +3,8 @@ import time
 import matplotlib.pyplot as plt
 import nltk
 
-from . import DataObtainer
-from . import StreamPredictor
+from streampredictor import DataObtainer
+from streampredictor import StreamPredictor
 
 max_input_stream_length = 10000000
 storage_file = '../PatternStore/OnlineTokens.pb'
