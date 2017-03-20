@@ -1,4 +1,4 @@
-from streampredictor import data_fetcher
+from streampredictor import file_manager
 from streampredictor import pop
 from streampredictor import pop_manager
 from streampredictor import constants
@@ -10,7 +10,7 @@ class StreamPredictor:
             self.pop_manager = pm  # type: pop_manager
         else:
             self.pop_manager = pop_manager.PopManager()  # type: pop_manager
-        self.file_manager = data_fetcher.FileManager(self.pop_manager)
+        self.file_manager = file_manager.FileManager(self.pop_manager)
         print(self.pop_manager.stats())
 
     def train(self, list_of_words):

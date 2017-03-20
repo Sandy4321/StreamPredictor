@@ -1,4 +1,4 @@
-from streampredictor import DataObtainer
+from streampredictor import data_fetcher
 from streampredictor.stream_predictor import StreamPredictor
 
 
@@ -7,7 +7,7 @@ def fruit_generalization():
     sp = StreamPredictor()
     sp.pop_manager.add_pop_string('apple')
     sp.pop_manager.add_pop_string('banana')
-    text = DataObtainer.get_clean_text_from_file('data/Experimental/case.txt', 100000)
+    text = data_fetcher.get_clean_text_from_file('data/Experimental/case.txt', 100000)
     sp.train_characters(text)
     sp.pop_manager.refactor()
     # sp.generalize()

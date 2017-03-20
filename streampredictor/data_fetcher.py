@@ -1,66 +1,71 @@
-from streampredictor.pop import Pop
-from streampredictor import pop_manager
+import nltk
+import urllib.request, urllib.error, urllib.parse
+import time
+import os
+import random
 
 
-class FileManager():
-    """
-    Saves and loads the pop manager in different format.
-    """
+def gutenberg_random_book():
+    for i in range(100):
+        book_number = random.randint(9, 2000)
+        url = 'http://www.gutenberg.org/cache/epub/' + str(book_number) + '/pg' + str(book_number) + '.txt'
+        response = urllib.request.urlopen(url)
+        text = response.read()
+        if len(text) > 1000 and is_english(text):
+            print(('Got book from ', url))
+            return text
+        else:
+            print(('Didnt get book, waiting for some time, seconds = ' + str(10 + book_number / 10)))
+            time.sleep(10 + book_number / 10)
 
-    def __init__(self, pm):
-        """
-        :type pm: pop_manager
-        """
-        self.pop_manager = pm  # type: pop_manager.PopManager
 
-    def save_tsv(self, filename):
-        header = '\t'.join(['pattern', 'strength', 'component1', 'component2', 'parents']) + '\n'
-        save_string = header
-        for key, pop in sorted(iter(self.pop_manager.patterns_collection.items()), key=lambda ng: ng[1].strength):
-            save_string += key + '\t' + str(pop.strength) + '\t'
-            if pop.first_component:
-                save_string += pop.first_component.unrolled_pattern
-            save_string += '\t'
-            if pop.second_component:
-                save_string += pop.second_component.unrolled_pattern
-            save_string += '\t'
-            for parent_i in pop.first_child_parents:
-                save_string += parent_i.unrolled_pattern
-                save_string += '\t'
-            save_string += '\n'
-        with open(filename, mode='w') as file:
-            file.write(save_string)
-        print('Saved file ' + filename)
+def is_english(text):
+    english_words = ['here', 'there', 'where', 'some', 'and', 'but']
+    for word in english_words:
+        if word not in text:
+            return False
+    return True
 
-    def load_tsv(self, filename):
-        with open(filename, mode='r') as file:
-            all_lines = file.readlines()
-            data_lines = all_lines[1:]  # skip header
-            # first
-            self.get_keys_and_strength(data_lines)
-            self.connect_pops(data_lines)
-        print('Loaded file ' + filename
-              + ' with number of patterns = ' + str(len(self.pop_manager.patterns_collection)))
 
-    def connect_pops(self, data_lines):
-        for lines in data_lines:
-            elements = lines.strip('\n').split('\t')
-            key = elements[0]
-            current_pop = self.pop_manager.get(key)
-            if elements[2] is not '' and elements[3] is not '':
-                first_component = self.pop_manager.get(elements[2])
-                second_component = self.pop_manager.get(elements[3])
-                current_pop.set_components(first_component, second_component)
-            # elements 4 + are parents
-            if elements[4] != '':
-                for parent_i in elements[4:]:
-                    if parent_i != '' and parent_i in self.pop_manager.patterns_collection:
-                        parent_pop = self.pop_manager.get(parent_i)
-                        current_pop.first_child_parents.append(parent_pop)
+def get_random_book_local(folder):
+    file = random.choice(os.listdir(folder))
+    with open(folder + file) as opened_file:
+        return opened_file.read()
 
-    def get_keys_and_strength(self, data_lines):
-        for lines in data_lines:
-            elements = lines.split('\t')
-            key = elements[0]
-            self.pop_manager.patterns_collection[key] = Pop(key)
-            self.pop_manager.patterns_collection[key].strength = int(elements[1])
+
+def get_clean_text_from_file(file, max_input_stream_length):
+    with open(file) as opened_file:
+        text = opened_file.read()
+        return clean_text(text, max_input_stream_length)
+
+
+def get_clean_words_from_file(file, max_input_length):
+    with open(file) as opened_file:
+        text = opened_file.read()
+        clean_words = nltk.word_tokenize(clean_text(text))[:max_input_length]
+        print('Cleaned words, some of the first few are ', clean_words[:5])
+        return clean_words
+
+
+def get_words_from_ptb(file, max_input_length):
+    with open(file) as opened_file:
+        text = opened_file.read().replace('\n', '')
+        return text.split(' ')[:max_input_length]
+
+
+def clean_text(text, max_input_length=10 ** 10000):
+    text = text.replace('\n', ' ')
+    max_length = min(max_input_length, len(text))
+    rotation = random.randint(0, max_length)
+    text = text[rotation:max_length] + text[:rotation]
+    # make sure to remove # for category separation
+    text = ''.join(e for e in text if e.isalnum() or e in '.?", <>')
+    return text
+
+
+def get_online_words(max_input_length):
+    text = gutenberg_random_book()
+    words = nltk.word_tokenize(clean_text(text, max_input_length))
+    return words
+
+

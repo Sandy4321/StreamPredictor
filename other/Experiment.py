@@ -3,7 +3,7 @@ import time
 import matplotlib.pyplot as plt
 import nltk
 
-from streampredictor import DataObtainer
+from streampredictor import data_fetcher
 from streampredictor import stream_predictor
 from streampredictor import Trainer
 
@@ -25,8 +25,8 @@ def default_trainer(storage_file):
     for iteration in range(100):
         start_time = time.time()
         print('Iteration number ' + str(iteration))
-        text = DataObtainer.get_random_book_local('data/')
-        text = DataObtainer.clean_text(text, max_input_stream_length)
+        text = data_fetcher.get_random_book_local('data/')
+        text = data_fetcher.clean_text(text, max_input_stream_length)
         sp = load_sp(storage_file)
         sp.train_characters(text)
         sp.file_manager.save_tsv(storage_file)
@@ -39,8 +39,8 @@ def default_trainer(storage_file):
 
 def default_small_trainer(storage_file):
     start_time = time.time()
-    text = DataObtainer.get_random_book_local('data/')
-    text = DataObtainer.clean_text(text, 10000)
+    text = data_fetcher.get_random_book_local('data/')
+    text = data_fetcher.clean_text(text, 10000)
     sp = load_sp(storage_file)
     sp.train_characters(text)
     sp.generalizer.generalize()
@@ -57,8 +57,8 @@ def online_trainer(storage_file):
     for iteration in range(100):
         start_time = time.time()
         print('Iteration number ' + str(iteration))
-        text = DataObtainer.gutenberg_random_book()
-        text = DataObtainer.clean_text(text, max_input_stream_length)
+        text = data_fetcher.gutenberg_random_book()
+        text = data_fetcher.clean_text(text, max_input_stream_length)
         sp = load_sp(storage_file)
         sp.train_characters(text)
         sp.file_manager.save_tsv(storage_file)
@@ -108,7 +108,7 @@ def perplexity_experiment_load(string):
 
 def train_and_perplexity(input_text_file):
     max_input_length = 10 ** 9
-    words = DataObtainer.get_clean_words_from_file(input_text_file, max_input_length)
+    words = data_fetcher.get_clean_words_from_file(input_text_file, max_input_length)
     sp = stream_predictor.StreamPredictor()
     Trainer.train(words=words, streampredictor=sp)
     perplexity_list, iteration = sp.pop_manager.train_token_and_perplexity(words)
@@ -121,7 +121,7 @@ def train_and_perplexity(input_text_file):
 
 def generalize_token():
     sp = stream_predictor.StreamPredictor()
-    words = DataObtainer.get_clean_words_from_file('../Data/pride.txt', 10 ** 9)
+    words = data_fetcher.get_clean_words_from_file('../Data/pride.txt', 10 ** 9)
     sp.pop_manager.train_token(words)
     sp.generalizer.generalize()
     sp.file_manager.save_pb_plain('../PatternStore/pride_generalized.txt')
@@ -138,7 +138,7 @@ def online_token_perplexity_trainer():
     for iteration in range(10):
         start_time = time.time()
         print('Iteration number ' + str(iteration))
-        words = DataObtainer.get_online_words(10 ** 10)
+        words = data_fetcher.get_online_words(10 ** 10)
         perplexity_over_training, training_time = sp.pop_manager.train_token_and_perplexity(words)
         plt.plot(training_time, perplexity_over_training, 'd-')
         plt.show()
