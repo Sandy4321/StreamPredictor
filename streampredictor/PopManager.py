@@ -45,6 +45,15 @@ class PopManager:
         return 'Has ' + str(len(self.patterns_collection)) + ' few are ' + \
                '-'.join([i.__repr__() for i in list(self.patterns_collection.values())[:5]])
 
+    def get(self, key):
+        """
+        Gets the pop with the name key
+
+        :type key: str
+        :rtype: Pop
+        """
+        return self.patterns_collection[key]
+
     def add_pop(self, pop):
         string = pop.unrolled_pattern
         if string in self.patterns_collection:
@@ -253,17 +262,6 @@ class PopManager:
         # first_category = first_pattern.belongs_to_category if first_pattern.belongs_to_category else first_pattern
         # second_category = second_pattern.belongs_to_category if second_pattern.belongs_to_category else second_pattern
         # self.join_pattern(first_category, second_category, found_pattern_feed_ratio * self.feed_ratio_parent_category)
-
-    def find_next_pattern(self, long_word):
-        """
-        Returns the longest pattern in the given word.
-        :param long_word: a string
-        :return: PoP(), longest pattern from start.
-        """
-        for j in range(self.maximum_pattern_length, 0, -1):  # how many chars to look ahead
-            current_word = long_word[:j]
-            if current_word in self.patterns_collection:
-                return self.patterns_collection[current_word]
 
     def choose_next_word_word_list(self, input_word, Verbose=False):
         start = max(0, len(input_word) - self.maximum_pattern_length)

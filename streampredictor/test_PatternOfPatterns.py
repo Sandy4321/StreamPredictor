@@ -6,7 +6,6 @@ from streampredictor.Pop import Pop
 from streampredictor.StreamPredictor import StreamPredictor
 
 save_filename = '../PatternStore/test.tsv'
-test_pb_plain = '../PatternStore/test.txt'
 training_words = 'cat hat mat bat sat in the barn'.split(' ')
 
 
@@ -20,13 +19,17 @@ class TestPatternOfPatterns(TestCase):
         sample = self.get_sample()
         sample.file_manager.save_tsv(save_filename)
         self.assertTrue(os.path.isfile(save_filename))
+        os.remove(save_filename)
 
     def test_load(self):
-        self.test_save()
+        sample = self.get_sample()
+        sample.file_manager.save_tsv(save_filename)
+        self.assertTrue(os.path.isfile(save_filename))
         empty_sample = StreamPredictor()
         self.assertFalse(len(empty_sample.pop_manager.patterns_collection) > 10)
         empty_sample.file_manager.load_tsv(save_filename)
         self.assertTrue(len(empty_sample.pop_manager.patterns_collection) > 10)
+        os.remove(save_filename)
 
     def test_train_increases_patterns(self):
         sample = self.get_sample()
@@ -43,39 +46,6 @@ class TestPatternOfPatterns(TestCase):
         second.file_manager.load_pb(save_filename)
         second_string = second.pop_manager.status()
         self.assertEqual(first_string, second_string)
-
-    def test_find_next_pattern(self):
-        sample = self.get_sample()
-        small_pattern = 'somew'
-        big_pattern = small_pattern + ' some random text'
-        sample.pop_manager.patterns_collection[small_pattern] = Pop(small_pattern)
-        found_pattern = sample.pop_manager.find_next_pattern(big_pattern)
-        self.assertEqual(found_pattern.unrolled_pattern, small_pattern)
-        small_pattern = 'somewhat'
-        big_pattern = small_pattern + ' some random text'
-        sample.pop_manager.patterns_collection[small_pattern] = Pop(small_pattern)
-        found_pattern = sample.pop_manager.find_next_pattern(big_pattern)
-        self.assertEqual(found_pattern.unrolled_pattern, small_pattern)
-        small_pattern = 'somewhatapa'
-        big_pattern = small_pattern + ' some random text'
-        sample.pop_manager.patterns_collection[small_pattern] = Pop(small_pattern)
-        found_pattern = sample.pop_manager.find_next_pattern(big_pattern)
-        self.assertEqual(found_pattern.unrolled_pattern, small_pattern)
-
-    def test_join_pattern(self):
-        sample = StreamPredictor()
-        cat_ate_ = Pop('The cat ate ')
-        fruit = Pop('fruit')
-        banana = Pop('banana')
-        strawberry = Pop('strawberry')
-        sample.pop_manager.add_pop(cat_ate_)
-        sample.pop_manager.add_pop(fruit)
-        sample.pop_manager.add_pop(banana)
-        sample.pop_manager.add_pop(strawberry)
-        banana.belongs_to_category = fruit
-        strawberry.belongs_to_category = fruit
-        sample.pop_manager.join_pattern(cat_ate_, banana, found_pattern_feed_ratio=1)
-        self.assertTrue((cat_ate_.unrolled_pattern + fruit.unrolled_pattern) in sample.pop_manager.patterns_collection)
 
     def test_generate_stream(self):
         sample = self.get_sample()
@@ -218,13 +188,13 @@ class TestPatternOfPatterns(TestCase):
     def test_find_next_word(self):
         sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
         words = ['ab', 'd']
-        current_pop, increment = sp.pop_manager.find_next_word(words[1:])
+        current_pop, remaining = sp.pop_manager.get_next_pop(words[1:])
         self.assertEqual(current_pop.unrolled_pattern, 'd')
-        self.assertEqual(increment, 1)
+        self.assertEqual(remaining, [])
         words = ['ab', 'x', 'e']
-        current_pop, increment = sp.pop_manager.find_next_word(words[1:])
+        current_pop, remaining = sp.pop_manager.get_next_pop(words[1:])
         self.assertEqual(current_pop.unrolled_pattern, 'xe')
-        self.assertEqual(increment, 2)
+        self.assertEqual(remaining, [])
 
     def test_get_prediction_probability(self):
         words = ['and', 'what', 'where']

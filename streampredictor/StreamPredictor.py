@@ -7,9 +7,9 @@ from streampredictor import constants
 class StreamPredictor:
     def __init__(self, pm=None):
         if pm:
-            self.pop_manager = pm
+            self.pop_manager = pm  # type: PopManager
         else:
-            self.pop_manager = PopManager.PopManager()
+            self.pop_manager = PopManager.PopManager()  # type: PopManager
         self.file_manager = FileManager.FileManager(self.pop_manager)
         print(self.pop_manager.stats())
 

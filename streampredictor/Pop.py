@@ -35,6 +35,10 @@ class Pop:
     def set_components(self, first_component, second_component):
         """
         Sets the children.
+
+        :type first_component: Pop
+        :type second_component: Pop
+        :rtype first_component: None
         """
         if (not first_component) or (not second_component):
             raise Exception("component cannot be None")
@@ -154,3 +158,10 @@ class Pop:
         if self.first_component and self.second_component:
             return self.first_component.print_components() + ' ' + self.second_component.print_components()
         return ' ' + self.unrolled_pattern
+
+    def add_parent(self, parent_pop):
+        """
+        :type parent_pop: Pop
+        :rtype: None
+        """
+        self.first_child_parents.append(parent_pop)

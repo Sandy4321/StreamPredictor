@@ -1,4 +1,5 @@
 from streampredictor.Pop import Pop
+from streampredictor import PopManager
 
 
 class FileManager():
@@ -7,7 +8,10 @@ class FileManager():
     """
 
     def __init__(self, pm):
-        self.pop_manager = pm
+        """
+        :type pm: PopManager
+        """
+        self.pop_manager = pm  # type: PopManager.PopManager
 
     def save_tsv(self, filename):
         header = '\t'.join(['pattern', 'strength', 'component1', 'component2', 'parents']) + '\n'
@@ -29,31 +33,34 @@ class FileManager():
         print('Saved file ' + filename)
 
     def load_tsv(self, filename):
-        partial_loading = False  # doesn't work for now, some patterns will have first
-        limit = 0  # parent child which is not loaded
         with open(filename, mode='r') as file:
             all_lines = file.readlines()
-            total_lines = len(all_lines)
-            if partial_loading:
-                start_line = max(0, total_lines - limit)
-                lines_to_read = all_lines[1 + start_line:]
-            else:
-                lines_to_read = all_lines[1:]
-            for lines in lines_to_read:
-                elements = lines.split('\t')
-                key = elements[0]
-                self.pop_manager.patterns_collection[key] = Pop(key)
-                self.pop_manager.patterns_collection[key].strength = int(elements[1])
-            for lines in all_lines[1:]:
-                elements = lines.strip('\n').split('\t')
-                key = elements[0]
-                if elements[2] is not '' and elements[3] is not '':
-                    self.pop_manager.set_components_from_string(self.pop_manager.patterns_collection[key], elements[2],
-                                                                elements[3])
-                if elements[4] != '':
-                    for parent_i in elements[4:]:
-                        if parent_i != '' and parent_i in self.pop_manager.patterns_collection:
-                            self.pop_manager.patterns_collection[key].first_child_parents.append(
-                                self.pop_manager.patterns_collection[parent_i])
+            data_lines = all_lines[1:]  # skip header
+            # first
+            self.get_keys_and_strength(data_lines)
+            self.connect_pops(data_lines)
         print('Loaded file ' + filename
               + ' with number of patterns = ' + str(len(self.pop_manager.patterns_collection)))
+
+    def connect_pops(self, data_lines):
+        for lines in data_lines:
+            elements = lines.strip('\n').split('\t')
+            key = elements[0]
+            current_pop = self.pop_manager.get(key)
+            if elements[2] is not '' and elements[3] is not '':
+                first_component = self.pop_manager.get(elements[2])
+                second_component = self.pop_manager.get(elements[3])
+                current_pop.set_components(first_component, second_component)
+            # elements 4 + are parents
+            if elements[4] != '':
+                for parent_i in elements[4:]:
+                    if parent_i != '' and parent_i in self.pop_manager.patterns_collection:
+                        parent_pop = self.pop_manager.get(parent_i)
+                        current_pop.first_child_parents.append(parent_pop)
+
+    def get_keys_and_strength(self, data_lines):
+        for lines in data_lines:
+            elements = lines.split('\t')
+            key = elements[0]
+            self.pop_manager.patterns_collection[key] = Pop(key)
+            self.pop_manager.patterns_collection[key].strength = int(elements[1])
