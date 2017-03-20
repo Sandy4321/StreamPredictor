@@ -14,12 +14,14 @@ class StreamPredictor:
         print(self.pop_manager.stats())
 
     def train(self, list_of_words):
-        self.pop_manager.setup(list_of_words)
+        self.pop_manager.add_words_to_vocabulary(list_of_words)
         previous_pop = self.pop_manager.patterns_collection[list_of_words[0]]
         remaining_sequence = list_of_words[1:]
         i = 0
-        while len(remaining_sequence) > 0:
+        while remaining_sequence and len(remaining_sequence) > 0:
             next_pop, remaining_sequence = self.pop_manager.get_next_pop(remaining_sequence)
+            if next_pop is None:
+                break
             new_pop = Pop.combine(next_pop, previous_pop)
             self.pop_manager.ingest(new_pop)
             if i % constants.occasional_step_count == 0:

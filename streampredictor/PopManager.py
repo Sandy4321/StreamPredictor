@@ -28,6 +28,7 @@ class PopManager:
         self.feed_strength_gain = 10 ** 6
         #  Fields
         self.patterns_collection = dict()
+        self.vocabulary_count = 0
 
     def stats(self):
         return '\n============= Stream Predictor Hyper parameters ===================' + \
@@ -36,10 +37,6 @@ class PopManager:
                '\nThe not found raitio is' + str(self.not_found_ratio) + \
                '\nFeed strength gain is ' + str(self.feed_strength_gain) + \
                '\n============= End Stream Predictor Hyper parameters ==================='
-
-    @property
-    def vocabulary_count(self):
-        return len(self.patterns_collection)
 
     def __repr__(self):
         return 'Has ' + str(len(self.patterns_collection)) + ' few are ' + \
@@ -59,6 +56,7 @@ class PopManager:
         if string in self.patterns_collection:
             raise Exception(string + 'is already present')
         self.patterns_collection[string] = pop
+        self.vocabulary_count += 1
 
     def get_next_pop(self, remaining_sequence):
         """
@@ -72,6 +70,7 @@ class PopManager:
             current_word = ''.join(remaining_sequence[:j])
             if current_word in self.patterns_collection:
                 return self.patterns_collection[current_word], remaining_sequence[j:]
+        return None, None
 
     def ingest(self, new_pop):
         """
@@ -142,7 +141,7 @@ class PopManager:
         pop.set_components(self.patterns_collection[first_string],
                            self.patterns_collection[second_string])
 
-    def setup(self, words, verbose=True):
+    def add_words_to_vocabulary(self, words, verbose=True):
         """
         Find the vocabulary and add that vocabulary to pattern collection.
 
@@ -152,7 +151,7 @@ class PopManager:
         unique_words = set(words)
         for word in unique_words:
             if word not in self.patterns_collection:
-                self.patterns_collection[word] = Pop(word)
+                self.add_pop(Pop(word))
                 self.patterns_collection[word].feed(self.feed_strength_gain)
         if verbose:
             print('There are ', self.vocabulary_count, ' words in vocabulary.')
@@ -177,7 +176,7 @@ class PopManager:
         return N, log_running_perplexity
 
     def calculate_perplexity(self, words, verbose=True):
-        self.setup(words, verbose)
+        self.add_words_to_vocabulary(words, verbose)
         word_count = len(words)
         if verbose:
             print('Started calculating perplexity with word count = ' + str(word_count))
@@ -214,11 +213,16 @@ class PopManager:
 
 
 
-    def get_prediction_probability(self, actual_next_word, next_words, probabilities):
-        word_count = len(next_words)
+    def get_prediction_probability(self, actual_next_word, predicted_words, probabilities):
+        if actual_next_word not in self.patterns_collection:
+            raise ValueError('The actual next word is not present in vocabulary. Preprocess to handle unknown words')
+        word_count = len(predicted_words)
         remaining_words_in_vocabulary = self.vocabulary_count - word_count
-        if actual_next_word in next_words:
-            chosen_prob = (1 - self.not_found_ratio) * probabilities[next_words.index(actual_next_word)]
+        if remaining_words_in_vocabulary < 0:
+            raise ValueError('The given predicted word count {0} is  greater than vocabulary word count {1}'
+                             .format(word_count, self.vocabulary_count))
+        if actual_next_word in predicted_words:
+            chosen_prob = (1 - self.not_found_ratio) * probabilities[predicted_words.index(actual_next_word)]
         else:
             chosen_prob = self.not_found_ratio / remaining_words_in_vocabulary
         return chosen_prob
