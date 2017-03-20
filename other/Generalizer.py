@@ -1,7 +1,7 @@
 """
 Author: Abhishek Rao
 """
-from streampredictor import Pop
+from streampredictor import pop
 
 
 class Generalizer():
@@ -68,7 +68,7 @@ class Generalizer():
         print('Perhaps ', first_pattern, ' and ', second_pattern, ' are similar?')
         new_category_string = 'category with ' + first_pattern + ' and ' + second_pattern
         if new_category_string not in self.patterns_collection:
-            new_category = Pop.Pop(new_category_string)
+            new_category = pop.Pop(new_category_string)
             self.patterns_collection[new_category_string] = new_category
             new_category.set_category(self.patterns_collection[first_pattern],
                                       self.patterns_collection[second_pattern])

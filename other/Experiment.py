@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import nltk
 
 from streampredictor import DataObtainer
-from streampredictor import StreamPredictor
+from streampredictor import stream_predictor
 from streampredictor import Trainer
 
 max_input_stream_length = 10000000
@@ -12,7 +12,7 @@ storage_file = '../PatternStore/OnlineTokens.pb'
 
 
 def load_sp(storage_file):
-    sp = StreamPredictor.StreamPredictor()
+    sp = stream_predictor.StreamPredictor()
     if os.path.isfile(storage_file):
         sp.file_manager.load_tsv(storage_file)
         print('Loaded PopManager.PopManager from ', storage_file)
@@ -70,7 +70,7 @@ def online_trainer(storage_file):
 
 
 def sanity_check_run():
-    sp = StreamPredictor.StreamPredictor()
+    sp = stream_predictor.StreamPredictor()
     text = 'hahaha this is a sanity check, just checking some text'
     sp.train_characters(text)
     sp.train_characters(text)
@@ -86,7 +86,7 @@ def perplexity_experiment(string):
     train_count = int(0.99 * word_count)
     train_words = words[:train_count]
     test_words = words[train_count:]
-    sp = StreamPredictor.StreamPredictor()
+    sp = stream_predictor.StreamPredictor()
     sp.pop_manager.train_token(train_words)
     sp.file_manager.save_pb_plain('../PatternStore/pride_token2.txt')
     perplexity_list = sp.pop_manager.calculate_perplexity(test_words)
@@ -99,7 +99,7 @@ def perplexity_experiment_load(string):
     word_count = len(words)
     train_count = int(0.99 * word_count)
     test_words = words[train_count:]
-    sp = StreamPredictor.StreamPredictor()
+    sp = stream_predictor.StreamPredictor()
     sp.file_manager.load_pb_plain('../PatternStore/pride_token.txt')
     perplexity_list = sp.pop_manager.calculate_perplexity(test_words)
     plt.plot(perplexity_list)
@@ -109,7 +109,7 @@ def perplexity_experiment_load(string):
 def train_and_perplexity(input_text_file):
     max_input_length = 10 ** 9
     words = DataObtainer.get_clean_words_from_file(input_text_file, max_input_length)
-    sp = StreamPredictor.StreamPredictor()
+    sp = stream_predictor.StreamPredictor()
     Trainer.train(words=words, streampredictor=sp)
     perplexity_list, iteration = sp.pop_manager.train_token_and_perplexity(words)
     plt.plot(iteration, perplexity_list)
@@ -120,7 +120,7 @@ def train_and_perplexity(input_text_file):
 
 
 def generalize_token():
-    sp = StreamPredictor.StreamPredictor()
+    sp = stream_predictor.StreamPredictor()
     words = DataObtainer.get_clean_words_from_file('../Data/pride.txt', 10 ** 9)
     sp.pop_manager.train_token(words)
     sp.generalizer.generalize()
@@ -129,7 +129,7 @@ def generalize_token():
 
 def online_token_perplexity_trainer():
     print('Starting online training with tokens and perplexity calculation')
-    sp = StreamPredictor.StreamPredictor()
+    sp = stream_predictor.StreamPredictor()
     if os.path.isfile(storage_file):
         sp.file_manager.load_pb(storage_file)
         print('Loaded PopManager.PopManager from ', storage_file)
