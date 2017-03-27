@@ -154,7 +154,7 @@ class PopManager:
                 self.pattern_collection[word].feed(self.feed_strength_gain)
         if verbose:
             print('There are ', self.vocabulary_count, ' words in vocabulary.')
-            print('The first few words are ', ','.join(words[:10]))
+            print('The first few words are ', ','.join(list(unique_words)[:10]))
 
     def status(self):
         out_string = ''

@@ -39,9 +39,9 @@ class Generator():
         :rtype: str
         """
         current_pop = self.longest_pop(previous_list_of_words)
-        words, probabilities = current_pop.get_next_words_distribution()
+        words, probabilities = current_pop.get_next_smallest_distribution()
         if current_pop.belongs_to_category:
-            category_words, category_probabilities = current_pop.belongs_to_category.get_next_words_distribution()
+            category_words, category_probabilities = current_pop.belongs_to_category.get_next_smallest_distribution()
             words = words + category_words
             probabilities = np.hstack([0.5 * probabilities, 0.5 * category_probabilities])
         if len(words) < 1:
@@ -62,7 +62,7 @@ class Generator():
             current_word = ''.join(list_of_words[j:])
             if current_word in self.pattern_collection:
                 current_pop = self.pattern_collection[current_word]
-                words, probabilities = current_pop.get_next_words_distribution()
+                words, probabilities = current_pop.get_next_smallest_distribution()
                 if len(words) < 1:
                     continue
                 return current_pop

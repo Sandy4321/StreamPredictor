@@ -135,12 +135,12 @@ class TestPatternOfPatterns(TestCase):
 
     def test_pop_get_next_prediction(self):
         sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
-        words, probabilites = ab.get_next_words_distribution()
+        words, probabilites = ab.get_next_smallest_distribution()
         self.assertTrue(len(words) > 1)
         self.assertEqual(probabilites[0], 0.6)
         self.assertEqual(probabilites[1], 0.4)
-        self.assertTrue('xe' in words)
-        self.assertTrue('yd' in words)
+        self.assertTrue('x' in words)
+        self.assertTrue('y' in words)
 
     def test_pop_get_smallest_next_prediction(self):
         sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()

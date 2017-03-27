@@ -3,6 +3,7 @@ import random
 
 from streampredictor.constants import decay_strength_loss, feed_ratio
 
+
 def combine(first_pop, second_pop):
     """
     Combines two Pop into new Pop
@@ -15,6 +16,7 @@ def combine(first_pop, second_pop):
     new_pop = Pop(new_string)
     new_pop.set_components(first_pop, second_pop)
     return new_pop
+
 
 class Pop:
     def __init__(self, chars):
@@ -95,24 +97,9 @@ class Pop:
     #     return (len(self.first_component.unrolled_pattern) * similarity1 + len(self.second_component.unrolled_pattern)
     #             * similarity2) / len(self.unrolled_pattern)
 
-    def get_next_words_distribution(self):
+    def get_next_smallest_distribution(self):
         """ Gives the list of next predicted words and their associated probabilities.
         :return: List A, B. Where A is a list of strings, B is list of floats.
-        """
-        next_words = []
-        strengths = []
-        for parent_i in self.first_child_parents:
-            if parent_i.second_component:
-                next_pop = parent_i.second_component
-                next_words.append(next_pop.get_sample())
-                strengths.append(max(parent_i.strength, 0))
-        total = sum(strengths)
-        probabilities = np.array([float(i) / total for i in strengths])
-        return next_words, probabilities
-
-    def get_next_smallest_distribution(self):
-        """
-        Returns the smallest pattern that will come next.
         """
         next_words = []
         strengths = []
@@ -123,9 +110,6 @@ class Pop:
                     next_pop = next_pop.first_component
                 next_words.append(next_pop.get_sample())
                 strengths.append(max(parent_i.strength, 0))
-        if len(next_words) == 0:
-            if self.second_component:
-                return self.second_component.get_next_smallest_distribution()
         total = sum(strengths)
         probabilities = np.array([float(i) / total for i in strengths])
         return next_words, probabilities
