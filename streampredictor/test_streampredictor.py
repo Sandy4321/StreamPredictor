@@ -11,7 +11,8 @@ training_words = 'cat hat mat bat sat in the barn'.split(' ')
 
 
 class TestPatternOfPatterns(TestCase):
-    def get_sample(self):
+    @staticmethod
+    def get_sample():
         sample = StreamPredictor()
         sample.train(training_words)
         return sample
@@ -27,32 +28,27 @@ class TestPatternOfPatterns(TestCase):
         sample.file_manager.save_tsv(save_filename)
         self.assertTrue(os.path.isfile(save_filename))
         empty_sample = StreamPredictor()
-        self.assertFalse(len(empty_sample.pop_manager.patterns_collection) > 10)
+        self.assertFalse(len(empty_sample.pop_manager.pattern_collection) > 10)
         empty_sample.file_manager.load_tsv(save_filename)
-        self.assertTrue(len(empty_sample.pop_manager.patterns_collection) > 10)
+        self.assertTrue(len(empty_sample.pop_manager.pattern_collection) > 10)
         os.remove(save_filename)
 
     # def test_train_increases_patterns(self):
     #     sample = self.get_sample()
-    #     pattern_count = len(sample.pop_manager.patterns_collection)
+    #     pattern_count = len(sample.pop_manager.pattern_collection)
     #     sample.train(training_words)
-    #     self.assertGreater(len(sample.pop_manager.patterns_collection), pattern_count)
+    #     self.assertGreater(len(sample.pop_manager.pattern_collection), pattern_count)
 
     def test_save_load_equal(self):
         original = self.get_sample()
-        original.pop_manager.patterns_collection['karma'] = Pop('karma')
+        original.pop_manager.pattern_collection['karma'] = Pop('karma')
         original_string = original.pop_manager.status()
         original.file_manager.save_tsv(save_filename)
         loaded = StreamPredictor()
         loaded.file_manager.load_tsv(save_filename)
         loaded_string = loaded.pop_manager.status()
         self.assertEqual(original_string, loaded_string)
-        self.assertEqual(len(original.pop_manager.patterns_collection), len(loaded.pop_manager.patterns_collection))
-
-    def test_generate_stream(self):
-        sample = self.get_sample()
-        generated = sample.generate(10)
-        self.assertGreater(len(generated), 9)
+        self.assertEqual(len(original.pop_manager.pattern_collection), len(loaded.pop_manager.pattern_collection))
 
     # def test_generailze(self):
     #     sp = StreamPredictor()
@@ -61,10 +57,10 @@ class TestPatternOfPatterns(TestCase):
     #     text = DataObtainer.get_clean_text_from_file('data/Experimental/case.txt', 100000)
     #     sp.pop_manager.train(text)
     #     sp.pop_manager.generalize()
-    #     print [i.belongs_to_category.__repr__() for i in sp.pop_manager.patterns_collection.values() if
+    #     print [i.belongs_to_category.__repr__() for i in sp.pop_manager.pattern_collection.values() if
     #            i.belongs_to_category is not None]
-    #     self.assertTrue(sp.pop_manager.patterns_collection['apple'].
-    #                     belongs_to_category is sp.pop_manager.patterns_collection['banana'].belongs_to_category)
+    #     self.assertTrue(sp.pop_manager.pattern_collection['apple'].
+    #                     belongs_to_category is sp.pop_manager.pattern_collection['banana'].belongs_to_category)
 
     def test_change_component(self):
         a, ab, abc, sp, b, c, bc = self.setup_simple_patterns()
@@ -72,7 +68,7 @@ class TestPatternOfPatterns(TestCase):
         self.assertTrue(len(ab.first_child_parents) == 0)
         sp.pop_manager.change_components_string('ab', 'c', abc)
         self.assertTrue(len(a.first_child_parents) == 0)
-        self.assertTrue(len(sp.pop_manager.patterns_collection['ab'].first_child_parents) == 1)
+        self.assertTrue(len(sp.pop_manager.pattern_collection['ab'].first_child_parents) == 1)
 
     def setup_simple_patterns(self):
         sp = StreamPredictor()
@@ -203,18 +199,24 @@ class TestPatternOfPatterns(TestCase):
 
 
 class TestGenerator(TestCase):
-    def sample_generator(self):
+    @staticmethod
+    def sample_generator():
         pattern_collection = {'where': Pop('where'), 'are': Pop('are'), 'where are': Pop('where are')}
         pattern_collection['where are'].set_components(pattern_collection['where'], pattern_collection['are'])
         return generator.Generator(pattern_collection)
 
+    def test_generate_stream(self):
+        sample = TestPatternOfPatterns.get_sample()
+        generated = sample.generate(10)
+        self.assertGreater(len(generated), 9)
+
     def test_choose_next_word(self):
-        test_generator = self.sample_generator()
+        test_generator = TestGenerator.sample_generator()
         generated_word = test_generator.choose_next_word(['where'])
         self.assertEqual(generated_word, 'are')
 
     def test_longest_pop(self):
-        test_generator = self.sample_generator()
+        test_generator = TestGenerator.sample_generator()
         where_are = test_generator.longest_pop(['where', ' are'])
         self.assertEqual(where_are.unrolled_pattern, 'where are')
         where = test_generator.longest_pop(['where'])
