@@ -4,3 +4,4 @@ feed_ratio = [0.5, 0.25, 0.25]  # ratio of self feed to child components feed. F
 found_pattern_feed_ratio = 1
 occasional_decay = occasional_step_count
 maximum_pattern_length = 40  # maximum pattern length for look ahead in generation
+max_strength = 100000

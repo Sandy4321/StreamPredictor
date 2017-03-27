@@ -1,7 +1,8 @@
 import numpy as np
 import random
 
-from streampredictor.constants import decay_strength_loss, feed_ratio
+
+from streampredictor import constants
 
 
 def combine(first_pop, second_pop):
@@ -65,18 +66,18 @@ class Pop:
         return random.choice(self.members_of_category).get_sample()
 
     def feed(self, gain):
-        self.strength += int(gain * feed_ratio[0])
+        self.strength += min(constants.max_strength, int(gain * constants.feed_ratio[0]))
         if gain > 2:
             if self.first_component:
-                self.first_component.feed(int(gain * feed_ratio[1]))
+                self.first_component.feed(int(gain * constants.feed_ratio[1]))
             if self.second_component:
-                self.second_component.feed(int(gain * feed_ratio[2]))
+                self.second_component.feed(int(gain * constants.feed_ratio[2]))
 
     def decay(self, decay_amount=None):
         if decay_amount:
             self.strength -= decay_amount
         else:
-            self.strength -= decay_strength_loss
+            self.strength -= constants.decay_strength_loss
 
     def __repr__(self):
         out = self.unrolled_pattern + ': strength ' + str(self.strength)
