@@ -100,10 +100,10 @@ class Generator():
             chosen_pop = chosen_pop.first_component
         return chosen_pop.unrolled_pattern
 
-    ####### extra ########
-
     def perplexity_step(self, N, log_running_perplexity, perplexity_list, previous_words, actual_next_word):
         distribution = self.next_word_distribution(previous_words)
+        if actual_next_word not in distribution:
+            raise ValueError('Next word not present in vocabulary:', actual_next_word)
         likelihood = distribution[actual_next_word]
         log_running_perplexity -= np.log2(likelihood)
         perplexity_list.append(2 ** (log_running_perplexity * (1 / float(N))))
