@@ -28,8 +28,6 @@ class Generator():
         generated_output = [current_word]
         for i in range(word_length - 1):
             next_word = self.choose_next_word(generated_output)
-            if next_word == '':
-                next_word = self.get_random_word()
             generated_output.append(next_word)
         return generated_output
 
@@ -46,6 +44,8 @@ class Generator():
             category_words, category_probabilities = current_pop.belongs_to_category.get_next_words_distribution()
             words = words + category_words
             probabilities = np.hstack([0.5 * probabilities, 0.5 * category_probabilities])
+        if len(words) < 1:
+            return self.get_random_word()
         probabilities /= sum(probabilities)
         return np.random.choice(words, p=probabilities)
 
@@ -74,4 +74,4 @@ class Generator():
 
         :rtype: str
         """
-        return np.random.choice(list(self.pattern_collection.values()))
+        return np.random.choice(list(self.pattern_collection.keys()))

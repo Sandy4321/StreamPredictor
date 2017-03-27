@@ -19,7 +19,7 @@ def combine(first_pop, second_pop):
 class Pop:
     def __init__(self, chars):
         self.unrolled_pattern = chars  # The actual characters that make up current pattern.
-        self.strength = 0
+        self.strength = 1
         self.first_component = None  # type: Pop
         self.second_component = None  # type: Pop
 

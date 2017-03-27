@@ -201,8 +201,8 @@ class TestPatternOfPatterns(TestCase):
 class TestGenerator(TestCase):
     @staticmethod
     def sample_generator():
-        pattern_collection = {'where': Pop('where'), 'are': Pop('are'), 'where are': Pop('where are')}
-        pattern_collection['where are'].set_components(pattern_collection['where'], pattern_collection['are'])
+        pattern_collection = {'where': Pop('where'), 'are': Pop('are'), 'whereare': Pop('whereare')}
+        pattern_collection['whereare'].set_components(pattern_collection['where'], pattern_collection['are'])
         return generator.Generator(pattern_collection)
 
     def test_generate_stream(self):
@@ -210,14 +210,19 @@ class TestGenerator(TestCase):
         generated = sample.generate(10)
         self.assertGreater(len(generated), 9)
 
-    def test_choose_next_word(self):
+    def test_choose_next_word_valid(self):
         test_generator = TestGenerator.sample_generator()
         generated_word = test_generator.choose_next_word(['where'])
         self.assertEqual(generated_word, 'are')
 
+    def test_choose_next_word_base(self):
+        test_generator = TestGenerator.sample_generator()
+        generated_word = test_generator.choose_next_word(['are'])
+        self.assertTrue(generated_word in test_generator.pattern_collection.keys())
+
     def test_longest_pop(self):
         test_generator = TestGenerator.sample_generator()
-        where_are = test_generator.longest_pop(['where', ' are'])
-        self.assertEqual(where_are.unrolled_pattern, 'where are')
+        where_are = test_generator.longest_pop(['where', 'are'])
+        self.assertEqual(where_are.unrolled_pattern, 'are')
         where = test_generator.longest_pop(['where'])
         self.assertEqual(where.unrolled_pattern, 'where')
