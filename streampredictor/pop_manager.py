@@ -85,17 +85,19 @@ class PopManager:
         self.pattern_collection[new_pop.unrolled_pattern].feed(
             self.feed_strength_gain * constants.found_pattern_feed_ratio)
 
-    def occasional_step(self, step_count):
+    def occasional_step(self, step_count, verbose):
         self.decay(constants.occasional_decay)
-        self.cull(step_count)
-        self.refactor()
+        self.cull(step_count, verbose)
+        self.refactor(verbose)
 
     def decay(self, i):
         for key, pop in self.pattern_collection.items():
             pop.decay(i)
 
-    def cull(self, limit):
+    def cull(self, limit, verbose):
         cull_list = self.cull_child_and_mark_self(limit)
+        if verbose and cull_list:
+            print('The cull list is ', cull_list)
         for cull_key in cull_list:
             first_component = self.pattern_collection[cull_key].first_component
             if first_component:
@@ -116,7 +118,7 @@ class PopManager:
                 cull_list.append(key)
         return cull_list
 
-    def refactor(self):
+    def refactor(self, verbose=False):
         for key, pop in self.pattern_collection.items():
             if pop.first_component and pop.second_component:
                 current_components_strength = pop.first_component.strength + pop.second_component.strength
@@ -130,6 +132,9 @@ class PopManager:
                         refactored_components_strength = self.pattern_collection[new_first_component].strength + \
                                                          self.pattern_collection[new_second_component].strength
                         if refactored_components_strength > current_components_strength:
+                            if verbose:
+                                print('Refactoring {0} into {1}:{2}'
+                                      .format(pop, new_first_component, new_second_component))
                             self.change_components_string(new_first_component, new_second_component, pop)
 
     def change_components_string(self, first_string, second_string, pop):
@@ -266,4 +271,3 @@ class PopManager:
                 if verbose:
                     print('Mismatch ', pop.__repr__(), ' and ', parent_pop.__repr__())
                 pop.first_child_parents.remove(parent_pop)
-

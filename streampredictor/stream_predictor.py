@@ -15,7 +15,7 @@ class StreamPredictor:
         self.generator = generator.Generator(self.pop_manager.pattern_collection)
         print(self.pop_manager.stats())
 
-    def train(self, list_of_words):
+    def train(self, list_of_words, verbose=False):
         self.pop_manager.add_words_to_vocabulary(list_of_words)
         previous_pop = self.pop_manager.pattern_collection[list_of_words[0]]
         remaining_sequence = list_of_words[1:]
@@ -27,10 +27,10 @@ class StreamPredictor:
             new_pop = pop.combine(next_pop, previous_pop)
             self.pop_manager.ingest(new_pop)
             if i % constants.occasional_step_count == 0:
-                self.occasional_step(i)
+                self.occasional_step(i, verbose)
 
-    def occasional_step(self, step_count):
-        self.pop_manager.occasional_step(step_count)
+    def occasional_step(self, step_count, verbose):
+        self.pop_manager.occasional_step(step_count, verbose)
 
     def generate(self, word_length, seed=None):
         """
