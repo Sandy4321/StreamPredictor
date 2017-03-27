@@ -1,5 +1,4 @@
 nltk
 numpy
 matplotlib
-progressbar2
 nose

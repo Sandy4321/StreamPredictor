@@ -4,6 +4,7 @@ from unittest import TestCase
 from streampredictor import data_fetcher
 from streampredictor.pop import Pop
 from streampredictor.stream_predictor import StreamPredictor
+from streampredictor import generator
 
 save_filename = '../PatternStore/test.tsv'
 training_words = 'cat hat mat bat sat in the barn'.split(' ')
@@ -199,3 +200,22 @@ class TestPatternOfPatterns(TestCase):
         self.assertEqual(returned_probability, 0.8 * 0.3)
         returned_probability = sp.pop_manager.get_prediction_probability('not', predicted_words, probabilities)
         self.assertEqual(returned_probability, 0.2 * 1)
+
+
+class TestGenerator(TestCase):
+    def sample_generator(self):
+        pattern_collection = {'where': Pop('where'), 'are': Pop('are'), 'where are': Pop('where are')}
+        pattern_collection['where are'].set_components(pattern_collection['where'], pattern_collection['are'])
+        return generator.Generator(pattern_collection)
+
+    def test_choose_next_word(self):
+        test_generator = self.sample_generator()
+        generated_word = test_generator.choose_next_word(['where'])
+        self.assertEqual(generated_word, 'are')
+
+    def test_longest_pop(self):
+        test_generator = self.sample_generator()
+        where_are = test_generator.longest_pop(['where', ' are'])
+        self.assertEqual(where_are.unrolled_pattern, 'where are')
+        where = test_generator.longest_pop(['where'])
+        self.assertEqual(where.unrolled_pattern, 'where')

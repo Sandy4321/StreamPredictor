@@ -21,13 +21,12 @@ class PopManager:
         self.perplexity_count = 6000  # the length of words used to calculate perplexity
         self.maximum_word_count = 40
         self.max_input_stream_length = 10 ** 7
-        self.maximum_pattern_length = 40  # maximum pattern length
         self.required_repeats = 5  # if seen less than this many times, patterns won't survive on the long run.
         self.feed_ratio_parent_category = 0.5
         self.not_found_ratio = 0.9
         self.feed_strength_gain = 10 ** 6
         #  Fields
-        self.patterns_collection = dict()
+        self.pattern_collection = dict()  # type: dict[str,Pop]
         self.vocabulary_count = 0
 
     def stats(self):
@@ -39,8 +38,8 @@ class PopManager:
                '\n============= End Stream Predictor Hyper parameters ==================='
 
     def __repr__(self):
-        return 'Has ' + str(len(self.patterns_collection)) + ' few are ' + \
-               '-'.join([i.__repr__() for i in list(self.patterns_collection.values())[:5]])
+        return 'Has ' + str(len(self.pattern_collection)) + ' few are ' + \
+               '-'.join([i.__repr__() for i in list(self.pattern_collection.values())[:5]])
 
     def get(self, key):
         """
@@ -49,13 +48,13 @@ class PopManager:
         :type key: str
         :rtype: Pop
         """
-        return self.patterns_collection[key]
+        return self.pattern_collection[key]
 
     def add_pop(self, pop):
         string = pop.unrolled_pattern
-        if string in self.patterns_collection:
+        if string in self.pattern_collection:
             raise Exception(string + 'is already present')
-        self.patterns_collection[string] = pop
+        self.pattern_collection[string] = pop
         self.vocabulary_count += 1
 
     def get_next_pop(self, remaining_sequence):
@@ -68,8 +67,8 @@ class PopManager:
         end = min(len(remaining_sequence), self.maximum_word_count)
         for j in range(end, 0, -1):  # how many chars to look ahead
             current_word = ''.join(remaining_sequence[:j])
-            if current_word in self.patterns_collection:
-                return self.patterns_collection[current_word], remaining_sequence[j:]
+            if current_word in self.pattern_collection:
+                return self.pattern_collection[current_word], remaining_sequence[j:]
         return None, None
 
     def ingest(self, new_pop):
@@ -79,9 +78,9 @@ class PopManager:
         :type new_pop: Pop
         :rtype:None
         """
-        if new_pop.unrolled_pattern not in self.patterns_collection:
-            self.patterns_collection[new_pop.unrolled_pattern] = new_pop
-        self.patterns_collection[new_pop.unrolled_pattern].feed(
+        if new_pop.unrolled_pattern not in self.pattern_collection:
+            self.pattern_collection[new_pop.unrolled_pattern] = new_pop
+        self.pattern_collection[new_pop.unrolled_pattern].feed(
             self.feed_strength_gain * constants.found_pattern_feed_ratio)
 
     def occasional_step(self, step_count):
@@ -90,20 +89,20 @@ class PopManager:
         self.refactor()
 
     def decay(self, i):
-        for key, pop in self.patterns_collection.items():
+        for key, pop in self.pattern_collection.items():
             pop.decay(i)
 
     def cull(self, limit):
         cull_list = self.cull_child_and_mark_self(limit)
         for cull_key in cull_list:
-            first_component = self.patterns_collection[cull_key].first_component
+            first_component = self.pattern_collection[cull_key].first_component
             if first_component:
-                first_component.first_child_parents.remove(self.patterns_collection[cull_key])
-            self.patterns_collection.pop(cull_key)
+                first_component.first_child_parents.remove(self.pattern_collection[cull_key])
+            self.pattern_collection.pop(cull_key)
 
     def cull_child_and_mark_self(self, limit):
         cull_list = []
-        for key, pop in self.patterns_collection.items():
+        for key, pop in self.pattern_collection.items():
             if pop.first_component:
                 if pop.first_component.strength < limit:
                     pop.first_component.first_child_parents.remove(pop)
@@ -116,7 +115,7 @@ class PopManager:
         return cull_list
 
     def refactor(self):
-        for key, pop in self.patterns_collection.items():
+        for key, pop in self.pattern_collection.items():
             if pop.first_component and pop.second_component:
                 current_components_strength = pop.first_component.strength + pop.second_component.strength
             else:
@@ -124,22 +123,22 @@ class PopManager:
             for i in range(1, len(key) - 1):
                 new_first_component = key[:i]
                 new_second_component = key[i:]
-                if new_first_component in self.patterns_collection:
-                    if new_second_component in self.patterns_collection:
-                        refactored_components_strength = self.patterns_collection[new_first_component].strength + \
-                                                         self.patterns_collection[new_second_component].strength
+                if new_first_component in self.pattern_collection:
+                    if new_second_component in self.pattern_collection:
+                        refactored_components_strength = self.pattern_collection[new_first_component].strength + \
+                                                         self.pattern_collection[new_second_component].strength
                         if refactored_components_strength > current_components_strength:
                             self.change_components_string(new_first_component, new_second_component, pop)
 
     def change_components_string(self, first_string, second_string, pop):
-        if first_string not in self.patterns_collection or second_string not in self.patterns_collection:
+        if first_string not in self.pattern_collection or second_string not in self.pattern_collection:
             raise ValueError('One of these is not in pattern collection {', first_string, ' : ', second_string, '}')
         if pop.first_component:
             old_pop = pop.first_component
             if pop in old_pop.first_child_parents:
                 old_pop.first_child_parents.remove(pop)
-        pop.set_components(self.patterns_collection[first_string],
-                           self.patterns_collection[second_string])
+        pop.set_components(self.pattern_collection[first_string],
+                           self.pattern_collection[second_string])
 
     def add_words_to_vocabulary(self, words, verbose=True):
         """
@@ -150,18 +149,18 @@ class PopManager:
         """
         unique_words = set(words)
         for word in unique_words:
-            if word not in self.patterns_collection:
+            if word not in self.pattern_collection:
                 self.add_pop(Pop(word))
-                self.patterns_collection[word].feed(self.feed_strength_gain)
+                self.pattern_collection[word].feed(self.feed_strength_gain)
         if verbose:
             print('There are ', self.vocabulary_count, ' words in vocabulary.')
             print('The first few words are ', ','.join(words[:10]))
 
     def status(self):
         out_string = ''
-        for key, pop in sorted(iter(self.patterns_collection.items()), key=lambda ng: ng[0]):
+        for key, pop in sorted(iter(self.pattern_collection.items()), key=lambda ng: ng[0]):
             out_string += pop.__repr__()
-        out_string += 'Status of Pattern of patterns with ' + str(len(self.patterns_collection)) + ' pops \n'
+        out_string += 'Status of Pattern of patterns with ' + str(len(self.pattern_collection)) + ' pops \n'
         return out_string
 
     ############## end of clean code ########################
@@ -214,7 +213,7 @@ class PopManager:
 
 
     def get_prediction_probability(self, actual_next_word, predicted_words, probabilities):
-        if actual_next_word not in self.patterns_collection:
+        if actual_next_word not in self.pattern_collection:
             raise ValueError('The actual next word is not present in vocabulary. Preprocess to handle unknown words')
         word_count = len(predicted_words)
         remaining_words_in_vocabulary = self.vocabulary_count - word_count
@@ -227,28 +226,12 @@ class PopManager:
             chosen_prob = self.not_found_ratio / remaining_words_in_vocabulary
         return chosen_prob
 
-    def generate_words(self, word_length, seed=None):
-        print('Generating words with word count = ', word_length)
-        current_pop = np.random.choice(list(self.patterns_collection.values())) \
-            if seed is None or '' else self.find_next_pattern(seed)
-        current_word = current_pop.unrolled_pattern
-        generated_output = [current_word]
-        printable_output = self.patterns_collection[current_word].print_components()
-        for i in range(word_length - 1):
-            next_word = self.choose_next_word_word_list(generated_output)
-            if next_word == '':
-                next_word = np.random.choice([pop.unrolled_pattern
-                                              for key, pop in self.patterns_collection.items()])
-            generated_output.append(next_word)
-            printable_output += self.patterns_collection[next_word].print_components()
-        return printable_output
-
     def next_word_distribution(self, previous_words_list):
         start = max(0, len(previous_words_list) - self.maximum_word_count)
         for j in range(start, len(previous_words_list)):
             current_word = ''.join(previous_words_list[j:])
-            if current_word in self.patterns_collection:
-                current_pop = self.patterns_collection[current_word]
+            if current_word in self.pattern_collection:
+                current_pop = self.pattern_collection[current_word]
                 words, probabilities = current_pop.get_next_smallest_distribution()
                 return words, probabilities
         print('Warning. Nothing after ', ''.join(previous_words_list))
@@ -267,32 +250,13 @@ class PopManager:
         # second_category = second_pattern.belongs_to_category if second_pattern.belongs_to_category else second_pattern
         # self.join_pattern(first_category, second_category, found_pattern_feed_ratio * self.feed_ratio_parent_category)
 
-    def choose_next_word_word_list(self, input_word, Verbose=False):
-        start = max(0, len(input_word) - self.maximum_pattern_length)
-        for j in range(start, len(input_word)):
-            current_word = ''.join(input_word[j:])
-            if current_word in self.patterns_collection:
-                current_pop = self.patterns_collection[current_word]
-                words, probabilities = current_pop.get_next_words_distribution()
-                if current_pop.belongs_to_category:
-                    category_words, category_probabilities = current_pop.belongs_to_category.get_next_words_distribution()
-                    words = words + category_words
-                    probabilities = np.hstack([0.5 * probabilities, 0.5 * category_probabilities])
-                if len(words) < 1:
-                    continue
-                probabilities /= sum(probabilities)
-                return np.random.choice(words, p=probabilities)
-        if Verbose:
-            print(' nothing after ', input_word)
-        return ''
-
     def fix_first_child_parents(self, verbose=False):
         """
         Fixes mismatch between first_child_parents by going through each pattern and checking if pop is
         pop.first_child_parents.first component
         """
         print('Fixing incorrect first_child_parents')
-        for pop in list(self.patterns_collection.values()):
+        for pop in list(self.pattern_collection.values()):
             for parent_pop in pop.first_child_parents:
                 if parent_pop.first_component:
                     if parent_pop.first_component is pop:
@@ -300,3 +264,4 @@ class PopManager:
                 if verbose:
                     print('Mismatch ', pop.__repr__(), ' and ', parent_pop.__repr__())
                 pop.first_child_parents.remove(parent_pop)
+

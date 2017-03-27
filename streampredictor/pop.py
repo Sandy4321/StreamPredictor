@@ -27,7 +27,7 @@ class Pop:
         self.first_child_parents = []  # type: list[Pop]
 
         # which category does this belong to?
-        self.belongs_to_category = None  # type: list[Pop]
+        self.belongs_to_category = None  # type: Pop
 
         # who are the members of this category?
         self.members_of_category = []  # type: list[Pop]

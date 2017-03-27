@@ -2,6 +2,7 @@ from streampredictor import file_manager
 from streampredictor import pop
 from streampredictor import pop_manager
 from streampredictor import constants
+from streampredictor import generator
 
 
 class StreamPredictor:
@@ -11,11 +12,12 @@ class StreamPredictor:
         else:
             self.pop_manager = pop_manager.PopManager()  # type: pop_manager
         self.file_manager = file_manager.FileManager(self.pop_manager)
+        self.generator = generator.Generator(self.pop_manager.pattern_collection)
         print(self.pop_manager.stats())
 
     def train(self, list_of_words):
         self.pop_manager.add_words_to_vocabulary(list_of_words)
-        previous_pop = self.pop_manager.patterns_collection[list_of_words[0]]
+        previous_pop = self.pop_manager.pattern_collection[list_of_words[0]]
         remaining_sequence = list_of_words[1:]
         i = 0
         while remaining_sequence and len(remaining_sequence) > 0:
@@ -31,7 +33,15 @@ class StreamPredictor:
         self.pop_manager.occasional_step(step_count)
 
     def generate(self, word_length, seed=None):
-        return self.pop_manager.generate_words(word_length, seed=None)
+        """
+        Returns the list of generated words.
+
+        :type word_length: int
+        :type seed: str
+        :rtype: list[str]
+        """
+        generated_words = self.generator.generate_words(word_length, seed=seed)
+        return generated_words
 
     def calculate_perplexity(self, words):
         return self.pop_manager.calculate_perplexity(words=words, verbose=False)

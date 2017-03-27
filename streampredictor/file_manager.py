@@ -9,14 +9,14 @@ class FileManager():
 
     def __init__(self, pm):
         """
-        :type pm: pop_manager
+        :type pm: pop_manager.PopManager
         """
         self.pop_manager = pm  # type: pop_manager.PopManager
 
     def save_tsv(self, filename):
         header = '\t'.join(['pattern', 'strength', 'component1', 'component2', 'parents']) + '\n'
         save_string = header
-        for key, pop in sorted(iter(self.pop_manager.patterns_collection.items()), key=lambda ng: ng[1].strength):
+        for key, pop in sorted(iter(self.pop_manager.pattern_collection.items()), key=lambda ng: ng[1].strength):
             save_string += key + '\t' + str(pop.strength) + '\t'
             if pop.first_component:
                 save_string += pop.first_component.unrolled_pattern
@@ -40,7 +40,7 @@ class FileManager():
             self.get_keys_and_strength(data_lines)
             self.connect_pops(data_lines)
         print('Loaded file ' + filename
-              + ' with number of patterns = ' + str(len(self.pop_manager.patterns_collection)))
+              + ' with number of patterns = ' + str(len(self.pop_manager.pattern_collection)))
 
     def connect_pops(self, data_lines):
         for lines in data_lines:
@@ -54,7 +54,7 @@ class FileManager():
             # elements 4 + are parents
             if elements[4] != '':
                 for parent_i in elements[4:]:
-                    if parent_i != '' and parent_i in self.pop_manager.patterns_collection:
+                    if parent_i != '' and parent_i in self.pop_manager.pattern_collection:
                         parent_pop = self.pop_manager.get(parent_i)
                         current_pop.first_child_parents.append(parent_pop)
 
@@ -62,5 +62,5 @@ class FileManager():
         for lines in data_lines:
             elements = lines.split('\t')
             key = elements[0]
-            self.pop_manager.patterns_collection[key] = Pop(key)
-            self.pop_manager.patterns_collection[key].strength = int(elements[1])
+            self.pop_manager.pattern_collection[key] = Pop(key)
+            self.pop_manager.pattern_collection[key].strength = int(elements[1])
