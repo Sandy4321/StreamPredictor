@@ -1,7 +1,6 @@
 import os
 from unittest import TestCase
 
-from streampredictor import data_fetcher
 from streampredictor.pop import Pop
 from streampredictor.stream_predictor import StreamPredictor
 from streampredictor import generator
@@ -166,13 +165,6 @@ class TestPatternOfPatterns(TestCase):
                                                                    previous_words, actual_next_word)
         self.assertEqual(N, 2)
         self.assertAlmostEqual(perplexity_list[0], 2.5, places=2)
-
-    # def test_train_token_perplexity_limit(self):
-    #     words = DataObtainer.get_clean_words_from_file('../data/pride.txt', 20000)
-    #     sp = StreamPredictor()
-    #     sp.train(words[:15000])
-    #     perplexity_list = sp.pop_manager.calculate_perplexity(words[15000:])
-    #     self.assertLess(perplexity_list[-1], 2500)
 
     def test_find_next_word(self):
         sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
