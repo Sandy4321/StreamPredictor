@@ -161,10 +161,10 @@ class TestPatternOfPatterns(TestCase):
         perplexity_list = []
         abxe.strength = 500
         abyd.strength = 500
-        N, log_running_perplexity = sp.pop_manager.perplexity_step(N, log_running_perplexity, perplexity_list,
-                                                                   previous_words, actual_next_word)
+        N, log_running_perplexity = sp.generator.perplexity_step(N, log_running_perplexity, perplexity_list,
+                                                                 previous_words, actual_next_word)
         self.assertEqual(N, 2)
-        self.assertAlmostEqual(perplexity_list[0], 2.5, places=2)
+        self.assertAlmostEqual(perplexity_list[0], 2.17, places=2)
 
     def test_find_next_word(self):
         sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
@@ -177,25 +177,13 @@ class TestPatternOfPatterns(TestCase):
         self.assertEqual(current_pop.unrolled_pattern, 'xe')
         self.assertEqual(remaining, [])
 
-    def test_get_prediction_probability(self):
-        predicted_words = ['and', 'what', 'where']
-        vocabulary = predicted_words + ['not']
-        probabilities = [0.3, 0.3, 0.4]
-        sp = StreamPredictor()
-        sp.pop_manager.add_words_to_vocabulary(vocabulary)
-        sp.pop_manager.not_found_ratio = 0.2
-        returned_probability = sp.pop_manager.get_prediction_probability('and', predicted_words, probabilities)
-        self.assertEqual(returned_probability, 0.8 * 0.3)
-        returned_probability = sp.pop_manager.get_prediction_probability('not', predicted_words, probabilities)
-        self.assertEqual(returned_probability, 0.2 * 1)
-
 
 class TestGenerator(TestCase):
     @staticmethod
     def sample_generator():
         pattern_collection = {'where': Pop('where'), 'are': Pop('are'), 'whereare': Pop('whereare')}
         pattern_collection['whereare'].set_components(pattern_collection['where'], pattern_collection['are'])
-        return generator.Generator(pattern_collection)
+        return generator.Generator(pattern_collection, vocabulary={'where', 'are'})
 
     def test_generate_stream(self):
         sample = TestPatternOfPatterns.get_sample()
@@ -204,6 +192,7 @@ class TestGenerator(TestCase):
 
     def test_choose_next_word_valid(self):
         test_generator = TestGenerator.sample_generator()
+        test_generator.uniform_prediction_ratio = 0
         generated_word = test_generator.choose_next_word(['where'])
         self.assertEqual(generated_word, 'are')
 

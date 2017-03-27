@@ -1,16 +1,23 @@
 import numpy as np
 from streampredictor import constants
 from streampredictor import pop
+from streampredictor import utitlities
 
 
 class Generator():
-    def __init__(self, pattern_collection):
+    def __init__(self, pattern_collection, vocabulary):
         """
         Generates words from pattern collection
 
         :type pattern_collection:dict[str,pop.Pop]
         """
         self.pattern_collection = pattern_collection
+        self.vocabulary = vocabulary
+        self.uniform_prediction_ratio = constants.uniform_prediction_ratio
+
+    @property
+    def vocabulary_count(self):
+        return len(self.vocabulary)
 
     def generate_words(self, word_length, seed=None):
         """
@@ -38,16 +45,30 @@ class Generator():
         :type previous_list_of_words:list[str]
         :rtype: str
         """
+        words_distribution = self.next_word_distribution(previous_list_of_words)
+        words = list(words_distribution.keys())
+        probabilities = np.array([float(p) for p in words_distribution.values()])
+        return np.random.choice(words, p=probabilities)
+
+    def next_word_distribution(self, previous_list_of_words):
+        """
+        Gets the distribution for the predicted next word given list of past words.
+
+        :type previous_list_of_words: list[str]
+        :rtype: dict[str,float]
+        """
         current_pop = self.longest_pop(previous_list_of_words)
         words, probabilities = current_pop.get_next_smallest_distribution()
         if current_pop.belongs_to_category:
             category_words, category_probabilities = current_pop.belongs_to_category.get_next_smallest_distribution()
             words = words + category_words
             probabilities = np.hstack([0.5 * probabilities, 0.5 * category_probabilities])
-        if len(words) < 1:
-            return self.get_random_base_word()
-        probabilities /= sum(probabilities)
-        return np.random.choice(words, p=probabilities)
+        predicted_distribution = dict((i, j) for i, j in zip(words, probabilities))
+        uniform_distribution = self.get_uniform_distribution()
+        final_distribution = utitlities.combine_normalize_distribution(
+            [predicted_distribution, uniform_distribution],
+            weights=[1 - self.uniform_prediction_ratio, self.uniform_prediction_ratio])
+        return final_distribution
 
     def longest_pop(self, list_of_words):
         """
@@ -78,3 +99,17 @@ class Generator():
         while chosen_pop.first_component:
             chosen_pop = chosen_pop.first_component
         return chosen_pop.unrolled_pattern
+
+    ####### extra ########
+
+    def perplexity_step(self, N, log_running_perplexity, perplexity_list, previous_words, actual_next_word):
+        distribution = self.next_word_distribution(previous_words)
+        likelihood = distribution[actual_next_word]
+        log_running_perplexity -= np.log2(likelihood)
+        perplexity_list.append(2 ** (log_running_perplexity * (1 / float(N))))
+        print('Current Perplexity = {0}\r'.format(perplexity_list[-1]), end=' ')
+        N += 1
+        return N, log_running_perplexity
+
+    def get_uniform_distribution(self):
+        return dict((i, 1.0 / self.vocabulary_count) for i in self.vocabulary)

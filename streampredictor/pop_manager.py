@@ -23,7 +23,6 @@ class PopManager:
         self.max_input_stream_length = 10 ** 7
         self.required_repeats = 5  # if seen less than this many times, patterns won't survive on the long run.
         self.feed_ratio_parent_category = 0.5
-        self.not_found_ratio = 0.9
         self.feed_strength_gain = 10 ** 6
         #  Fields
         self.pattern_collection = dict()  # type: dict[str,Pop]
@@ -34,7 +33,6 @@ class PopManager:
         return '\n============= Stream Predictor Hyper parameters ===================' + \
                '\nThe perplexity count constant is ' + str(self.perplexity_count) + \
                '\nThe occasional step periods is ' + str(self.occasional_step_period) + \
-               '\nThe not found raitio is' + str(self.not_found_ratio) + \
                '\nFeed strength gain is ' + str(self.feed_strength_gain) + \
                '\n============= End Stream Predictor Hyper parameters ==================='
 
@@ -171,91 +169,6 @@ class PopManager:
         return out_string
 
     ############## end of clean code ########################
-
-    def perplexity_step(self, N, log_running_perplexity, perplexity_list, previous_words, actual_next_word):
-        next_words, probabilities = self.next_word_distribution(previous_words)
-        chosen_prob = self.get_prediction_probability(actual_next_word, next_words, probabilities)
-        log_running_perplexity -= np.log2(chosen_prob)
-        perplexity_list.append(2 ** (log_running_perplexity * (1 / float(N))))
-        print('Current Perplexity = {0}\r'.format(perplexity_list[-1]), end=' ')
-        N += 1
-        return N, log_running_perplexity
-
-    def calculate_perplexity(self, words, verbose=True):
-        self.add_words_to_vocabulary(words, verbose)
-        word_count = len(words)
-        if verbose:
-            print('Started calculating perplexity with word count = ' + str(word_count))
-        log_running_perplexity = 0
-        perplexity_list = []
-        N = 1
-        while N < word_count:
-            N, log_running_perplexity = self.perplexity_step(N, log_running_perplexity, perplexity_list, words[:N],
-                                                             words[N])
-        final_log_perplexity = log_running_perplexity * (1 / float(N))
-        final_perplexity = 2 ** final_log_perplexity
-        if verbose:
-            print('Final perplexity is ', final_perplexity)
-        return perplexity_list
-
-    # def train_token_and_perplexity(self, words):
-    #     self.add_words_to_patterns_collection(words)
-    #     word_count = len(words)
-    #     print('Started training and calculating perplexity with ', str(word_count), ' words.')
-    #     previous_pop = list(self.patterns_collection.values())[0]
-    #     perplexity_over_training = []
-    #     training_time = []
-    #     i = 1
-    #     while i < word_count - self.maximum_pattern_length:
-    #         i, current_pop = self.train_token_step(i, previous_pop, words[i:i + self.maximum_word_count])
-    #         previous_pop = current_pop
-    #         if i % self.occasional_step_period == 0:
-    #             self.occasional_step(i, perplexity_over_training, training_time, words)
-    #     self.occasional_step(i, perplexity_over_training, training_time, words)
-    #     self.fix_first_child_parents()
-    #     final_perplexity = perplexity_over_training[-1]
-    #     print('Final perplexity is ', final_perplexity, ' number of patterns is ', len(self.patterns_collection))
-    #     return perplexity_over_training, training_time
-
-
-
-    def get_prediction_probability(self, actual_next_word, predicted_words, probabilities):
-        if actual_next_word not in self.pattern_collection:
-            raise ValueError('The actual next word is not present in vocabulary. Preprocess to handle unknown words')
-        word_count = len(predicted_words)
-        remaining_words_in_vocabulary = self.vocabulary_count - word_count
-        if remaining_words_in_vocabulary < 0:
-            raise ValueError('The given predicted word count {0} is  greater than vocabulary word count {1}'
-                             .format(word_count, self.vocabulary_count))
-        if actual_next_word in predicted_words:
-            chosen_prob = (1 - self.not_found_ratio) * probabilities[predicted_words.index(actual_next_word)]
-        else:
-            chosen_prob = self.not_found_ratio / remaining_words_in_vocabulary
-        return chosen_prob
-
-    def next_word_distribution(self, previous_words_list):
-        start = max(0, len(previous_words_list) - self.maximum_word_count)
-        for j in range(start, len(previous_words_list)):
-            current_word = ''.join(previous_words_list[j:])
-            if current_word in self.pattern_collection:
-                current_pop = self.pattern_collection[current_word]
-                words, probabilities = current_pop.get_next_smallest_distribution()
-                return words, probabilities
-        print('Warning. Nothing after ', ''.join(previous_words_list))
-        return previous_words_list[0], np.array([1])
-
-        # def join_pattern(self, first_pattern, second_pattern, found_pattern_feed_ratio):
-        #     new_pattern = first_pattern.unrolled_pattern + second_pattern.unrolled_pattern
-        #     if new_pattern not in self.patterns_collection:
-        #         self.patterns_collection[new_pattern] = Pop(new_pattern)
-        #         self.patterns_collection[new_pattern].set_components(first_pattern, second_pattern)
-        #     self.patterns_collection[new_pattern].feed(self.feed_strength_gain * found_pattern_feed_ratio)
-        # Category tasks
-        # if first_pattern.belongs_to_category is None and second_pattern.belongs_to_category is None:
-        #     return
-        # first_category = first_pattern.belongs_to_category if first_pattern.belongs_to_category else first_pattern
-        # second_category = second_pattern.belongs_to_category if second_pattern.belongs_to_category else second_pattern
-        # self.join_pattern(first_category, second_category, found_pattern_feed_ratio * self.feed_ratio_parent_category)
 
     def fix_first_child_parents(self, verbose=False):
         """

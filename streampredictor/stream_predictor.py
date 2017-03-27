@@ -12,7 +12,7 @@ class StreamPredictor:
         else:
             self.pop_manager = pop_manager.PopManager()  # type: pop_manager
         self.file_manager = file_manager.FileManager(self.pop_manager)
-        self.generator = generator.Generator(self.pop_manager.pattern_collection)
+        self.generator = generator.Generator(self.pop_manager.pattern_collection, self.pop_manager.vocabulary)
         print(self.pop_manager.stats())
 
     def train(self, list_of_words, verbose=False):
@@ -27,10 +27,10 @@ class StreamPredictor:
             new_pop = pop.combine(previous_pop, next_pop)
             self.pop_manager.ingest(new_pop)
             if i % constants.occasional_step_count == 0:
-                print('Occasional step at ',i)
+                print('Occasional step at ', i)
                 self.occasional_step(i, verbose)
             previous_pop = next_pop
-            i+=1
+            i += 1
         print('Finished training in {0} steps'.format(i))
 
     def occasional_step(self, step_count, verbose):
@@ -50,5 +50,20 @@ class StreamPredictor:
                 raise ValueError('Generated word not in vocabulary :' + word)
         return generated_output
 
-    def calculate_perplexity(self, words):
-        return self.pop_manager.calculate_perplexity(words=words, verbose=False)
+    def calculate_perplexity(self, words, verbose=False):
+        self.pop_manager.add_words_to_vocabulary(words, verbose)
+        word_count = len(words)
+        if verbose:
+            print('Started calculating perplexity with word count = ' + str(word_count))
+        log_running_perplexity = 0
+        perplexity_list = []
+        N = 1
+        while N < word_count:
+            N, log_running_perplexity = self.generator.perplexity_step(N, log_running_perplexity, perplexity_list,
+                                                                       words[:N],
+                                                                       words[N])
+        final_log_perplexity = log_running_perplexity * (1 / float(N))
+        final_perplexity = 2 ** final_log_perplexity
+        if verbose:
+            print('Final perplexity is ', final_perplexity)
+        return perplexity_list
