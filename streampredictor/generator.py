@@ -22,7 +22,7 @@ class Generator():
         """
         print('Generating words with word count = ', word_length)
         if (seed is None) or (seed is ''):
-            current_word = self.get_random_word()
+            current_word = self.get_random_base_word()
         else:
             current_word = seed
         generated_output = [current_word]
@@ -45,7 +45,7 @@ class Generator():
             words = words + category_words
             probabilities = np.hstack([0.5 * probabilities, 0.5 * category_probabilities])
         if len(words) < 1:
-            return self.get_random_word()
+            return self.get_random_base_word()
         probabilities /= sum(probabilities)
         return np.random.choice(words, p=probabilities)
 
@@ -68,10 +68,13 @@ class Generator():
                 return current_pop
         return self.pattern_collection[list_of_words[-1]]
 
-    def get_random_word(self):
+    def get_random_base_word(self):
         """
         Returns a random string from pattern collection
 
         :rtype: str
         """
-        return np.random.choice(list(self.pattern_collection.keys()))
+        chosen_pop = np.random.choice(list(self.pattern_collection.values()))
+        while chosen_pop.first_component:
+            chosen_pop = chosen_pop.first_component
+        return chosen_pop.unrolled_pattern

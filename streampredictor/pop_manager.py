@@ -27,6 +27,7 @@ class PopManager:
         self.feed_strength_gain = 10 ** 6
         #  Fields
         self.pattern_collection = dict()  # type: dict[str,Pop]
+        self.vocabulary = set()
         self.vocabulary_count = 0
 
     def stats(self):
@@ -50,12 +51,13 @@ class PopManager:
         """
         return self.pattern_collection[key]
 
-    def add_pop(self, pop):
+    def add_pop_to_vocabulary(self, pop):
         string = pop.unrolled_pattern
         if string in self.pattern_collection:
             raise Exception(string + 'is already present')
         self.pattern_collection[string] = pop
         self.vocabulary_count += 1
+        self.vocabulary.add(pop.unrolled_pattern)
 
     def get_next_pop(self, remaining_sequence):
         """
@@ -150,7 +152,7 @@ class PopManager:
         unique_words = set(words)
         for word in unique_words:
             if word not in self.pattern_collection:
-                self.add_pop(Pop(word))
+                self.add_pop_to_vocabulary(Pop(word))
                 self.pattern_collection[word].feed(self.feed_strength_gain)
         if verbose:
             print('There are ', self.vocabulary_count, ' words in vocabulary.')

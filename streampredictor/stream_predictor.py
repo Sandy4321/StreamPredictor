@@ -40,7 +40,11 @@ class StreamPredictor:
         :type seed: str
         :rtype: list[str]
         """
-        return self.generator.generate_words(word_length, seed=seed)
+        generated_output = self.generator.generate_words(word_length, seed=seed)
+        for word in generated_output:
+            if word not in self.pop_manager.vocabulary:
+                raise ValueError('Generated word not in vocabulary :' + word)
+        return generated_output
 
     def calculate_perplexity(self, words):
         return self.pop_manager.calculate_perplexity(words=words, verbose=False)
