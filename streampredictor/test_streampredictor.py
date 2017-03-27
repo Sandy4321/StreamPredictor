@@ -218,3 +218,18 @@ class TestGenerator(TestCase):
         self.assertEqual(where_are.unrolled_pattern, 'are')
         where = test_generator.longest_pop(['where'])
         self.assertEqual(where.unrolled_pattern, 'where')
+
+
+class TestStreamPredictor(TestCase):
+    def test_sequence_learn(self):
+        sp = StreamPredictor()
+        first_words_list = ['that', 'is', 'good']
+        sp.train(first_words_list)
+        first_next_words, first_probabilities = sp.pop_manager.get('that').get_next_smallest_distribution()
+        self.assertEqual(['is'], first_next_words)
+        self.assertEqual([1.0], first_probabilities)
+        second_words_list = ['that', 'isnt', 'good']
+        sp.train(second_words_list)
+        second_next_words, second_probabilities = sp.pop_manager.get('that').get_next_smallest_distribution()
+        self.assertEqual({'is', 'isnt'}, set(second_next_words))
+        self.assertListEqual([0.5, 0.5], list(second_probabilities))

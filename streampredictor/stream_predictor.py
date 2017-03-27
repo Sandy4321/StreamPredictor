@@ -27,9 +27,11 @@ class StreamPredictor:
             new_pop = pop.combine(previous_pop, next_pop)
             self.pop_manager.ingest(new_pop)
             if i % constants.occasional_step_count == 0:
+                print('Occasional step at ',i)
                 self.occasional_step(i, verbose)
             previous_pop = next_pop
             i+=1
+        print('Finished training in {0} steps'.format(i))
 
     def occasional_step(self, step_count, verbose):
         self.pop_manager.occasional_step(step_count, verbose)
