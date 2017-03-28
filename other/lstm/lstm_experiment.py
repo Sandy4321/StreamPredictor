@@ -6,7 +6,7 @@ import random
 try:
     from  DataObtainer import get_train_test_data
 except:
-    from streampredictor.DataObtainer import get_train_test_data
+    from streampredictor.data_fetcher import get_train_test_data
 
 max_grad_norm = 5
 init_scale = 0.1

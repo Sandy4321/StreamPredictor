@@ -1,7 +1,4 @@
 nltk
 numpy
-protobuf
 matplotlib
-progressbar2
 nose
-tensorflow
