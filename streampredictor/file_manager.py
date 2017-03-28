@@ -30,7 +30,7 @@ class FileManager():
             save_string += '\n'
         with open(filename, mode='w') as file:
             file.write(save_string)
-        print('Saved file ' + filename)
+        print('Saved file ' + filename + ' with pattern count ' + str(len((self.pop_manager.pattern_collection))))
 
     def load_tsv(self, filename):
         with open(filename, mode='r') as file:
