@@ -36,7 +36,7 @@ class StreamPredictor:
             i += 1
         total_time_s = time.time() - start_time
         print('Finished training in {0} steps'.format(i))
-        print('The rate of learning is {0} words/s'.format(i/total_time_s))
+        print('The rate of learning is {0} K words/s'.format(round(i/(1000*total_time_s),3)))
 
     def occasional_step(self, step_count, verbose):
         self.pop_manager.occasional_step(step_count, verbose)
