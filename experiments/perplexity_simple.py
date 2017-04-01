@@ -10,8 +10,8 @@ from streampredictor.stream_predictor import StreamPredictor
 # Parameters
 input_text_file = '../Data/ptb.train.txt'
 output_filename = '../PatternStore/ptb.train.tsv'
-train_length = 10 ** 5
-test_length = 10 ** 3
+train_length = 8 * 10 ** 5
+test_length = 8 * 10 ** 3
 logging.basicConfig(filename='../PatternStore/perplexity.log', level=logging.INFO)
 
 # Experiment

@@ -96,6 +96,9 @@ class PopManager:
 
     def cull(self, limit):
         cull_list = self.cull_child_and_mark_self(limit)
+        if len(cull_list) == 0:
+            logging.info('Nothing to cull')
+            return
         logging.info('The cull list is ' +  ' '.join(cull_list))
         for cull_key in cull_list:
             first_component = self.pattern_collection[cull_key].first_component
