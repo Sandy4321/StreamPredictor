@@ -14,7 +14,7 @@ storage_file = '../PatternStore/OnlineTokens.pb'
 def load_sp(storage_file):
     sp = stream_predictor.StreamPredictor()
     if os.path.isfile(storage_file):
-        sp.file_manager.load_tsv(storage_file)
+        sp.file_manager.load(storage_file)
         print('Loaded PopManager.PopManager from ', storage_file)
     else:
         print(' Created new PopManager.PopManager. Didnt find anything at ', storage_file)
@@ -29,7 +29,7 @@ def default_trainer(storage_file):
         text = data_fetcher.clean_text(text, max_input_stream_length)
         sp = load_sp(storage_file)
         sp.train_characters(text)
-        sp.file_manager.save_tsv(storage_file)
+        sp.file_manager.save(storage_file)
         print(sp.generate_stream(200))
         total_time_mins = (time.time() - start_time) / 60
         rate_chars_min = round(len(text) / total_time_mins / 1000)
@@ -44,7 +44,7 @@ def default_small_trainer(storage_file):
     sp = load_sp(storage_file)
     sp.train_characters(text)
     sp.generalizer.generalize()
-    sp.file_manager.save_tsv(storage_file)
+    sp.file_manager.save(storage_file)
     print(sp.generate_stream(200))
     total_time_mins = (time.time() - start_time) / 60
     rate_chars_min = round(len(text) / total_time_mins / 1000)
@@ -61,7 +61,7 @@ def online_trainer(storage_file):
         text = data_fetcher.clean_text(text, max_input_stream_length)
         sp = load_sp(storage_file)
         sp.train_characters(text)
-        sp.file_manager.save_tsv(storage_file)
+        sp.file_manager.save(storage_file)
         print(sp.generate_stream(200))
         total_time_mins = (time.time() - start_time) / 60
         rate_chars_min = round(len(text) / total_time_mins / 1000)

@@ -43,7 +43,7 @@ class StreamPredictor:
         total_time_s = time.time() - start_time
         if total_time_s > 0.01:
             print('Finished training in {0} steps'.format(i))
-            print('The rate of learning is {0} K words/s'.format(round(i/(1000*total_time_s),3)))
+            print('The rate of learning is {0} K words/s'.format(round(i / (1000 * total_time_s), 3)))
 
     def generate(self, word_length, seed=None):
         """
@@ -73,4 +73,16 @@ class StreamPredictor:
         final_log_perplexity = log_running_perplexity * (1 / float(N))
         final_perplexity = 2 ** final_log_perplexity
         print('Final perplexity is ', final_perplexity, ' final vocab count is ', self.pop_manager.vocabulary_count)
+        return perplexity_list
+
+    def train_and_test(self, train_words, test_words):
+        """
+        Trains on the given words and calculates perplexity on the test words.
+
+        :type train_words: list[str]
+        :type test_words: list[str]
+        :rtype: list[float]
+        """
+        self.train(train_words)
+        perplexity_list = self.calculate_perplexity(words=test_words)
         return perplexity_list

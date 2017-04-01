@@ -1,8 +1,8 @@
 import numpy as np
 import random
 
-
 from streampredictor import constants
+from streampredictor.category import Category
 
 
 def combine(first_pop, second_pop):
@@ -29,11 +29,8 @@ class Pop:
         # Which parent has this Pop as it's first child
         self.first_child_parents = []  # type: list[Pop]
 
-        # which category does this belong to?
-        self.belongs_to_category = None  # type: Pop
-
-        # who are the members of this category?
-        self.members_of_category = []  # type: list[Pop]
+        # which categories does this belong to?
+        self.belongs_to_category = []  # type: list[Category]
 
     def set_components(self, first_component, second_component):
         """
@@ -60,11 +57,6 @@ class Pop:
     #     self.members_of_category.append(first_component)
     #     self.members_of_category.append(second_component)
 
-    def get_sample(self):
-        if len(self.members_of_category) < 1:
-            return self.unrolled_pattern
-        return random.choice(self.members_of_category).get_sample()
-
     def feed(self, gain):
         self.strength += min(constants.max_strength, int(gain * constants.feed_ratio[0]))
         if gain > 2:
@@ -85,8 +77,6 @@ class Pop:
             out += '={ ' + self.first_component.unrolled_pattern + ': '
         if self.second_component:
             out += self.second_component.unrolled_pattern + '}'
-        if self.belongs_to_category:
-            out += ' # ' + self.belongs_to_category.unrolled_pattern
         return out
 
     # def similarity(self, other_pop):
@@ -150,3 +140,6 @@ class Pop:
         :rtype: None
         """
         self.first_child_parents.append(parent_pop)
+
+    def get_sample(self):
+        return self.unrolled_pattern

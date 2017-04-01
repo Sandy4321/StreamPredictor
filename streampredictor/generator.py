@@ -59,10 +59,6 @@ class Generator():
         """
         current_pop = self.longest_pop(previous_list_of_words)
         words, probabilities = current_pop.get_next_smallest_distribution()
-        if current_pop.belongs_to_category:
-            category_words, category_probabilities = current_pop.belongs_to_category.get_next_smallest_distribution()
-            words = words + category_words
-            probabilities = np.hstack([0.5 * probabilities, 0.5 * category_probabilities])
         predicted_distribution = dict((i, j) for i, j in zip(words, probabilities))
         uniform_distribution = self.get_uniform_distribution()
         final_distribution = utitlities.combine_normalize_distribution(

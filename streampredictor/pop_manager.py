@@ -11,6 +11,7 @@ half of them. Kind of adaptive coding.
 import numpy as np
 
 from streampredictor.pop import Pop
+from streampredictor.category import Category
 from streampredictor import constants
 import logging
 
@@ -27,6 +28,7 @@ class PopManager:
         self.feed_strength_gain = 10 ** 6
         #  Fields
         self.pattern_collection = dict()  # type: dict[str,Pop]
+        self.category_collection = dict()  # type: dict[str, Category]
         self.vocabulary = set()
         self.vocabulary_count = 0
 

@@ -2,10 +2,12 @@ import os
 from unittest import TestCase
 
 from streampredictor.pop import Pop
+from streampredictor.category import Category
 from streampredictor.stream_predictor import StreamPredictor
 from streampredictor import generator
 
 save_filename = '../PatternStore/test.tsv'
+category_save_filename = '../PatternStore/test_category.tsv'
 training_words = 'cat hat mat bat sat in the barn'.split(' ')
 
 
@@ -16,19 +18,19 @@ class TestPatternOfPatterns(TestCase):
         sample.train(training_words)
         return sample
 
-    def test_save(self):
+    def test_save_predictor(self):
         sample = self.get_sample()
-        sample.file_manager.save_tsv(save_filename)
+        sample.file_manager.save_predictors(save_filename)
         self.assertTrue(os.path.isfile(save_filename))
         os.remove(save_filename)
 
     def test_load(self):
         sample = self.get_sample()
-        sample.file_manager.save_tsv(save_filename)
+        sample.file_manager.save_predictors(save_filename)
         self.assertTrue(os.path.isfile(save_filename))
         empty_sample = StreamPredictor()
         self.assertFalse(len(empty_sample.pop_manager.pattern_collection) > 10)
-        empty_sample.file_manager.load_tsv(save_filename)
+        empty_sample.file_manager.load_predictor(save_filename)
         self.assertTrue(len(empty_sample.pop_manager.pattern_collection) > 10)
         os.remove(save_filename)
 
@@ -42,9 +44,9 @@ class TestPatternOfPatterns(TestCase):
         original = self.get_sample()
         original.pop_manager.pattern_collection['karma'] = Pop('karma')
         original_string = original.pop_manager.status()
-        original.file_manager.save_tsv(save_filename)
+        original.file_manager.save_predictors(save_filename)
         loaded = StreamPredictor()
-        loaded.file_manager.load_tsv(save_filename)
+        loaded.file_manager.load_predictor(save_filename)
         loaded_string = loaded.pop_manager.status()
         self.assertEqual(original_string, loaded_string)
         self.assertEqual(len(original.pop_manager.pattern_collection), len(loaded.pop_manager.pattern_collection))
@@ -222,3 +224,37 @@ class TestStreamPredictor(TestCase):
         second_next_words, second_probabilities = sp.pop_manager.get('that').get_next_smallest_distribution()
         self.assertEqual({'is', 'isnt'}, set(second_next_words))
         self.assertListEqual([0.5, 0.5], list(second_probabilities))
+
+    def test_train_and_test_returns_perplexity_length(self):
+        sp = StreamPredictor()
+        train_words = ['that', 'is', 'good']
+        test_words = train_words
+        perplexity = sp.train_and_test(train_words, test_words)
+        self.assertEqual(len(perplexity), len(test_words) - 1)
+
+
+class TestCategorization(TestCase):
+    def get_sample(self):
+        cat = Pop('cat')
+        dog = Pop('dog')
+        animal = Category('animal', 5, [cat, dog])
+        sp = StreamPredictor()
+        sp.pop_manager.add_pop_to_vocabulary(cat)
+        sp.pop_manager.add_pop_to_vocabulary(dog)
+        sp.pop_manager.category_collection[animal.name] = animal
+        return sp
+
+    def test_save_category_creates_file(self):
+        sample = self.get_sample()
+        sample.file_manager.save_category(category_save_filename)
+        self.assertTrue(os.path.isfile(category_save_filename))
+        os.remove(category_save_filename)
+
+    def test_save_category_equal_load(self):
+        saved_sp = self.get_sample()
+        saved_sp.file_manager.save(save_filename, category_save_filename)
+        loaded_sp = StreamPredictor()
+        loaded_sp.file_manager.load(save_filename, category_save_filename)
+        self.assertEqual(loaded_sp.pop_manager.stats(), saved_sp.pop_manager.stats())
+        os.remove(category_save_filename)
+        os.remove(save_filename)
