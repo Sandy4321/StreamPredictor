@@ -88,7 +88,7 @@ class PopManager:
         self.decay(constants.occasional_decay)
         self.cull(step_count)
         self.refactor()
-        # self.fix_first_child_parents()
+        self.fix_first_child_parents()
 
     def decay(self, i):
         for key, pop in self.pattern_collection.items():
