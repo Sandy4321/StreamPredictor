@@ -95,7 +95,7 @@ class PopManager:
     def cull(self, limit, verbose):
         cull_list = self.cull_child_and_mark_self(limit)
         if verbose and cull_list:
-            print('The cull list is ', cull_list)
+            print('The cull list is (first 100)', cull_list[:100])
         for cull_key in cull_list:
             first_component = self.pattern_collection[cull_key].first_component
             if first_component:
@@ -130,9 +130,6 @@ class PopManager:
                         refactored_components_strength = self.pattern_collection[new_first_component].strength + \
                                                          self.pattern_collection[new_second_component].strength
                         if refactored_components_strength > current_components_strength:
-                            if verbose:
-                                print('Refactoring {0} into {1}:{2}'
-                                      .format(pop, new_first_component, new_second_component))
                             self.change_components_string(new_first_component, new_second_component, pop)
 
     def change_components_string(self, first_string, second_string, pop):
