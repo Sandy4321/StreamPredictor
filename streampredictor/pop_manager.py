@@ -88,7 +88,7 @@ class PopManager:
         self.decay(constants.occasional_decay)
         self.cull(step_count)
         self.refactor()
-        self.fix_first_child_parents()
+        # self.fix_first_child_parents()
 
     def decay(self, i):
         for key, pop in self.pattern_collection.items():
@@ -96,7 +96,7 @@ class PopManager:
 
     def cull(self, limit):
         cull_list = self.cull_child_and_mark_self(limit)
-        logging.info('The cull list is ', cull_list)
+        logging.info('The cull list is ' +  ' '.join(cull_list))
         for cull_key in cull_list:
             first_component = self.pattern_collection[cull_key].first_component
             if first_component:

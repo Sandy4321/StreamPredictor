@@ -10,7 +10,7 @@ sp.occasional_step = 100
 input_text = 'hello how are you hello who are you'
 input_words = input_text.split(' ') * 1000
 print(input_words[:20])
-sp.train(input_words, verbose=True)
+sp.train(input_words)
 print('\n\nThe generated words are ')
 print(sp.generate(20))
 print('\nEnd of generated words\n')
