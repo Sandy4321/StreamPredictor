@@ -10,13 +10,13 @@ from streampredictor.stream_predictor import StreamPredictor
 # Parameters
 input_text_file = '../Data/ptb.train.txt'
 output_filename = '../PatternStore/ptb.train.tsv'
-train_length = 10 ** 3
-test_length = 10**2
+train_length = 10 ** 5
+test_length = 10 ** 3
 logging.basicConfig(filename='../PatternStore/perplexity.log', level=logging.INFO)
 
 # Experiment
 with open(input_text_file, 'r') as f:
-    input_words = f.read().split(' ')
+    input_words = f.read().replace('\n', '').replace('  ', ' ').split(' ')
 input_words_length = len(input_words)
 print('The file {0} has {1} words'.format(input_text_file, input_words_length))
 if input_words_length < train_length + test_length:
@@ -25,7 +25,7 @@ if input_words_length < train_length + test_length:
 random_rotation = random.randint(0, input_words_length)
 input_words = input_words[random_rotation:] + input_words[:random_rotation]
 train_words = input_words[:train_length]
-test_words = input_words[train_length:train_length+test_length]
+test_words = input_words[train_length:train_length + test_length]
 sp = StreamPredictor()
 
 sp.train(train_words)

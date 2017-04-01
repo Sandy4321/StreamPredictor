@@ -16,7 +16,9 @@ class FileManager():
     def save_tsv(self, filename):
         header = '\t'.join(['pattern', 'strength', 'component1', 'component2', 'parents']) + '\n'
         save_string = header
-        for key, pop in sorted(iter(self.pop_manager.pattern_collection.items()), key=lambda ng: ng[1].strength):
+        for key, pop in sorted(iter(self.pop_manager.pattern_collection.items()),
+                               key=lambda ng: ng[1].strength,
+                               reverse=True):
             save_string += key + '\t' + str(pop.strength) + '\t'
             if pop.first_component:
                 save_string += pop.first_component.unrolled_pattern
