@@ -12,6 +12,7 @@ import numpy as np
 
 from streampredictor.pop import Pop
 from streampredictor import constants
+import logging
 
 
 class PopManager:
@@ -83,19 +84,19 @@ class PopManager:
         self.pattern_collection[new_pop.unrolled_pattern].feed(
             self.feed_strength_gain * constants.found_pattern_feed_ratio)
 
-    def occasional_step(self, step_count, verbose):
+    def occasional_step(self, step_count):
         self.decay(constants.occasional_decay)
-        self.cull(step_count, verbose)
-        self.refactor(verbose)
+        self.cull(step_count)
+        self.refactor()
+        self.fix_first_child_parents()
 
     def decay(self, i):
         for key, pop in self.pattern_collection.items():
             pop.decay(i)
 
-    def cull(self, limit, verbose):
+    def cull(self, limit):
         cull_list = self.cull_child_and_mark_self(limit)
-        if verbose and cull_list:
-            print('The cull list is (first 100)', cull_list[:100])
+        logging.info('The cull list is ', cull_list)
         for cull_key in cull_list:
             first_component = self.pattern_collection[cull_key].first_component
             if first_component:
@@ -116,7 +117,7 @@ class PopManager:
                 cull_list.append(key)
         return cull_list
 
-    def refactor(self, verbose=False):
+    def refactor(self):
         for key, pop in self.pattern_collection.items():
             if pop.first_component and pop.second_component:
                 current_components_strength = pop.first_component.strength + pop.second_component.strength
@@ -130,6 +131,8 @@ class PopManager:
                         refactored_components_strength = self.pattern_collection[new_first_component].strength + \
                                                          self.pattern_collection[new_second_component].strength
                         if refactored_components_strength > current_components_strength:
+                            logging.info('Refactoring {0} into {1}:{2}'
+                                         .format(pop, new_first_component, new_second_component))
                             self.change_components_string(new_first_component, new_second_component, pop)
 
     def change_components_string(self, first_string, second_string, pop):
@@ -142,21 +145,20 @@ class PopManager:
         pop.set_components(self.pattern_collection[first_string],
                            self.pattern_collection[second_string])
 
-    def add_words_to_vocabulary(self, words, verbose=True):
+    def add_words_to_vocabulary(self, words):
         """
         Find the vocabulary and add that vocabulary to pattern collection.
 
         :type words: list of str
         :rtype: None
         """
+        print('Adding {0} words to vocabulary'.format(len(words)))
         unique_words = set(words)
         for word in unique_words:
             if word not in self.pattern_collection:
                 self.add_pop_to_vocabulary(Pop(word))
                 self.pattern_collection[word].feed(self.feed_strength_gain)
-        if verbose:
-            print('There are ', self.vocabulary_count, ' words in vocabulary.')
-            print('The first few words are ', ','.join(list(unique_words)[:10]))
+        print('now there are ', self.vocabulary_count, ' words in vocabulary.')
 
     def status(self):
         out_string = ''
@@ -165,9 +167,7 @@ class PopManager:
         out_string += 'Status of Pattern of patterns with ' + str(len(self.pattern_collection)) + ' pops \n'
         return out_string
 
-    ############## end of clean code ########################
-
-    def fix_first_child_parents(self, verbose=False):
+    def fix_first_child_parents(self):
         """
         Fixes mismatch between first_child_parents by going through each pattern and checking if pop is
         pop.first_child_parents.first component
@@ -178,6 +178,5 @@ class PopManager:
                 if parent_pop.first_component:
                     if parent_pop.first_component is pop:
                         continue
-                if verbose:
-                    print('Mismatch ', pop.__repr__(), ' and ', parent_pop.__repr__())
+                logging.info('Mismatch ', pop.__repr__(), ' and ', parent_pop.__repr__())
                 pop.first_child_parents.remove(parent_pop)

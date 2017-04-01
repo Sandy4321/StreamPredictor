@@ -16,7 +16,13 @@ class StreamPredictor:
         self.generator = generator.Generator(self.pop_manager.pattern_collection, self.pop_manager.vocabulary)
         print(self.pop_manager.stats())
 
-    def train(self, list_of_words, verbose=False):
+    def train(self, list_of_words):
+        """
+        Trains the stream predictor with given list of words.
+
+        :type list_of_words:list[str]
+        :rtype: None
+        """
         print('Started training with {0} words'.format(len(list_of_words)))
         self.pop_manager.add_words_to_vocabulary(list_of_words)
         previous_pop = self.pop_manager.pattern_collection[list_of_words[0]]
@@ -31,15 +37,13 @@ class StreamPredictor:
             self.pop_manager.ingest(new_pop)
             if i % constants.occasional_step_count == 0:
                 print('Occasional step at ', i)
-                self.occasional_step(i, verbose)
+                self.pop_manager.occasional_step(i)
             previous_pop = next_pop
             i += 1
         total_time_s = time.time() - start_time
-        print('Finished training in {0} steps'.format(i))
-        print('The rate of learning is {0} K words/s'.format(round(i/(1000*total_time_s),3)))
-
-    def occasional_step(self, step_count, verbose):
-        self.pop_manager.occasional_step(step_count, verbose)
+        if total_time_s > 0.01:
+            print('Finished training in {0} steps'.format(i))
+            print('The rate of learning is {0} K words/s'.format(round(i/(1000*total_time_s),3)))
 
     def generate(self, word_length, seed=None):
         """
@@ -55,11 +59,10 @@ class StreamPredictor:
                 raise ValueError('Generated word not in vocabulary :' + word)
         return generated_output
 
-    def calculate_perplexity(self, words, verbose=False):
-        self.pop_manager.add_words_to_vocabulary(words, verbose)
+    def calculate_perplexity(self, words):
+        self.pop_manager.add_words_to_vocabulary(words)
         word_count = len(words)
-        if verbose:
-            print('Started calculating perplexity with word count = ' + str(word_count))
+        print('Started calculating perplexity with word count = ' + str(word_count))
         log_running_perplexity = 0
         perplexity_list = []
         N = 1
@@ -69,6 +72,5 @@ class StreamPredictor:
                                                                        words[N])
         final_log_perplexity = log_running_perplexity * (1 / float(N))
         final_perplexity = 2 ** final_log_perplexity
-        if verbose:
-            print('Final perplexity is ', final_perplexity)
+        print('Final perplexity is ', final_perplexity)
         return perplexity_list
