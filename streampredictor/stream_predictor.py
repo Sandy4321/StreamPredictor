@@ -72,5 +72,5 @@ class StreamPredictor:
                                                                        words[N])
         final_log_perplexity = log_running_perplexity * (1 / float(N))
         final_perplexity = 2 ** final_log_perplexity
-        print('Final perplexity is ', final_perplexity)
+        print('Final perplexity is ', final_perplexity, ' final vocab count is ', self.pop_manager.vocabulary_count)
         return perplexity_list
