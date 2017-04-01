@@ -3,6 +3,7 @@ from streampredictor import pop
 from streampredictor import pop_manager
 from streampredictor import constants
 from streampredictor import generator
+import time
 
 
 class StreamPredictor:
@@ -16,10 +17,12 @@ class StreamPredictor:
         print(self.pop_manager.stats())
 
     def train(self, list_of_words, verbose=False):
+        print('Started training with {0} words'.format(len(list_of_words)))
         self.pop_manager.add_words_to_vocabulary(list_of_words)
         previous_pop = self.pop_manager.pattern_collection[list_of_words[0]]
         remaining_sequence = list_of_words[1:]
         i = 1
+        start_time = time.time()
         while remaining_sequence and len(remaining_sequence) > 0:
             next_pop, remaining_sequence = self.pop_manager.get_next_pop(remaining_sequence)
             if next_pop is None:
@@ -31,7 +34,9 @@ class StreamPredictor:
                 self.occasional_step(i, verbose)
             previous_pop = next_pop
             i += 1
+        total_time_s = time.time() - start_time
         print('Finished training in {0} steps'.format(i))
+        print('The rate of learning is {0} words/s'.format(i/total_time_s))
 
     def occasional_step(self, step_count, verbose):
         self.pop_manager.occasional_step(step_count, verbose)
