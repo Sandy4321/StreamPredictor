@@ -1,0 +1,61 @@
+The file ../Data/ptb.train.txt has 887523 words
+
+============= Stream Predictor Hyper parameters ===================
+The perplexity count constant is 6000
+The occasional step periods is 2000
+Feed strength gain is 1000000
+============= End Stream Predictor Hyper parameters ===================
+Started training with 800000 words
+Adding 800000 words to vocabulary
+now there are  9974  words in vocabulary.
+Occasional step at  10000
+Fixing incorrect first_child_parents
+Occasional step at  20000
+Fixing incorrect first_child_parents
+Occasional step at  30000
+Fixing incorrect first_child_parents
+Occasional step at  40000
+Fixing incorrect first_child_parents
+Occasional step at  50000
+Fixing incorrect first_child_parents
+Occasional step at  60000
+Fixing incorrect first_child_parents
+Finished training in 60011 steps
+The rate of learning is 0.068 K words/s
+Saved file ../PatternStore/ptb.train.tsv with pattern count 51355
+Adding 8000 words to vocabulary
+now there are  10179  words in vocabulary.
+Started calculating perplexity with word count = 8000
+Final perplexity is  7308.17183715  final vocab count is  10179
+
+
+
+The file ../Data/ptb.train.txt has 887523 words
+
+============= Stream Predictor Hyper parameters ===================
+The perplexity count constant is 6000
+The occasional step periods is 2000
+Feed strength gain is 1000000
+============= End Stream Predictor Hyper parameters ===================
+Started training with 800000 words
+Adding 800000 words to vocabulary
+now there are  9974  words in vocabulary.
+Occasional step at  10000
+Fixing incorrect first_child_parents
+Occasional step at  20000
+Fixing incorrect first_child_parents
+Occasional step at  30000
+Fixing incorrect first_child_parents
+Occasional step at  40000
+Fixing incorrect first_child_parents
+Occasional step at  50000
+Fixing incorrect first_child_parents
+Occasional step at  60000
+Fixing incorrect first_child_parents
+Finished training in 60024 steps
+The rate of learning is 0.076 K words/s
+Saved file ../PatternStore/ptb.train.tsv with pattern count 51399
+Adding 8000 words to vocabulary
+now there are  10175  words in vocabulary.
+Started calculating perplexity with word count = 8000
+ Final perplexity is  6303.13808619  final vocab count is  10175
