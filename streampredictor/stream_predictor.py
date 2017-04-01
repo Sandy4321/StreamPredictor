@@ -3,6 +3,7 @@ from streampredictor import pop
 from streampredictor import pop_manager
 from streampredictor import constants
 from streampredictor import generator
+from streampredictor import generalizer
 import time
 
 
@@ -14,6 +15,7 @@ class StreamPredictor:
             self.pop_manager = pop_manager.PopManager()  # type: pop_manager
         self.file_manager = file_manager.FileManager(self.pop_manager)
         self.generator = generator.Generator(self.pop_manager.pattern_collection, self.pop_manager.vocabulary)
+        self.generalizer = generalizer.Generalizer(self.pop_manager)
         print(self.pop_manager.stats())
 
     def train(self, list_of_words):
@@ -86,3 +88,6 @@ class StreamPredictor:
         self.train(train_words)
         perplexity_list = self.calculate_perplexity(words=test_words)
         return perplexity_list
+
+    def generalize(self):
+        self.generalizer.generalize()

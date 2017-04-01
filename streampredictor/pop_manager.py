@@ -185,3 +185,6 @@ class PopManager:
                         continue
                 logging.info('Mismatch ', pop.__repr__(), ' and ', parent_pop.__repr__())
                 pop.first_child_parents.remove(parent_pop)
+
+    def strongest_patterns(self):
+        return sorted(iter(self.pattern_collection.items()), key=lambda k:k[1].strength, reverse=True)[:20]

@@ -1,9 +1,10 @@
 """
 Author: Abhishek Rao
 """
-from streampredictor import pop
+from streampredictor import category
 from streampredictor import pop_manager
 from streampredictor import constants
+import logging
 
 
 class Generalizer():
@@ -19,25 +20,10 @@ class Generalizer():
         """
         self.pop_manager = pop_manager
 
-    def do_not_generalize(self, first_string, second_string):
-        if first_string == second_string:
-            return True
-        if len(''.join(e for e in first_string if e.isalnum())) < 3:
-            return True
-        if len(''.join(e for e in second_string if e.isalnum())) < 3:
-            return True
-        if self.pop_manager.pattern_collection[first_string].is_child(self.pop_manager.pattern_collection[second_string]) or \
-                self.pop_manager.pattern_collection[second_string].is_child(self.pop_manager.pattern_collection[first_string]):
-            return True
-        return False
-
-    def similarity_all(self):
-        for key1, pop1 in self.pop_manager.pattern_collection.items():
-            for key2, pop2 in self.pop_manager.pattern_collection.items():
-                print('Similarity of ', pop1.unrolled_pattern, ' and ', pop2.unrolled_pattern, ' is ', pop1.similarity(
-                    pop2))
-
     def generalize(self):
+        """
+        Ideally words that occur in same context should belong to same category.
+        """
         print('Generalizing ..')
         pops_list = list(self.pop_manager.pattern_collection.values())
         for pop in pops_list:
@@ -53,9 +39,23 @@ class Generalizer():
                     if same_length > passing_length and same_length > constants.generalize_common_required_count:
                         self.set_similarity(next_key_a, next_key_b)
 
+    def do_not_generalize(self, first_string, second_string):
+        if first_string == second_string:
+            return True
+        if len(''.join(e for e in first_string if e.isalnum())) < 3:
+            return True
+        if len(''.join(e for e in second_string if e.isalnum())) < 3:
+            return True
+        if self.pop_manager.pattern_collection[first_string].is_child(
+                self.pop_manager.pattern_collection[second_string]) or \
+                self.pop_manager.pattern_collection[second_string].is_child(
+                    self.pop_manager.pattern_collection[first_string]):
+            return True
+        return False
+
     def set_similarity(self, first_pattern, second_pattern):
         if first_pattern == second_pattern:
-            print(first_pattern, ' and ', second_pattern, ' are same!')
+            logging.info(first_pattern, ' and ', second_pattern, ' are same!')
             return
         first_pop = self.pop_manager.pattern_collection[first_pattern]
         second_pop = self.pop_manager.pattern_collection[second_pattern]
@@ -67,11 +67,10 @@ class Generalizer():
                 self.set_similarity(first_pop.second_component.unrolled_pattern,
                                     second_pop.second_component.unrolled_pattern)
                 return
-        print('Perhaps ', first_pattern, ' and ', second_pattern, ' are similar?')
-        new_category_string = 'category with ' + first_pattern + ' and ' + second_pattern
+        logging.info('Perhaps ', first_pattern, ' and ', second_pattern, ' are similar?')
+        new_category_string = 'category {' + first_pattern + ':' + second_pattern + '}'
         if new_category_string not in self.pop_manager.pattern_collection:
-            new_category = pop.Pop(new_category_string)
-            self.pop_manager.pattern_collection[new_category_string] = new_category
-            new_category.set_category(self.pop_manager.pattern_collection[first_pattern],
-                                      self.pop_manager.pattern_collection[second_pattern])
-        self.pop_manager.pattern_collection[new_category_string].feed(constants.new_category_strength)
+            category_members = [self.pop_manager.pattern_collection[first_pattern],
+                                self.pop_manager.pattern_collection[second_pattern]]
+            new_category = category.Category(new_category_string, constants.new_category_strength, category_members)
+            self.pop_manager.category_collection[new_category_string] = new_category

@@ -5,10 +5,16 @@ from streampredictor.pop import Pop
 from streampredictor.category import Category
 from streampredictor.stream_predictor import StreamPredictor
 from streampredictor import generator
+from streampredictor.data_fetcher import get_clean_words_from_file
 
 save_filename = '../PatternStore/test.tsv'
 category_save_filename = '../PatternStore/test_category.tsv'
 training_words = 'cat hat mat bat sat in the barn'.split(' ')
+
+
+def get_words_from_ptb(count):
+    with open('../data/ptb.train.txt', 'r') as f:
+        return f.read().replace('\n', '').replace('  ', ' ').split(' ')[:count]
 
 
 class TestPatternOfPatterns(TestCase):
@@ -50,18 +56,6 @@ class TestPatternOfPatterns(TestCase):
         loaded_string = loaded.pop_manager.status()
         self.assertEqual(original_string, loaded_string)
         self.assertEqual(len(original.pop_manager.pattern_collection), len(loaded.pop_manager.pattern_collection))
-
-    # def test_generailze(self):
-    #     sp = StreamPredictor()
-    #     sp.pop_manager.add_pop_string('apple')
-    #     sp.pop_manager.add_pop_string('banana')
-    #     text = DataObtainer.get_clean_text_from_file('data/Experimental/case.txt', 100000)
-    #     sp.pop_manager.train(text)
-    #     sp.pop_manager.generalize()
-    #     print [i.belongs_to_category.__repr__() for i in sp.pop_manager.pattern_collection.values() if
-    #            i.belongs_to_category is not None]
-    #     self.assertTrue(sp.pop_manager.pattern_collection['apple'].
-    #                     belongs_to_category is sp.pop_manager.pattern_collection['banana'].belongs_to_category)
 
     def test_change_component(self):
         a, ab, abc, sp, b, c, bc = self.setup_simple_patterns()
@@ -134,6 +128,15 @@ class TestPatternOfPatterns(TestCase):
         sample = self.get_sample()
         spm = sample.pop_manager.__repr__()
         self.assertGreater(len(spm), 10)
+
+    def test_pop_manager_strongest_patterns(self):
+        sp = StreamPredictor()
+        words = get_words_from_ptb(1000)
+        sp.train(words)
+        strongest_patterns = sp.pop_manager.strongest_patterns()
+        self.assertEqual(len(strongest_patterns), 20)
+        self.assertTrue(strongest_patterns[0][1].strength,
+                        max(i.strength for i in sp.pop_manager.pattern_collection.values()))
 
     def test_pop_get_next_prediction(self):
         sp, ab, abxe, abyd, xe, yd = self.form_simple_tree()
@@ -258,3 +261,15 @@ class TestCategorization(TestCase):
         self.assertEqual(loaded_sp.pop_manager.stats(), saved_sp.pop_manager.stats())
         os.remove(category_save_filename)
         os.remove(save_filename)
+
+    # def test_generailze(self):
+    #     sp = StreamPredictor()
+    #     sp.pop_manager.add_pop_to_vocabulary(Pop('apple'))
+    #     sp.pop_manager.add_pop_to_vocabulary(Pop('banana'))
+    #     text = get_clean_words_from_file('../data/generalize_test.txt', 100000)
+    #     sp.train(text)
+    #     sp.generalize()
+    #     print(i.belongs_to_category.__repr__() for i in sp.pop_manager.pattern_collection.values() if
+    #           i.belongs_to_category is not None)
+    #     self.assertTrue(sp.pop_manager.pattern_collection['apple'].
+    #                     belongs_to_category is sp.pop_manager.pattern_collection['banana'].belongs_to_category)
