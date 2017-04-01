@@ -34,11 +34,11 @@ class TestPatternOfPatterns(TestCase):
         self.assertTrue(len(empty_sample.pop_manager.pattern_collection) > 10)
         os.remove(save_filename)
 
-    # def test_train_increases_patterns(self):
-    #     sample = self.get_sample()
-    #     pattern_count = len(sample.pop_manager.pattern_collection)
-    #     sample.train(training_words)
-    #     self.assertGreater(len(sample.pop_manager.pattern_collection), pattern_count)
+    def test_train_increases_patterns(self):
+        sample = self.get_sample()
+        pattern_count = len(sample.pop_manager.pattern_collection)
+        sample.train(training_words)
+        self.assertGreater(len(sample.pop_manager.pattern_collection), pattern_count)
 
     def test_save_load_equal(self):
         original = self.get_sample()

@@ -6,3 +6,6 @@ occasional_decay = occasional_step_count
 maximum_pattern_length = 40  # maximum pattern length for look ahead in generation
 max_strength = 100000
 uniform_prediction_ratio = 0.1
+new_category_strength = max_strength/10
+generalize_intersection_ratio = 0.75
+generalize_common_required_count = 2
